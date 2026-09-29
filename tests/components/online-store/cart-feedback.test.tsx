@@ -102,10 +102,15 @@ describe("CartFeedback and cart mutation feedback", () => {
     fireEvent.click(screen.getByText("Thêm vào giỏ"));
     expect(screen.getByRole("status")).toBeInTheDocument();
 
+    vi.useFakeTimers();
     const closeBtn = screen.getByRole("button", { name: /đóng thông báo/i });
     fireEvent.click(closeBtn);
-
+    expect(screen.getByRole("status")).toHaveClass("storefront-feedback-exit");
+    act(() => {
+      vi.advanceTimersByTime(180);
+    });
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    vi.useRealTimers();
   });
 
   it("toast tự động biến mất sau thời gian timeout", () => {

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { CheckCircle2, ShieldCheck } from "lucide-react";
 
+import { createClientId } from "@/lib/client-uuid";
 import { formatFullAddress } from "@/lib/address/vietnam-address";
 import { formatVnd } from "@/lib/money";
 import {
@@ -79,7 +80,7 @@ function FormContent({
     street: "",
     isManual: false,
   });
-  const [clientId, setClientId] = useState(() => crypto.randomUUID());
+  const [clientId, setClientId] = useState(createClientId);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const subtotal = lines.reduce(
@@ -175,7 +176,7 @@ function FormContent({
       const parsed = onlineOrderResponseSchema.parse(body);
       clear();
       clearStoredVoucher();
-      setClientId(crypto.randomUUID());
+      setClientId(createClientId());
       router.push(
         parsed.data.order.accessUrl ?? parsed.data.order.receiptUrl ?? "/shop",
       );

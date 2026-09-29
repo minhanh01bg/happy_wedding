@@ -23,8 +23,8 @@ export function DashboardListCard({
 
   return (
     <section aria-labelledby={headingId}>
-      <Card className="h-full">
-        <CardHeader className="flex flex-row items-center justify-between gap-3">
+      <Card className="h-full min-w-0">
+        <CardHeader className="flex min-w-0 flex-wrap items-center justify-between gap-2">
           <CardTitle id={headingId}>{title}</CardTitle>
           <Link
             href={viewAllHref}

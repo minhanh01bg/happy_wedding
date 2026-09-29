@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CheckoutForm } from "@/features/online-store/checkout-form";
 
@@ -25,11 +25,27 @@ const mockCartItems = [
 ];
 
 describe("CheckoutForm - Structured Address & Experience", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
   beforeEach(() => {
     localStorage.clear();
     localStorage.setItem("online-cart-v1", JSON.stringify(mockCartItems));
     mockPush.mockReset();
     vi.restoreAllMocks();
+  });
+
+  it("mở thanh toán được trên HTTP khi crypto.randomUUID không tồn tại", () => {
+    vi.stubGlobal("crypto", {
+      getRandomValues: (bytes: Uint8Array) => {
+        bytes.fill(7);
+        return bytes;
+      },
+    });
+
+    render(<CheckoutForm />);
+    expect(
+      screen.getByRole("button", { name: /xác nhận đặt hàng/i }),
+    ).toBeInTheDocument();
   });
 
   async function selectDropdown(

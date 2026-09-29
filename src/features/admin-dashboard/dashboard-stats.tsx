@@ -12,7 +12,7 @@ interface DashboardStatsProps {
 /** Bon con so chu quan can liec thay dau tien moi sang. */
 export function DashboardStats({ summary }: DashboardStatsProps) {
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 lg:grid-cols-4">
       <StatTile
         label="Doanh thu hôm nay"
         value={summary.today.revenue}

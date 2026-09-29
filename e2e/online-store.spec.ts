@@ -17,6 +17,26 @@ test("chọn mức giá có phản hồi chuyển động tinh tế", async ({ p
   await expect(price).toHaveClass(/storefront-choice/);
 });
 
+test("giỏ hàng vẫn mở được và không chuyển động khi người dùng chọn giảm chuyển động", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/shop");
+  const trigger = page.getByRole("button", { name: /Mở giỏ hàng/ });
+  await trigger.click();
+  const drawer = page.getByRole("dialog", { name: "Giỏ hàng của bạn" });
+  await expect(drawer).toBeVisible();
+  const duration = await drawer.evaluate(
+    (node) => getComputedStyle(node).transitionDuration,
+  );
+  expect(duration.split(",").every((value) => parseFloat(value) < 0.001)).toBe(
+    true,
+  );
+  await page.keyboard.press("Escape");
+  await expect(drawer).not.toBeVisible();
+  await expect(trigger).toBeFocused();
+});
+
 test("route nội bộ vẫn yêu cầu đăng nhập", async ({ page }) => {
   await page.goto("/admin/orders");
   await expect(page).toHaveURL(/login/);

@@ -28,6 +28,7 @@ const CATALOG = {
 
 describe("PosScreen — in hoá đơn sau khi thanh toán", () => {
   beforeEach(() => {
+    vi.mocked(submitOrder).mockReset();
     useCartStore.setState({
       lines: [
         {
@@ -118,5 +119,53 @@ describe("PosScreen — in hoá đơn sau khi thanh toán", () => {
     expect(
       screen.getByRole("link", { name: /xem đơn chưa gửi/i }),
     ).toHaveAttribute("href", "/admin/offline");
+  });
+
+  it("không thể lưu cả máy chủ lẫn hàng đợi thì giữ nguyên giỏ và cho thử lại", async () => {
+    vi.mocked(submitOrder).mockRejectedValue(
+      new Error("IndexedDB unavailable"),
+    );
+    render(<PosScreen catalog={CATALOG} bankAccount={null} storeName="Tiệm" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /thanh toán/i }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Đúng số tiền" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Xác nhận" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      /không thể lưu đơn/i,
+    );
+    expect(useCartStore.getState().lines).toHaveLength(1);
+    expect(screen.queryByText("Thanh toán thành công")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /thanh toán/i })).toBeEnabled();
+  });
+
+  it("thử lại sau lỗi lưu dùng lại cùng clientId để tránh trùng đơn", async () => {
+    vi.mocked(submitOrder)
+      .mockRejectedValueOnce(new Error("IndexedDB unavailable"))
+      .mockResolvedValueOnce({
+        synced: true,
+        order: { code: "DH000123", total: 84_000 },
+      });
+    render(<PosScreen catalog={CATALOG} bankAccount={null} storeName="Tiệm" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /thanh toán/i }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Đúng số tiền" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Xác nhận" }));
+    await screen.findByRole("alert");
+
+    fireEvent.click(screen.getByRole("button", { name: /thanh toán/i }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Đúng số tiền" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Xác nhận" }));
+    await screen.findByText("Thanh toán thành công");
+
+    expect(vi.mocked(submitOrder)).toHaveBeenCalledTimes(2);
+    const firstId = vi.mocked(submitOrder).mock.calls[0]?.[0].clientId;
+    expect(vi.mocked(submitOrder).mock.calls[1]?.[0].clientId).toBe(firstId);
   });
 });

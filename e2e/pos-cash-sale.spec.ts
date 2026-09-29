@@ -24,14 +24,20 @@ test.describe("Bán hàng tiền mặt", () => {
     const search = page.getByRole("combobox");
 
     await search.fill("nhot");
-    await expect(page.getByText("Nhớt Castrol Power1 0.8L")).toBeVisible();
+    await expect(
+      page.getByRole("option").getByText("Nhớt Castrol Power1 0.8L"),
+    ).toBeVisible();
 
     await search.press("Enter");
-    await expect(page.getByText("Nhớt Castrol Power1 0.8L")).toBeVisible();
+    await expect(
+      page.locator("#pos-cart").getByText("Nhớt Castrol Power1 0.8L"),
+    ).toBeVisible();
     await expect(page.getByTestId("cart-total")).toHaveText("120.000");
 
     await search.fill("sen wave");
-    await expect(page.getByText("Bộ nhông sên dĩa xe Wave")).toBeVisible();
+    await expect(
+      page.getByRole("option").getByText("Bộ nhông sên dĩa xe Wave"),
+    ).toBeVisible();
     await search.press("Enter");
     await expect(page.getByTestId("cart-total")).toHaveText("400.000");
 
@@ -82,7 +88,22 @@ test.describe("Bán hàng tiền mặt", () => {
     page,
   }) => {
     await page.getByRole("combobox").fill("bugi wave");
-    await expect(page.getByText("Bugi NGK C7HSA")).toBeVisible();
+    await expect(
+      page.getByRole("option").getByText("Bugi NGK C7HSA"),
+    ).toBeVisible();
+  });
+
+  test("mở quầy có sẵn sản phẩm để chọn và tính tiền", async ({ page }) => {
+    await expect(page.getByRole("button", { name: "Tất cả" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await page
+      .getByRole("button", { name: /Nhớt Castrol Power1 0.8L/ })
+      .click();
+    await expect(page.getByTestId("cart-total")).toHaveText("120.000");
+    await page.getByRole("button", { name: /thanh toán/i }).click();
+    await expect(page.getByTestId("payment-total")).toHaveText("120.000");
   });
 
   test("sua so luong le cap nhat tong tien", async ({ page }) => {

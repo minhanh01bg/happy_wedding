@@ -24,7 +24,7 @@ export function CategoryGrid({
 }: CategoryGridProps) {
   const visible = activeCategoryId
     ? products.filter((product) => product.categoryId === activeCategoryId)
-    : [];
+    : products;
 
   return (
     <div className="flex flex-col gap-3">
@@ -32,6 +32,19 @@ export function CategoryGrid({
         className="flex gap-2 overflow-x-auto pb-2 sm:flex-wrap"
         aria-label="Danh mục sản phẩm"
       >
+        <button
+          type="button"
+          aria-pressed={activeCategoryId === null}
+          onClick={() => onCategoryChange(null)}
+          className={cn(
+            "focus-visible:ring-ring min-h-11 shrink-0 cursor-pointer rounded-xl border px-4 py-2 text-base font-bold transition-colors focus-visible:ring-3 focus-visible:outline-none",
+            activeCategoryId === null
+              ? "border-primary bg-primary text-primary-foreground"
+              : "border-border bg-background hover:bg-accent",
+          )}
+        >
+          Tất cả
+        </button>
         {categories.map((category) => (
           <button
             key={category.id}
@@ -53,12 +66,6 @@ export function CategoryGrid({
           </button>
         ))}
       </div>
-
-      {activeCategoryId === null ? (
-        <p className="bg-muted/60 text-muted-foreground rounded-xl px-4 py-5 text-center text-sm">
-          Chọn một danh mục ở trên để xem các sản phẩm bên trong.
-        </p>
-      ) : null}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
         {visible.map((product) => (

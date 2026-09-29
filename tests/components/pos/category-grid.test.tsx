@@ -10,6 +10,36 @@ const CATEGORIES = [
 ];
 
 describe("CategoryGrid", () => {
+  it("mở sẵn toàn bộ sản phẩm khi chưa chọn danh mục", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const product = {
+      id: "p1",
+      name: "Nhớt Castrol",
+      sku: null,
+      price: 120000,
+      unit: "chai",
+      stock: 3,
+      imageUrl: null,
+      categoryId: "c1",
+      soldCount: 0,
+      searchText: "nhot castrol",
+    };
+    render(
+      <CategoryGrid
+        categories={CATEGORIES}
+        products={[product]}
+        activeCategoryId={null}
+        onCategoryChange={vi.fn()}
+        onSelect={onSelect}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /Nhớt Castrol/ }));
+    expect(onSelect).toHaveBeenCalledWith(product);
+    expect(screen.queryByText(/Chọn một danh mục/)).not.toBeInTheDocument();
+  });
+
   it("nut danh muc bao trang thai bang aria-pressed", async () => {
     const user = userEvent.setup();
     const onCategoryChange = vi.fn();

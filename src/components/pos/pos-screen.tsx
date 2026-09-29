@@ -128,6 +128,10 @@ export function PosScreen({
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [serviceOpen, setServiceOpen] = useState(false);
   const [paymentOpen, setPaymentOpen] = useState(false);
+  const [paymentError, setPaymentError] = useState(false);
+  const submittingRef = useRef(false);
+  // Giu cung clientId neu lan luu truoc loi: retry khong tao don thu hai.
+  const pendingClientIdRef = useRef<string | null>(null);
   const [lastSale, setLastSale] = useState<LastSale | null>(null);
   // Tach co mo khoi du lieu de hop thoai con noi dung trong luc dong (animation).
   const [saleOpen, setSaleOpen] = useState(false);
@@ -147,6 +151,8 @@ export function PosScreen({
 
   // Luu danh muc vao IndexedDB de lan sau mat mang van ban duoc.
   useEffect(() => {
+    // Server tra ve rong khi mat ket noi: khong xoa cache con ban duoc.
+    if (initialCatalog.products.length === 0) return;
     saveCatalog(initialCatalog).catch((error: unknown) => {
       reportClientError(error, "pos.catalog.save");
     });
@@ -213,42 +219,55 @@ export function PosScreen({
   });
 
   async function handleConfirm(result: PaymentResult) {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setPaymentOpen(false);
+    setPaymentError(false);
 
-    const outcome = await submitOrder({
-      clientId: crypto.randomUUID(),
-      preferredCode: pendingCode,
-      channel: "pos",
-      lines: lines.map((line) => ({
-        productId: line.productId,
-        name: line.name,
-        unitPrice: line.unitPrice,
-        originalPrice: line.originalPrice,
-        quantity: line.quantity,
-        discount: line.discount,
-        unit: line.unit,
-        isService: line.isService,
-      })),
-      orderDiscount,
-      payments: result.payments,
-      customerId: result.customerId,
-    });
+    try {
+      pendingClientIdRef.current ??= crypto.randomUUID();
+      const outcome = await submitOrder({
+        clientId: pendingClientIdRef.current,
+        preferredCode: pendingCode,
+        channel: "pos",
+        lines: lines.map((line) => ({
+          productId: line.productId,
+          name: line.name,
+          unitPrice: line.unitPrice,
+          originalPrice: line.originalPrice,
+          quantity: line.quantity,
+          discount: line.discount,
+          unit: line.unit,
+          isService: line.isService,
+        })),
+        orderDiscount,
+        payments: result.payments,
+        customerId: result.customerId,
+      });
 
-    const code = outcome.order?.code ?? null;
-    setLastSale({
-      code,
-      total: totals.total,
-      received: result.received,
-      change: Math.max(0, result.received - totals.total),
-      synced: outcome.synced,
-      rejected: outcome.rejected,
-      receipt: buildPosReceipt(code ?? pendingCode, totals, result),
-    });
-    setSaleOpen(true);
+      const code = outcome.order?.code ?? null;
+      setLastSale({
+        code,
+        total: totals.total,
+        received: result.received,
+        change: Math.max(0, result.received - totals.total),
+        synced: outcome.synced,
+        rejected: outcome.rejected,
+        receipt: buildPosReceipt(code ?? pendingCode, totals, result),
+      });
+      setSaleOpen(true);
 
-    setPendingCode(`DH${Date.now().toString().slice(-6)}`);
-    clear();
-    focusSearch();
+      setPendingCode(`DH${Date.now().toString().slice(-6)}`);
+      pendingClientIdRef.current = null;
+      clear();
+      focusSearch();
+    } catch (error) {
+      // Khong co ban sao tren server/hang doi: tuyet doi khong xoa gio hang.
+      reportClientError(error, "pos.order.save");
+      setPaymentError(true);
+    } finally {
+      submittingRef.current = false;
+    }
   }
 
   return (
@@ -289,6 +308,13 @@ export function PosScreen({
           aria-label="Trạng thái hệ thống"
         >
           <SyncIndicator />
+          {paymentError ? (
+            <p role="alert" className="text-destructive font-semibold">
+              Không thể lưu đơn trên máy chủ hoặc thiết bị. Đơn vẫn ở trong giỏ;
+              kiểm tra kết nối và thử thanh toán lại. Không thu tiền lần nữa nếu
+              khách đã trả.
+            </p>
+          ) : null}
           {stale ? (
             <div className="bg-warning/15 text-warning-foreground flex flex-wrap items-center gap-2 rounded-2xl px-3 py-2 text-sm font-semibold">
               <span>Danh mục đã cũ</span>

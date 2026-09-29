@@ -27,6 +27,24 @@ const EMPTY_CATALOG = {
   fetchedAt: new Date().toISOString(),
 };
 
+const CATALOG = {
+  ...EMPTY_CATALOG,
+  products: [
+    {
+      id: "p1",
+      name: "Nhớt Castrol",
+      sku: null,
+      price: 120000,
+      unit: "chai",
+      stock: 3,
+      imageUrl: null,
+      categoryId: null,
+      soldCount: 0,
+      searchText: "nhot castrol",
+    },
+  ],
+};
+
 describe("PosScreen catalog cache", () => {
   beforeEach(() => {
     vi.mocked(reportClientError).mockClear();
@@ -37,9 +55,7 @@ describe("PosScreen catalog cache", () => {
     vi.mocked(saveCatalog).mockRejectedValue(failure);
     vi.mocked(loadCatalog).mockResolvedValue(null);
 
-    render(
-      <PosScreen catalog={EMPTY_CATALOG} bankAccount={null} storeName="Tiệm" />,
-    );
+    render(<PosScreen catalog={CATALOG} bankAccount={null} storeName="Tiệm" />);
 
     await waitFor(() => {
       expect(reportClientError).toHaveBeenCalledWith(
@@ -64,5 +80,17 @@ describe("PosScreen catalog cache", () => {
         "pos.catalog.load",
       );
     });
+  });
+
+  it("danh mục server rỗng không ghi đè danh mục đã lưu offline", async () => {
+    vi.mocked(saveCatalog).mockClear();
+    vi.mocked(loadCatalog).mockResolvedValue(null);
+
+    render(
+      <PosScreen catalog={EMPTY_CATALOG} bankAccount={null} storeName="Tiệm" />,
+    );
+
+    await waitFor(() => expect(loadCatalog).toHaveBeenCalled());
+    expect(saveCatalog).not.toHaveBeenCalled();
   });
 });

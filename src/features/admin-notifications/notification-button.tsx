@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Bell, CheckCircle, X } from "@phosphor-icons/react";
 import { BellOff } from "lucide-react";
@@ -19,12 +20,41 @@ export function NotificationButton({
   const closeRef = useRef<HTMLButtonElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLElement>(null);
+  const [desktopPosition, setDesktopPosition] = useState({ top: 0, left: 0 });
   const { items, unreadCount, loading, error, refresh, markOne, markAll } =
     useAdminNotifications();
 
   useEffect(() => {
     if (open) closeRef.current?.focus();
   }, [open]);
+
+  useEffect(() => {
+    if (!open || placement !== "desktop") return;
+    const positionPanel = () => {
+      const trigger = triggerRef.current?.getBoundingClientRect();
+      if (!trigger) return;
+      const panelWidth = Math.min(384, window.innerWidth - 24);
+      const panelHeight = panelRef.current?.getBoundingClientRect().height ?? 0;
+      setDesktopPosition({
+        left: Math.max(
+          12,
+          Math.min(trigger.right + 12, window.innerWidth - panelWidth - 12),
+        ),
+        top: Math.max(
+          12,
+          Math.min(trigger.top, window.innerHeight - panelHeight - 12),
+        ),
+      });
+    };
+    positionPanel();
+    window.addEventListener("resize", positionPanel);
+    window.addEventListener("scroll", positionPanel, true);
+    return () => {
+      window.removeEventListener("resize", positionPanel);
+      window.removeEventListener("scroll", positionPanel, true);
+    };
+  }, [open, placement]);
 
   // Escape va bam ra ngoai dong panel, giong hanh vi popover chuan.
   useEffect(() => {
@@ -38,7 +68,11 @@ export function NotificationButton({
 
     function handlePointerDown(event: PointerEvent) {
       const target = event.target;
-      if (target instanceof Node && containerRef.current?.contains(target)) {
+      if (
+        target instanceof Node &&
+        (containerRef.current?.contains(target) ||
+          panelRef.current?.contains(target))
+      ) {
         return;
       }
       setOpen(false);
@@ -98,103 +132,107 @@ export function NotificationButton({
           </span>
         )}
       </button>
-      {open && (
-        <section
-          id={panelId}
-          aria-label="Thông báo quản trị"
-          className={
-            placement === "desktop"
-              ? "bg-popover text-popover-foreground animate-popover-enter absolute top-0 left-full z-[100] ml-3 max-h-[75dvh] w-96 overflow-auto rounded-2xl border p-3 shadow-xl"
-              : "bg-popover text-popover-foreground animate-popover-enter fixed inset-x-3 top-18 z-[100] max-h-[calc(100dvh-6rem)] overflow-auto rounded-2xl border p-3 shadow-xl"
-          }
-        >
-          <header className="mb-2 flex items-center justify-between gap-2">
-            <h2 className="font-heading font-bold">Thông báo</h2>
-            <div className="flex items-center gap-1">
-              {unreadCount > 0 && (
+      {open &&
+        createPortal(
+          <section
+            ref={panelRef}
+            id={panelId}
+            aria-label="Thông báo quản trị"
+            style={placement === "desktop" ? desktopPosition : undefined}
+            className={
+              placement === "desktop"
+                ? "bg-popover text-popover-foreground animate-popover-enter fixed z-[100] max-h-[min(75dvh,calc(100dvh-1.5rem))] w-[min(24rem,calc(100vw-1.5rem))] overflow-auto rounded-2xl border p-3 shadow-xl"
+                : "bg-popover text-popover-foreground animate-popover-enter fixed inset-x-3 top-18 z-[100] max-h-[calc(100dvh-6rem)] overflow-auto rounded-2xl border p-3 shadow-xl"
+            }
+          >
+            <header className="mb-2 flex items-center justify-between gap-2">
+              <h2 className="font-heading font-bold">Thông báo</h2>
+              <div className="flex items-center gap-1">
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => void markAll()}
+                    className="hover:bg-muted min-h-11 rounded-lg px-2 text-sm font-semibold"
+                  >
+                    Đọc tất cả
+                  </button>
+                )}
+                <button
+                  ref={closeRef}
+                  type="button"
+                  aria-label="Đóng thông báo"
+                  onClick={close}
+                  className="hover:bg-muted flex size-11 items-center justify-center rounded-lg"
+                >
+                  <X aria-hidden="true" />
+                </button>
+              </div>
+            </header>
+            {loading ? (
+              <p role="status" className="text-muted-foreground p-4 text-sm">
+                Đang tải thông báo…
+              </p>
+            ) : error ? (
+              <div role="alert" className="p-4 text-sm">
+                <p>{error}</p>
                 <button
                   type="button"
-                  onClick={() => void markAll()}
-                  className="hover:bg-muted min-h-11 rounded-lg px-2 text-sm font-semibold"
+                  onClick={() => void refresh()}
+                  className="mt-2 font-semibold underline"
                 >
-                  Đọc tất cả
+                  Thử lại
                 </button>
-              )}
-              <button
-                ref={closeRef}
-                type="button"
-                aria-label="Đóng thông báo"
-                onClick={close}
-                className="hover:bg-muted flex size-11 items-center justify-center rounded-lg"
-              >
-                <X aria-hidden="true" />
-              </button>
-            </div>
-          </header>
-          {loading ? (
-            <p role="status" className="text-muted-foreground p-4 text-sm">
-              Đang tải thông báo…
-            </p>
-          ) : error ? (
-            <div role="alert" className="p-4 text-sm">
-              <p>{error}</p>
-              <button
-                type="button"
-                onClick={() => void refresh()}
-                className="mt-2 font-semibold underline"
-              >
-                Thử lại
-              </button>
-            </div>
-          ) : items.length === 0 ? (
-            <EmptyState
-              size="compact"
-              icon={BellOff}
-              title="Chưa có thông báo"
-              description="Đơn online mới và cảnh báo tồn kho sẽ hiện ở đây."
-            />
-          ) : (
-            <ul className="space-y-1">
-              {items.map((item) => (
-                <li key={item.id} className="relative">
-                  <Link
-                    href={item.href}
-                    onClick={() => {
-                      setOpen(false);
-                      if (!item.readAt) void markOne(item.id);
-                    }}
-                    className={`focus-visible:ring-ring block rounded-xl p-3 pr-11 text-sm focus-visible:ring-3 focus-visible:outline-none ${item.readAt ? "hover:bg-muted" : "bg-primary/8 hover:bg-primary/12"}`}
-                  >
-                    <span className="block font-bold">{item.title}</span>
-                    <span className="text-muted-foreground mt-1 block">
-                      {item.body}
-                    </span>
-                    <time
-                      className="text-muted-foreground mt-1 block text-xs"
-                      dateTime={item.createdAt}
+              </div>
+            ) : items.length === 0 ? (
+              <EmptyState
+                size="compact"
+                icon={BellOff}
+                title="Chưa có thông báo"
+                description="Đơn online mới và cảnh báo tồn kho sẽ hiện ở đây."
+              />
+            ) : (
+              <ul className="space-y-1">
+                {items.map((item) => (
+                  <li key={item.id} className="relative">
+                    <Link
+                      href={item.href}
+                      onClick={() => {
+                        setOpen(false);
+                        if (!item.readAt) void markOne(item.id);
+                      }}
+                      className={`focus-visible:ring-ring block rounded-xl p-3 pr-11 text-sm focus-visible:ring-3 focus-visible:outline-none ${item.readAt ? "hover:bg-muted" : "bg-primary/8 hover:bg-primary/12"}`}
                     >
-                      {new Intl.DateTimeFormat("vi-VN", {
-                        dateStyle: "short",
-                        timeStyle: "short",
-                      }).format(new Date(item.createdAt))}
-                    </time>
-                  </Link>
-                  {!item.readAt && (
-                    <button
-                      type="button"
-                      aria-label={`Đánh dấu đã đọc: ${item.title}`}
-                      onClick={() => void markOne(item.id)}
-                      className="hover:bg-background absolute top-2 right-1 flex size-11 items-center justify-center rounded-lg"
-                    >
-                      <CheckCircle aria-hidden="true" />
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
+                      <span className="block font-bold">{item.title}</span>
+                      <span className="text-muted-foreground mt-1 block">
+                        {item.body}
+                      </span>
+                      <time
+                        className="text-muted-foreground mt-1 block text-xs"
+                        dateTime={item.createdAt}
+                      >
+                        {new Intl.DateTimeFormat("vi-VN", {
+                          dateStyle: "short",
+                          timeStyle: "short",
+                        }).format(new Date(item.createdAt))}
+                      </time>
+                    </Link>
+                    {!item.readAt && (
+                      <button
+                        type="button"
+                        aria-label={`Đánh dấu đã đọc: ${item.title}`}
+                        onClick={() => void markOne(item.id)}
+                        className="hover:bg-background absolute top-2 right-1 flex size-11 items-center justify-center rounded-lg"
+                      >
+                        <CheckCircle aria-hidden="true" />
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>,
+          document.body,
+        )}
     </div>
   );
 }

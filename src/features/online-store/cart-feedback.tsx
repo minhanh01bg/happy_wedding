@@ -1,34 +1,53 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertCircle, AlertTriangle, CheckCircle2, X } from "lucide-react";
 
 import { useOnlineCart } from "./cart-context";
+import type { CartMutationResult } from "./types";
 
 const AUTO_DISMISS_MS = 4000;
+const EXIT_MS = 180;
 
 export function CartFeedback({ onViewCart }: { onViewCart?: () => void }) {
   const { feedback, dismissFeedback, openDrawer } = useOnlineCart();
   const handleViewCart = onViewCart || openDrawer;
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [exitingFeedback, setExitingFeedback] =
+    useState<CartMutationResult | null>(null);
+  const feedbackRef = useRef(feedback);
+  const exitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    feedbackRef.current = feedback;
+    if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+    exitTimerRef.current = null;
+  }, [feedback]);
+
+  const beginExit = useCallback(
+    (current: CartMutationResult) => {
+      if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+      setExitingFeedback(current);
+      exitTimerRef.current = setTimeout(() => {
+        exitTimerRef.current = null;
+        if (feedbackRef.current !== current) return;
+        dismissFeedback();
+      }, EXIT_MS);
+    },
+    [dismissFeedback],
+  );
 
   useEffect(() => {
     if (!feedback) return;
+    const timer = setTimeout(() => beginExit(feedback), AUTO_DISMISS_MS);
+    return () => clearTimeout(timer);
+  }, [feedback, beginExit]);
 
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
-
-    timerRef.current = setTimeout(() => {
-      dismissFeedback();
-    }, AUTO_DISMISS_MS);
-
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, [feedback, dismissFeedback]);
+  useEffect(
+    () => () => {
+      if (exitTimerRef.current) clearTimeout(exitTimerRef.current);
+    },
+    [],
+  );
 
   if (!feedback) return null;
 
@@ -70,7 +89,7 @@ export function CartFeedback({ onViewCart }: { onViewCart?: () => void }) {
     >
       <div
         role="status"
-        className="border-border bg-card text-card-foreground pointer-events-auto flex max-w-md items-center gap-3 rounded-2xl border p-4 shadow-xl backdrop-blur-md transition-[opacity,transform] duration-200"
+        className={`border-border bg-card text-card-foreground pointer-events-auto flex max-w-md items-center gap-3 rounded-2xl border p-4 shadow-xl backdrop-blur-md ${exitingFeedback === feedback ? "storefront-feedback-exit" : "storefront-feedback-enter"}`}
       >
         <Icon aria-hidden="true" className={`size-5 shrink-0 ${iconColor}`} />
         <div className="min-w-0 flex-1 text-sm font-medium">
@@ -89,7 +108,7 @@ export function CartFeedback({ onViewCart }: { onViewCart?: () => void }) {
         </div>
         <button
           type="button"
-          onClick={dismissFeedback}
+          onClick={() => beginExit(feedback)}
           aria-label="Đóng thông báo"
           className="text-muted-foreground hover:text-foreground inline-flex size-8 shrink-0 items-center justify-center rounded-lg transition-colors outline-none focus-visible:ring-2"
         >

@@ -35,6 +35,28 @@ test("giỏ hàng vẫn mở được và không chuyển động khi người d
   await page.keyboard.press("Escape");
   await expect(drawer).not.toBeVisible();
   await expect(trigger).toBeFocused();
+
+  await page
+    .getByRole("button", { name: /Xem nhanh/ })
+    .first()
+    .click();
+  const quickView = page.locator('[data-slot="dialog-content"]');
+  await expect(quickView).toBeVisible();
+  const quickViewDuration = await quickView.evaluate(
+    (node) => getComputedStyle(node).transitionDuration,
+  );
+  expect(
+    quickViewDuration.split(",").every((value) => parseFloat(value) < 0.001),
+  ).toBe(true);
+  await page.keyboard.press("Escape");
+  await expect(quickView).toHaveCount(0);
+
+  const carousel = page.getByRole("region", { name: "Khuyến mãi nổi bật" });
+  await carousel.getByRole("button", { name: "Slide tiếp theo" }).click();
+  const carouselDuration = await carousel
+    .locator(".animate-carousel-slide-in-right")
+    .evaluate((node) => getComputedStyle(node).animationDuration);
+  expect(parseFloat(carouselDuration)).toBeLessThan(0.001);
 });
 
 test("Xem nhanh đi vào từ phía dưới và thoát ra trước khi gỡ khỏi trang", async ({

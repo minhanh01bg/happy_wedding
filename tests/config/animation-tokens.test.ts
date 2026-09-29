@@ -44,4 +44,17 @@ describe("animation tokens and micro-interactions in globals.css", () => {
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
     expect(css).toContain("animation-duration: 0.01ms !important");
   });
+
+  it("giới hạn motion storefront và giữ reduced-motion", () => {
+    for (const selector of [
+      ".storefront-choice",
+      ".storefront-press",
+      ".storefront-feedback-enter",
+      ".storefront-feedback-exit",
+    ]) {
+      expect(css).toContain(selector);
+    }
+    expect(css).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(css).not.toMatch(/transition-all\b/);
+  });
 });

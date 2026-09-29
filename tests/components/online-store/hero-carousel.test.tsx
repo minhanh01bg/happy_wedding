@@ -30,6 +30,18 @@ describe("HeroCarousel Component", () => {
     expect(screen.getByText(DEFAULT_HERO_SLIDES[1].title)).toBeInTheDocument();
   });
 
+  it("bấm liên tiếp không cắt ngang slide đang trượt, sau khi kết thúc vẫn chuyển tiếp được", () => {
+    render(<HeroCarousel slides={DEFAULT_HERO_SLIDES} autoPlayInterval={0} />);
+    const next = screen.getByLabelText("Slide tiếp theo");
+    fireEvent.click(next);
+    fireEvent.click(next);
+    expect(screen.getByText("02 / 03")).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(550));
+    fireEvent.click(next);
+    expect(screen.getByText("03 / 03")).toBeInTheDocument();
+  });
+
   it("chuyển slide khi bấm nút Prev (trước đó)", () => {
     render(<HeroCarousel slides={DEFAULT_HERO_SLIDES} />);
     const prevBtn = screen.getByLabelText("Slide trước đó");
@@ -89,6 +101,7 @@ describe("HeroCarousel Component", () => {
     fireEvent.keyDown(region, { key: "ArrowRight" });
     expect(screen.getByText("02 / 03")).toBeInTheDocument();
 
+    act(() => vi.advanceTimersByTime(550));
     fireEvent.keyDown(region, { key: "ArrowLeft" });
     expect(screen.getByText("01 / 03")).toBeInTheDocument();
   });

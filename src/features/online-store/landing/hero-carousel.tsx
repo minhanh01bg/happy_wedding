@@ -52,6 +52,7 @@ export function HeroCarousel({
   const dragOffsetRef = useRef(0);
   const isHoveredRef = useRef(false);
   const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const transitionInProgressRef = useRef(false);
   // Khung hinh dang cho de day dragOffset vao state — toi da 1 lan/khung.
   const dragFrameRef = useRef<number | null>(null);
 
@@ -59,9 +60,9 @@ export function HeroCarousel({
 
   const changeSlide = useCallback(
     (newIndex: number, dir: 1 | -1) => {
-      if (transitionTimerRef.current) {
-        clearTimeout(transitionTimerRef.current);
-      }
+      // Tránh khởi động lại keyframe giữa chừng khi người dùng bấm liên tiếp.
+      if (transitionInProgressRef.current) return;
+      transitionInProgressRef.current = true;
       setPrevIndex(currentIndex);
       setDirection(dir);
       setCurrentIndex(newIndex);
@@ -69,6 +70,8 @@ export function HeroCarousel({
       setAnimKey((k) => k + 1);
 
       transitionTimerRef.current = setTimeout(() => {
+        transitionInProgressRef.current = false;
+        transitionTimerRef.current = null;
         setIsAnimating(false);
         setPrevIndex(null);
       }, 550);

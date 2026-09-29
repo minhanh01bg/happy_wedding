@@ -275,6 +275,61 @@
     @apply transition-transform duration-100 active:scale-[0.97];
   }
 
+  .storefront-choice {
+    transition:
+      background-color 180ms ease-out,
+      color 180ms ease-out,
+      border-color 180ms ease-out,
+      box-shadow 180ms ease-out;
+  }
+
+  .storefront-press {
+    transition: transform 120ms ease-out;
+  }
+
+  .storefront-choice.storefront-press {
+    transition:
+      transform 120ms ease-out,
+      background-color 180ms ease-out,
+      color 180ms ease-out,
+      border-color 180ms ease-out,
+      box-shadow 180ms ease-out;
+  }
+
+  .storefront-press:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+
+  @keyframes storefront-feedback-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes storefront-feedback-out {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  .storefront-feedback-enter {
+    animation: storefront-feedback-in 200ms ease-out both;
+  }
+
+  .storefront-feedback-exit {
+    animation: storefront-feedback-out 180ms ease-in both;
+  }
+
   @keyframes slide-in-right {
     from {
       transform: translateX(100%);

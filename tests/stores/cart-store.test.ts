@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useCartStore } from "@/stores/cart-store";
 import type { SearchableProduct } from "@/lib/search/types";
@@ -20,7 +20,21 @@ beforeEach(() => {
   useCartStore.getState().clear();
 });
 
+afterEach(() => vi.unstubAllGlobals());
+
 describe("cart store", () => {
+  it("thêm hàng và tiền công khi HTTP không có crypto.randomUUID", () => {
+    vi.stubGlobal("crypto", {
+      getRandomValues: (bytes: Uint8Array) => {
+        bytes.fill(7);
+        return bytes;
+      },
+    });
+    useCartStore.getState().addProduct(sugar);
+    useCartStore.getState().addService("Công thay nhớt", 20000);
+    expect(useCartStore.getState().lines).toHaveLength(2);
+  });
+
   it("them san pham vao gio", () => {
     useCartStore.getState().addProduct(sugar);
     const { lines } = useCartStore.getState();

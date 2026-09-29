@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
+import { createClientId } from "@/lib/client-uuid";
 import type { CartLine } from "@/lib/pricing/types";
 import type { SearchableProduct } from "@/lib/search/types";
 
@@ -18,7 +19,7 @@ interface CartState {
 }
 
 function newLineId(): string {
-  return crypto.randomUUID();
+  return createClientId();
 }
 
 function patchLine(

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { PosScreen } from "@/components/pos/pos-screen";
 import { submitOrder } from "@/lib/sync/submit";
@@ -27,6 +27,8 @@ const CATALOG = {
 };
 
 describe("PosScreen — in hoá đơn sau khi thanh toán", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
   beforeEach(() => {
     vi.mocked(submitOrder).mockReset();
     useCartStore.setState({
@@ -167,5 +169,28 @@ describe("PosScreen — in hoá đơn sau khi thanh toán", () => {
     expect(vi.mocked(submitOrder)).toHaveBeenCalledTimes(2);
     const firstId = vi.mocked(submitOrder).mock.calls[0]?.[0].clientId;
     expect(vi.mocked(submitOrder).mock.calls[1]?.[0].clientId).toBe(firstId);
+  });
+
+  it("xác nhận thanh toán khi trình duyệt HTTP không có crypto.randomUUID", async () => {
+    vi.stubGlobal("crypto", {
+      getRandomValues: (bytes: Uint8Array) => {
+        bytes.fill(7);
+        return bytes;
+      },
+    });
+    render(<PosScreen catalog={CATALOG} bankAccount={null} storeName="Tiệm" />);
+
+    fireEvent.click(screen.getByRole("button", { name: /thanh toán/i }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Đúng số tiền" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Xác nhận" }));
+
+    expect(
+      await screen.findByText("Thanh toán thành công"),
+    ).toBeInTheDocument();
+    expect(vi.mocked(submitOrder).mock.calls[0]?.[0].clientId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
   });
 });

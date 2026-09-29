@@ -33,6 +33,7 @@ import {
 import { PrintReceiptButton } from "@/features/orders/print-receipt-button";
 import type { ReceiptOrder } from "@/features/orders/receipt-k80";
 import { reportClientError } from "@/lib/client-log";
+import { createClientId } from "@/lib/client-uuid";
 import { formatVnd } from "@/lib/money";
 import { calculateCart } from "@/lib/pricing/calculate";
 import {
@@ -225,7 +226,7 @@ export function PosScreen({
     setPaymentError(false);
 
     try {
-      pendingClientIdRef.current ??= crypto.randomUUID();
+      pendingClientIdRef.current ??= createClientId();
       const outcome = await submitOrder({
         clientId: pendingClientIdRef.current,
         preferredCode: pendingCode,

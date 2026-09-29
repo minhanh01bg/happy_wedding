@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { CartLine } from "@/lib/pricing/types";
 import { useHeldOrdersStore } from "@/stores/held-orders-store";
@@ -21,7 +21,21 @@ beforeEach(() => {
   useHeldOrdersStore.setState({ held: [] });
 });
 
+afterEach(() => vi.unstubAllGlobals());
+
 describe("giu don", () => {
+  it("giữ đơn khi HTTP không có crypto.randomUUID", () => {
+    const existingLine = line();
+    vi.stubGlobal("crypto", {
+      getRandomValues: (bytes: Uint8Array) => {
+        bytes.fill(7);
+        return bytes;
+      },
+    });
+    useHeldOrdersStore.getState().hold([existingLine], 0);
+    expect(useHeldOrdersStore.getState().held).toHaveLength(1);
+  });
+
   it("ban dau khong co don nao duoc giu", () => {
     expect(useHeldOrdersStore.getState().held).toEqual([]);
   });

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
+import { createClientId } from "@/lib/client-uuid";
 import { calculateCart } from "@/lib/pricing/calculate";
 import type { CartLine } from "@/lib/pricing/types";
 
@@ -40,7 +41,7 @@ export const useHeldOrdersStore = create<HeldOrdersState>()(
           held: [
             ...state.held,
             {
-              id: crypto.randomUUID(),
+              id: createClientId(),
               lines,
               orderDiscount,
               heldAt: Date.now(),

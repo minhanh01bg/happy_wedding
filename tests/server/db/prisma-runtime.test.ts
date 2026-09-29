@@ -20,6 +20,15 @@ async function readPragma(name: string): Promise<unknown> {
 }
 
 describe("prisma runtime (SQLite)", () => {
+  it("Prisma Client doc duoc cac cot SEO slug trong schema hien tai", async () => {
+    await expect(
+      prisma.category.findMany({ select: { id: true, slug: true }, take: 1 }),
+    ).resolves.toBeDefined();
+    await expect(
+      prisma.product.findMany({ select: { id: true, slug: true }, take: 1 }),
+    ).resolves.toBeDefined();
+  });
+
   it("bat WAL va busy_timeout=5000 sau khi prismaReady xong", async () => {
     await prismaReady;
 

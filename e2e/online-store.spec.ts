@@ -83,6 +83,26 @@ test("ngăn giỏ hàng mờ dần trong lúc trượt vào", async ({ page }) =
   expect(properties.endingOpacity).toBe(true);
 });
 
+test("hero trượt thực sự theo chiều ngang khi đổi slide", async ({ page }) => {
+  await page.goto("/shop");
+  const carousel = page.getByRole("region", { name: "Khuyến mãi nổi bật" });
+  await carousel.getByRole("button", { name: "Slide tiếp theo" }).click();
+  const entering = carousel.locator(".animate-carousel-slide-in-right");
+  await expect(entering).toHaveCount(1);
+  const motion = await entering.evaluate((element) => {
+    const running = element
+      .getAnimations()
+      .find((animation) => animation.playState === "running");
+    return {
+      name: getComputedStyle(element).animationName,
+      duration: running?.effect?.getTiming().duration,
+    };
+  });
+  expect(motion.name).toBe("carousel-slide-in-right");
+  expect(motion.duration).toBeGreaterThan(300);
+  await expect(entering).toHaveCount(0);
+});
+
 test("route nội bộ vẫn yêu cầu đăng nhập", async ({ page }) => {
   await page.goto("/admin/orders");
   await expect(page).toHaveURL(/login/);

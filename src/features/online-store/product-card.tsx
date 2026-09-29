@@ -49,7 +49,7 @@ export function ProductCard({
             type="button"
             onClick={() => onQuickView(product)}
             aria-label={`Xem nhanh ${product.name}`}
-            className="bg-background/90 text-foreground border-border hover:bg-primary hover:text-primary-foreground focus-visible:ring-ring absolute bottom-2.5 left-1/2 z-10 inline-flex min-h-10 -translate-x-1/2 items-center gap-1.5 rounded-full border px-3.5 text-xs font-bold shadow-sm backdrop-blur-sm transition-opacity focus-visible:opacity-100 focus-visible:ring-[3px] focus-visible:outline-none sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
+            className="storefront-choice bg-background/90 text-foreground border-border hover:bg-primary hover:text-primary-foreground focus-visible:ring-ring absolute bottom-2.5 left-1/2 z-10 inline-flex min-h-10 -translate-x-1/2 items-center gap-1.5 rounded-full border px-3.5 text-xs font-bold shadow-sm backdrop-blur-sm transition-opacity focus-visible:opacity-100 focus-visible:ring-[3px] focus-visible:outline-none sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100"
           >
             <Eye aria-hidden="true" className="size-4" />
             Xem nhanh
@@ -96,7 +96,7 @@ export function ProductCard({
               ? `Thêm ${product.name} vào giỏ`
               : `${product.name} đã hết hàng`
           }
-          className="mt-4 min-h-11 w-full font-bold"
+          className="storefront-press mt-4 min-h-11 w-full font-bold"
         >
           <ShoppingCart aria-hidden="true" className="size-4" />
           {product.stock > 0 ? "Thêm vào giỏ" : "Hết hàng"}

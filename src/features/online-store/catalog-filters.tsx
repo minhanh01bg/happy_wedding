@@ -155,7 +155,8 @@ export function CatalogFilters({
           className={buttonVariants({
             variant: !filter.category ? "default" : "secondary",
             size: "sm",
-            className: "min-h-10 shrink-0 rounded-full px-4 text-sm font-bold",
+            className:
+              "storefront-choice storefront-press focus-visible:ring-ring min-h-10 shrink-0 rounded-full px-4 text-sm font-bold focus-visible:ring-2",
           })}
         >
           Tất cả
@@ -172,7 +173,7 @@ export function CatalogFilters({
                 variant: isSelected ? "default" : "secondary",
                 size: "sm",
                 className:
-                  "min-h-10 shrink-0 rounded-full px-4 text-sm font-bold",
+                  "storefront-choice storefront-press focus-visible:ring-ring min-h-10 shrink-0 rounded-full px-4 text-sm font-bold focus-visible:ring-2",
               })}
             >
               {cat.name}
@@ -296,7 +297,7 @@ export function CatalogFilters({
                     }}
                     aria-pressed={active}
                     className={cn(
-                      "h-7 cursor-pointer rounded-lg px-2.5 text-xs font-medium transition-colors select-none",
+                      "storefront-choice storefront-press focus-visible:ring-ring h-7 cursor-pointer rounded-lg px-2.5 text-xs font-medium select-none focus-visible:ring-2",
                       active
                         ? "bg-primary text-primary-foreground font-semibold shadow-2xs"
                         : "bg-muted/70 hover:bg-muted text-muted-foreground hover:text-foreground border-border/50 border",

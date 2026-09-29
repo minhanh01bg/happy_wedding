@@ -9,6 +9,14 @@ test("khách truy cập cửa hàng công khai và tìm sản phẩm", async ({ 
   await expect(page).not.toHaveURL(/login/);
 });
 
+test("chọn mức giá có phản hồi chuyển động tinh tế", async ({ page }) => {
+  await page.goto("/shop");
+  const price = page.getByRole("button", { name: "50k - 100k" });
+  await price.click();
+  await expect(price).toHaveAttribute("aria-pressed", "true");
+  await expect(price).toHaveClass(/storefront-choice/);
+});
+
 test("route nội bộ vẫn yêu cầu đăng nhập", async ({ page }) => {
   await page.goto("/admin/orders");
   await expect(page).toHaveURL(/login/);

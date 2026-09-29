@@ -1,22 +1,19 @@
 import { Megaphone } from "lucide-react";
 
-import { EmptyState, PageHeader } from "@/components/kit";
-import { Button } from "@/components/ui/button";
+import { ActiveStatusBadge, EmptyState, PageHeader } from "@/components/kit";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PromotionForm } from "@/features/admin-promotions/promotion-form";
+import { PromotionRowActions } from "@/features/admin-promotions/promotion-row-actions";
 import { requireAdminSession } from "@/server/auth/require-admin-session";
-import { prisma } from "@/server/db/prisma";
-
-import { deletePromotionAction, togglePromotionActiveAction } from "./actions";
+import { listStorefrontPromotions } from "@/server/promotions/get-promotions";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPromotionsPage() {
   await requireAdminSession({ redirectToLogin: true });
 
-  const promotions = await prisma.storefrontPromotion.findMany({
-    orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-  });
+  const promotions = await listStorefrontPromotions();
 
   return (
     <div className="space-y-8">
@@ -51,18 +48,13 @@ export default async function AdminPromotionsPage() {
                       <span className="text-foreground font-bold">
                         {promo.title}
                       </span>
-                      <span className="text-muted-foreground rounded-md border px-2 py-0.5 text-xs font-semibold tracking-wider uppercase">
-                        {promo.placement}
-                      </span>
-                      <span
-                        className={`rounded-md px-2 py-0.5 text-xs font-semibold ${
-                          promo.isActive
-                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                            : "bg-muted text-muted-foreground"
-                        }`}
+                      <Badge
+                        variant="outline"
+                        className="text-xs tracking-wider uppercase"
                       >
-                        {promo.isActive ? "Đang bật" : "Đã tắt"}
-                      </span>
+                        {promo.placement}
+                      </Badge>
+                      <ActiveStatusBadge active={promo.isActive} />
                     </div>
 
                     {promo.body ? (
@@ -92,46 +84,11 @@ export default async function AdminPromotionsPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <form
-                      action={async () => {
-                        "use server";
-                        await togglePromotionActiveAction(
-                          promo.id,
-                          !promo.isActive,
-                        );
-                      }}
-                    >
-                      <Button
-                        type="submit"
-                        variant="outline"
-                        size="sm"
-                        className={
-                          promo.isActive
-                            ? "text-amber-600 hover:text-amber-700"
-                            : "text-emerald-600 hover:text-emerald-700"
-                        }
-                      >
-                        {promo.isActive ? "Tạm dừng" : "Kích hoạt"}
-                      </Button>
-                    </form>
-
-                    <form
-                      action={async () => {
-                        "use server";
-                        await deletePromotionAction(promo.id);
-                      }}
-                    >
-                      <Button
-                        type="submit"
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:bg-destructive/10"
-                      >
-                        Xóa
-                      </Button>
-                    </form>
-                  </div>
+                  <PromotionRowActions
+                    id={promo.id}
+                    title={promo.title}
+                    isActive={promo.isActive}
+                  />
                 </div>
               ))}
             </div>

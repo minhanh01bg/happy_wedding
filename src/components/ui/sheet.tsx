@@ -45,7 +45,7 @@ function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
 }
 
 const sheetVariants = cva(
-  "bg-popover text-popover-foreground fixed z-50 flex flex-col gap-4 text-sm shadow-2xl outline-none transition-[translate,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]",
+  "bg-popover text-popover-foreground fixed z-50 flex flex-col gap-4 text-sm shadow-2xl outline-none transition-[translate,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] data-starting-style:opacity-0 data-ending-style:opacity-0",
   {
     variants: {
       side: {

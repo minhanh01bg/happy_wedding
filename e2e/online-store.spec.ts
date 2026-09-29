@@ -37,6 +37,52 @@ test("giỏ hàng vẫn mở được và không chuyển động khi người d
   await expect(trigger).toBeFocused();
 });
 
+test("Xem nhanh đi vào từ phía dưới và thoát ra trước khi gỡ khỏi trang", async ({
+  page,
+}) => {
+  await page.goto("/shop");
+  await page
+    .getByRole("button", { name: /Xem nhanh/ })
+    .first()
+    .click();
+  const modal = page.locator('[data-slot="dialog-content"]');
+  await expect(modal).toBeVisible();
+  const entry = await modal.evaluate((element) => {
+    const animation = element
+      .getAnimations()
+      .find((item) => item instanceof CSSTransition);
+    return {
+      properties: getComputedStyle(element).transitionProperty,
+      active: !!animation,
+    };
+  });
+  expect(entry.properties).toContain("translate");
+  expect(entry.active).toBe(true);
+  await page.getByRole("button", { name: "Đóng xem nhanh" }).click();
+  await expect(modal).toHaveAttribute("data-ending-style", "");
+  await expect(modal).toHaveCount(0);
+});
+
+test("ngăn giỏ hàng mờ dần trong lúc trượt vào", async ({ page }) => {
+  await page.goto("/shop");
+  await page.getByRole("button", { name: /Mở giỏ hàng/ }).click();
+  const drawer = page.locator('[data-slot="sheet-content"]');
+  await expect(drawer).toBeVisible();
+  const properties = await drawer.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      properties: style.transitionProperty,
+      startingOpacity: element.className.includes(
+        "data-starting-style:opacity-0",
+      ),
+      endingOpacity: element.className.includes("data-ending-style:opacity-0"),
+    };
+  });
+  expect(properties.properties).toContain("opacity");
+  expect(properties.startingOpacity).toBe(true);
+  expect(properties.endingOpacity).toBe(true);
+});
+
 test("route nội bộ vẫn yêu cầu đăng nhập", async ({ page }) => {
   await page.goto("/admin/orders");
   await expect(page).toHaveURL(/login/);

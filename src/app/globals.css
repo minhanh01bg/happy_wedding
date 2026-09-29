@@ -560,16 +560,17 @@
 
   [data-slot="dialog-content"] {
     transition:
-      transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
-      opacity 200ms cubic-bezier(0.16, 1, 0.3, 1);
+      translate 280ms cubic-bezier(0.16, 1, 0.3, 1),
+      scale 280ms cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 220ms ease-out;
   }
 
-  /* Can giua bang thuoc tinh `translate` (utility -translate-x/y-1/2), nen
-     o day chi dung `transform: scale` — khong cong don them translate(-50%). */
+  /* Giữ translate căn giữa của Tailwind, thêm offset Y bằng calc khi vào/ra. */
   [data-slot="dialog-content"][data-starting-style],
   [data-slot="dialog-content"][data-ending-style] {
     opacity: 0;
-    transform: scale(0.96);
+    scale: 0.97;
+    translate: -50% calc(-50% + 12px);
   }
 }
 

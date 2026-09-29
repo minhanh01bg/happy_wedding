@@ -27,7 +27,7 @@ describe("StoreFooter", () => {
   it("render hotline link và google maps link khi URL hợp lệ", () => {
     render(<StoreFooter profile={mockProfile} />);
 
-    const phoneLink = screen.getByRole("link", { name: /0901234567/ });
+    const phoneLink = screen.getByRole("link", { name: /gọi ngay/i });
     expect(phoneLink).toHaveAttribute("href", "tel:0901234567");
 
     const mapLink = screen.getByRole("link", { name: /bản đồ|chỉ đường/i });
@@ -66,6 +66,26 @@ describe("StoreFooter", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /chính sách bảo mật/i }),
+    ).toHaveAttribute("href", "/shop/privacy");
+  });
+
+  it("hiển thị lời mời hỗ trợ rõ ràng và đường dẫn về cửa hàng", () => {
+    render(<StoreFooter profile={mockProfile} />);
+
+    expect(
+      screen.getByRole("heading", { name: /cần hỗ trợ/i }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /mua sắm/i })).toHaveAttribute(
+      "href",
+      "/shop",
+    );
+  });
+
+  it("không hiển thị nút gọi khi không có hotline", () => {
+    render(<StoreFooter profile={{ name: "Cửa Hàng Tối Giản" }} />);
+
+    expect(
+      screen.queryByRole("link", { name: /gọi ngay/i }),
+    ).not.toBeInTheDocument();
   });
 });

@@ -19,7 +19,7 @@ export async function DashboardSection() {
     <div className="space-y-6">
       <DashboardStats summary={summary} />
       <WeeklyRevenueChart week={summary.week} />
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <RecentOnlineOrders orders={summary.latestOnlineOrders} />
         <LowStockList products={summary.lowStockProducts} />
       </div>

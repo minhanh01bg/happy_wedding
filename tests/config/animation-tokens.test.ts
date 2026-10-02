@@ -57,4 +57,10 @@ describe("animation tokens and micro-interactions in globals.css", () => {
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
     expect(css).not.toMatch(/transition-all\b/);
   });
+
+  it("chỉ bật hiệu ứng vào trang admin trên màn hình desktop", () => {
+    expect(css).toMatch(
+      /@media \(min-width: 768px\)[\s\S]*\.desktop-page-enter\s*\{[^}]*animation:/,
+    );
+  });
 });

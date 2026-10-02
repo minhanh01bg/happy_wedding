@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/kit";
 import { requireAdminSession } from "@/server/auth/require-admin-session";
 import {
-  getPublicStoreProfile,
+  getAdminStoreProfile,
   getShippingSettings,
   getStoreBankAccount,
 } from "@/server/settings/store-settings";
@@ -14,7 +14,7 @@ export default async function SettingsPage() {
   await requireAdminSession({ redirectToLogin: true });
 
   const [storeProfile, account, shipping] = await Promise.all([
-    getPublicStoreProfile(),
+    getAdminStoreProfile(),
     getStoreBankAccount(),
     getShippingSettings(),
   ]);

@@ -4,6 +4,7 @@ import { revalidatePublic } from "@/server/cache/public-cache";
 import { prisma } from "@/server/db/prisma";
 import {
   getPublicStoreProfile,
+  getAdminStoreProfile,
   getStoreBankAccount,
   getShippingSettings,
   getStoreName,
@@ -132,6 +133,73 @@ describe("Store Settings & Public Profile", () => {
     expect(profile).toEqual({
       name: "Cửa hàng",
     });
+  });
+
+  it("getPublicStoreProfile: bỏ từng trường cũ không hợp lệ và giữ các trường hợp lệ", async () => {
+    await prisma.setting.createMany({
+      data: [
+        { key: "store.name", value: "x".repeat(101) },
+        { key: "store.hotline", value: "123" },
+        { key: "store.mapUrl", value: "https://" },
+        { key: "store.address", value: "123 Lê Lợi" },
+        { key: "store.openingHours", value: "08:00 - 21:00" },
+      ],
+    });
+
+    await expect(getPublicStoreProfile()).resolves.toEqual({
+      name: "Cửa hàng",
+      address: "123 Lê Lợi",
+      openingHours: "08:00 - 21:00",
+    });
+  });
+
+  it("getPublicStoreProfile: tên môi trường quá dài vẫn dùng tên mặc định hợp lệ", async () => {
+    vi.stubEnv("NEXT_PUBLIC_STORE_NAME", "x".repeat(101));
+    try {
+      await expect(getPublicStoreProfile()).resolves.toEqual({
+        name: "Cửa hàng",
+      });
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("getAdminStoreProfile: đọc mới trực tiếp DB và giữ nguyên giá trị cũ để sửa", async () => {
+    const cached = vi.spyOn(
+      await import("@/server/cache/public-cache"),
+      "cachedPublic",
+    );
+    const legacyName = "x".repeat(101);
+    await prisma.setting.createMany({
+      data: [
+        { key: "store.name", value: legacyName },
+        { key: "store.hotline", value: " 123 " },
+        { key: "store.mapUrl", value: "https://" },
+        { key: "store.address", value: "123 Lê Lợi" },
+      ],
+    });
+
+    await expect(getAdminStoreProfile()).resolves.toEqual({
+      name: legacyName,
+      hotline: " 123 ",
+      mapUrl: "https://",
+      address: "123 Lê Lợi",
+    });
+    await prisma.setting.update({
+      where: { key: "store.name" },
+      data: { value: "Tiệm mới" },
+    });
+    await expect(getAdminStoreProfile()).resolves.toMatchObject({
+      name: "Tiệm mới",
+    });
+    expect(cached).not.toHaveBeenCalled();
+  });
+
+  it("các reader profile không che lỗi DB bằng giá trị mặc định", async () => {
+    const failure = new Error("database unavailable");
+    vi.spyOn(prisma.setting, "findMany").mockRejectedValue(failure);
+    await expect(getPublicStoreProfile()).rejects.toBe(failure);
+    await expect(getAdminStoreProfile()).rejects.toBe(failure);
   });
 
   it("getStoreName và getPublicStoreProfile: ưu tiên giá trị từ biến môi trường khi DB chưa cấu hình", async () => {

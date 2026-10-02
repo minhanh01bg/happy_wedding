@@ -1,7 +1,10 @@
 import { cache } from "react";
 import type { Prisma } from "@prisma/client";
 
-import { resolveDefaultStoreName } from "@/config/store-name";
+import {
+  FALLBACK_STORE_NAME,
+  resolveDefaultStoreName,
+} from "@/config/store-name";
 import {
   DEFAULT_SHIPPING_SETTINGS,
   type ShippingSettings,
@@ -139,26 +142,47 @@ export async function saveStoreName(name: string): Promise<void> {
   revalidatePublic(CACHE_TAGS.settings);
 }
 
-export async function getPublicStoreProfile(): Promise<PublicStoreProfile> {
-  const settings = await loadPublicSettings();
-  const name = settings[KEY_STORE_NAME];
-  const hotline = settings[KEY_STORE_HOTLINE];
-  const address = settings[KEY_STORE_ADDRESS];
-  const openingHours = settings[KEY_STORE_OPENING_HOURS];
-  const mapUrl = settings[KEY_STORE_MAP_URL];
+function storeProfileFromSettings(settings: SettingValues): PublicStoreProfile {
+  return {
+    name: settings[KEY_STORE_NAME] ?? getDefaultStoreName(),
+    hotline: settings[KEY_STORE_HOTLINE],
+    address: settings[KEY_STORE_ADDRESS],
+    openingHours: settings[KEY_STORE_OPENING_HOURS],
+    mapUrl: settings[KEY_STORE_MAP_URL],
+  };
+}
 
-  const raw = {
-    name: name?.trim() || getDefaultStoreName(),
-    hotline: hotline?.trim() || undefined,
-    address: address?.trim() || undefined,
-    openingHours: openingHours?.trim() || undefined,
-    mapUrl:
-      mapUrl?.trim() && mapUrl.trim().startsWith("https://")
-        ? mapUrl.trim()
-        : undefined,
+/** Đọc trực tiếp để admin sửa cả giá trị cũ không còn qua validation. */
+export async function getAdminStoreProfile(): Promise<PublicStoreProfile> {
+  return storeProfileFromSettings(await readSettings(PUBLIC_SETTING_KEYS));
+}
+
+export async function getPublicStoreProfile(): Promise<PublicStoreProfile> {
+  const raw = storeProfileFromSettings(await loadPublicSettings());
+  const { shape } = publicStoreProfileSchema;
+  const name = shape.name.safeParse(raw.name);
+  const defaultName = shape.name.safeParse(getDefaultStoreName());
+  const profile: PublicStoreProfile = {
+    name: name.success
+      ? name.data
+      : defaultName.success
+        ? defaultName.data
+        : FALLBACK_STORE_NAME,
   };
 
-  return publicStoreProfileSchema.parse(raw);
+  // Một giá trị cũ sai không được làm mất các trường công khai còn hợp lệ.
+  for (const field of [
+    "hotline",
+    "address",
+    "openingHours",
+    "mapUrl",
+  ] as const) {
+    const parsed = shape[field].safeParse(raw[field]?.trim() || undefined);
+    if (parsed.success && parsed.data !== undefined) {
+      profile[field] = parsed.data;
+    }
+  }
+  return profile;
 }
 
 export async function saveStoreProfile(

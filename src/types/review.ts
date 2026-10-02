@@ -18,29 +18,27 @@ export type ReviewStatus = (typeof REVIEW_STATUSES)[number];
  * Payload POST /api/online/products/[id]/reviews. Tên hiển thị lấy từ tài
  * khoản; không nhận trường lạ, `rating` phải là số nguyên (không ép kiểu).
  */
-export const createReviewInputSchema = z
-  .object({
-    rating: z
-      .number({ message: "Số sao không hợp lệ" })
-      .int("Số sao không hợp lệ")
-      .min(1, "Vui lòng chọn từ 1 đến 5 sao")
-      .max(5, "Vui lòng chọn từ 1 đến 5 sao"),
-    content: z
-      .string({ message: "Vui lòng nhập nội dung đánh giá" })
-      .trim()
-      .min(
-        REVIEW_CONTENT_MIN,
-        `Nội dung đánh giá cần ít nhất ${REVIEW_CONTENT_MIN} ký tự`,
-      )
-      .max(
-        REVIEW_CONTENT_MAX,
-        `Nội dung đánh giá tối đa ${REVIEW_CONTENT_MAX} ký tự`,
-      )
-      .refine((content) => !containsReviewCode(content), {
-        message: REVIEW_CODE_MESSAGE,
-      }),
-  })
-  .strict();
+export const createReviewInputSchema = z.strictObject({
+  rating: z
+    .number({ message: "Số sao không hợp lệ" })
+    .int("Số sao không hợp lệ")
+    .min(1, "Vui lòng chọn từ 1 đến 5 sao")
+    .max(5, "Vui lòng chọn từ 1 đến 5 sao"),
+  content: z
+    .string({ message: "Vui lòng nhập nội dung đánh giá" })
+    .trim()
+    .min(
+      REVIEW_CONTENT_MIN,
+      `Nội dung đánh giá cần ít nhất ${REVIEW_CONTENT_MIN} ký tự`,
+    )
+    .max(
+      REVIEW_CONTENT_MAX,
+      `Nội dung đánh giá tối đa ${REVIEW_CONTENT_MAX} ký tự`,
+    )
+    .refine((content) => !containsReviewCode(content), {
+      message: REVIEW_CODE_MESSAGE,
+    }),
+});
 
 export type CreateReviewInput = z.infer<typeof createReviewInputSchema>;
 

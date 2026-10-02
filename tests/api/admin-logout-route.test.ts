@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { POST } from "@/app/api/auth/logout/route";
+import { env } from "@/config/env";
 import {
+  adminCookieOptions,
   createAdminSession,
   ensureDefaultAdminIdentity,
   resolveAdminSession,
@@ -22,6 +24,33 @@ function makeLogoutRequest(cookieHeader?: string): Request {
 }
 
 describe("POST /api/auth/logout (Task 16)", () => {
+  it("clears the HTTP store cookie without Secure while revoking its session", async () => {
+    const previousOrigin = env.CANONICAL_ORIGIN;
+    const previousSecure = adminCookieOptions.secure;
+    try {
+      (env as Record<string, unknown>).CANONICAL_ORIGIN =
+        "http://store.example.com:3000";
+      adminCookieOptions.secure = true;
+      const { token } = await createAdminSession();
+      const response = await POST(
+        new Request("http://store.example.com:3000/api/auth/logout", {
+          method: "POST",
+          headers: {
+            origin: "http://store.example.com:3000",
+            cookie: `${SESSION_COOKIE}=${token}`,
+          },
+        }),
+      );
+      expect(response.status).toBe(200);
+      expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
+      expect(response.headers.get("set-cookie")).not.toContain("Secure");
+      expect(await verifySession(token)).toBe(false);
+    } finally {
+      (env as Record<string, unknown>).CANONICAL_ORIGIN = previousOrigin;
+      adminCookieOptions.secure = previousSecure;
+    }
+  });
+
   beforeEach(async () => {
     await prisma.adminSession.deleteMany();
     await prisma.adminIdentity.deleteMany();

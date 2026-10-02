@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import {
-  adminCookieOptions,
+  adminCookieOptionsForRequest,
   revokeAdminSession,
   SESSION_COOKIE,
 } from "@/server/auth/session";
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   );
 
   response.cookies.set(SESSION_COOKIE, "", {
-    ...adminCookieOptions,
+    ...adminCookieOptionsForRequest(request),
     maxAge: 0,
   });
 

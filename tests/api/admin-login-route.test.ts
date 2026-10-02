@@ -4,6 +4,7 @@ import { env } from "@/config/env";
 import { POST } from "@/app/api/auth/login/route";
 import { setAdminLoginLimiter } from "@/server/auth/rate-limit";
 import {
+  adminCookieOptions,
   createAdminSession,
   hashPassword,
   SESSION_COOKIE,
@@ -39,12 +40,16 @@ class MockStore implements RateLimitStore {
 
 let store: MockStore;
 let originalPasswordHash: string;
+let originalCanonicalOrigin: string | undefined;
+let originalSecure: boolean;
 
 beforeEach(async () => {
   store = new MockStore();
   const limiter = createRateLimiter({ store, secret: "s".repeat(32) });
   setAdminLoginLimiter(limiter);
   originalPasswordHash = env.STORE_PASSWORD_HASH;
+  originalCanonicalOrigin = env.CANONICAL_ORIGIN;
+  originalSecure = adminCookieOptions.secure;
   (env as Record<string, unknown>).STORE_PASSWORD_HASH =
     await hashPassword("matkhau-cua-hang");
 });
@@ -52,6 +57,8 @@ beforeEach(async () => {
 afterEach(() => {
   setAdminLoginLimiter(null);
   (env as Record<string, unknown>).STORE_PASSWORD_HASH = originalPasswordHash;
+  (env as Record<string, unknown>).CANONICAL_ORIGIN = originalCanonicalOrigin;
+  adminCookieOptions.secure = originalSecure;
 });
 
 function makeRequest(
@@ -70,6 +77,59 @@ function makeRequest(
 }
 
 describe("POST /api/auth/login", () => {
+  it("sets a usable session cookie for an explicitly configured HTTP store", async () => {
+    adminCookieOptions.secure = true;
+    (env as Record<string, unknown>).CANONICAL_ORIGIN =
+      "http://store.example.com:3000";
+    const res = await POST(
+      new Request("http://store.example.com:3000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "http://store.example.com:3000",
+        },
+        body: JSON.stringify({ password: "matkhau-cua-hang" }),
+      }),
+    );
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get("set-cookie")).toContain(SESSION_COOKIE);
+    expect(res.headers.get("set-cookie")).toContain("HttpOnly");
+    expect(res.headers.get("set-cookie")).not.toContain("Secure");
+  });
+
+  it("keeps cookies secure for HTTPS behind a proxy even with an HTTP canonical origin", async () => {
+    adminCookieOptions.secure = true;
+    (env as Record<string, unknown>).CANONICAL_ORIGIN = "http://example.com";
+    const res = await POST(
+      new Request("http://example.com/api/auth/login", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "http://example.com",
+          "x-forwarded-proto": "https",
+        },
+        body: JSON.stringify({ password: "matkhau-cua-hang" }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("set-cookie")).toContain("Secure");
+  });
+
+  it("does not relax production cookies for an HTTP origin that is not configured", async () => {
+    adminCookieOptions.secure = true;
+    (env as Record<string, unknown>).CANONICAL_ORIGIN = "https://example.com";
+    const res = await POST(
+      new Request("http://example.com/api/auth/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ password: "matkhau-cua-hang" }),
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("set-cookie")).toContain("Secure");
+  });
+
   it("rejects cross-site login attempts before reading credentials", async () => {
     const req = makeRequest(
       { password: "matkhau-cua-hang" },
@@ -148,14 +208,12 @@ describe("POST /api/auth/login", () => {
     );
     const res = await POST(req);
 
-    // Note: If test environment has STORE_PASSWORD_HASH matching "matkhau-cua-hang", it returns 200
-    // If STORE_PASSWORD_HASH does not match, it returns 401. Let's check headers if 200.
-    if (res.status === 200) {
-      expect(res.headers.get("cache-control")).toContain("no-store");
-      const cookieHeader = res.headers.get("set-cookie");
-      expect(cookieHeader).toBeDefined();
-      expect(cookieHeader).toContain(SESSION_COOKIE);
-      expect(cookieHeader).not.toContain(oldSession);
-    }
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toContain("no-store");
+    const cookieHeader = res.headers.get("set-cookie");
+    expect(cookieHeader).toBeDefined();
+    expect(cookieHeader).toContain(SESSION_COOKIE);
+    expect(cookieHeader).toContain("Secure");
+    expect(cookieHeader).not.toContain(oldSession);
   });
 });

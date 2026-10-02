@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 
+import { env } from "@/config/env";
 import { prisma } from "@/server/db/prisma";
 
 export * from "@/server/auth/constants";
@@ -18,6 +19,24 @@ export const adminCookieOptions = {
   path: "/",
   maxAge: ADMIN_SESSION_MAX_AGE_SECONDS,
 };
+
+/** HTTP chỉ được dùng khi Origin khớp địa chỉ HTTP đã cấu hình rõ ràng. */
+export function adminCookieOptionsForRequest(request: Request) {
+  const isHttps =
+    new URL(request.url).protocol === "https:" ||
+    request.headers.get("x-forwarded-proto") === "https";
+  const canonicalUrl = env.CANONICAL_ORIGIN
+    ? new URL(env.CANONICAL_ORIGIN)
+    : null;
+  const configuredHttpOrigin =
+    canonicalUrl?.protocol === "http:" &&
+    request.headers.get("origin") === canonicalUrl.origin;
+
+  return {
+    ...adminCookieOptions,
+    secure: isHttps || (adminCookieOptions.secure && !configuredHttpOrigin),
+  };
+}
 
 const PBKDF2_ITERATIONS = 100_000;
 const encoder = new TextEncoder();

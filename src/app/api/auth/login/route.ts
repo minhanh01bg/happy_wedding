@@ -8,7 +8,7 @@ import {
   resetAdminLoginRateLimit,
 } from "@/server/auth/rate-limit";
 import {
-  adminCookieOptions,
+  adminCookieOptionsForRequest,
   createAdminSession,
   ensureDefaultAdminIdentity,
   SESSION_COOKIE,
@@ -109,15 +109,12 @@ export async function POST(request: Request) {
     const adminIdentity = await ensureDefaultAdminIdentity();
     const { token } = await createAdminSession(adminIdentity.id);
 
-    const isHttps =
-      request.headers.get("x-forwarded-proto") === "https" ||
-      request.url.startsWith("https:");
-
     // Rotate/replace any presented admin session cookie with new DB-backed session
-    response.cookies.set(SESSION_COOKIE, token, {
-      ...adminCookieOptions,
-      secure: adminCookieOptions.secure || isHttps,
-    });
+    response.cookies.set(
+      SESSION_COOKIE,
+      token,
+      adminCookieOptionsForRequest(request),
+    );
 
     return response;
   } catch (error) {

@@ -25,6 +25,25 @@ test.describe("UI kit gallery", () => {
         new RegExp(`\\b${scheme}\\b`),
       );
 
+      const notifications = page.locator("section").filter({
+        has: page.getByRole("heading", { name: "Thông báo", exact: true }),
+      });
+      await notifications.scrollIntoViewIfNeeded();
+      await expect(notifications.getByText("Có đơn online mới")).toBeVisible();
+      await expect(notifications.getByRole("status")).toBeVisible();
+      await notifications.screenshot({
+        path: `e2e/screenshots/notifications-${scheme}.png`,
+      });
+      await page.emulateMedia({ reducedMotion: "reduce" });
+      await expect(notifications.locator("li").first()).toHaveCSS(
+        "animation-name",
+        "none",
+      );
+      await expect(notifications.locator("li").first()).toHaveCSS(
+        "animation-delay",
+        "0s",
+      );
+
       // Ghi vao e2e/screenshots/ (da gitignore) — ca test-results/ lan
       // playwright-report/ deu bi Playwright xoa sach, cuon mat luon anh chup.
       await page.screenshot({

@@ -92,6 +92,14 @@ export function StoreFooter({ profile }: StoreFooterProps) {
                   Xem sản phẩm
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/login?next=%2Fadmin"
+                  className="inline-flex min-h-11 items-center transition-colors hover:text-white focus-visible:underline"
+                >
+                  Đăng nhập quản trị
+                </Link>
+              </li>
             </ul>
           </nav>
 

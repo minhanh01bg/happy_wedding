@@ -12,6 +12,8 @@ import {
   EmptyState,
   ImagePicker,
   Money,
+  NotificationList,
+  NotificationListSkeleton,
   PageHeader,
   ProductImage,
   ProductTile,
@@ -242,6 +244,42 @@ export default function KitGalleryPage() {
         </div>
       </Section>
 
+      <Section title="Thông báo">
+        <div className="grid max-w-3xl gap-6 sm:grid-cols-2">
+          <div className="bg-popover rounded-2xl border p-3">
+            <NotificationList
+              items={[
+                {
+                  id: "new",
+                  title: "Có đơn online mới",
+                  body: "Đơn DH1001 vừa được tiếp nhận.",
+                  href: "/dev/kit",
+                  kind: "order_created",
+                  createdAt: "2026-09-06T10:00:00.000Z",
+                  readAt: null,
+                },
+                {
+                  id: "read",
+                  title: "Đơn hàng hoàn tất",
+                  body: "Đơn DH1000 đã giao thành công.",
+                  href: "/dev/kit",
+                  kind: "order_completed",
+                  createdAt: "2026-09-05T10:00:00.000Z",
+                  readAt: "2026-09-06T10:00:00.000Z",
+                },
+              ]}
+              loading={false}
+              error={null}
+              onRetry={() => {}}
+              onMarkRead={() => {}}
+              emptyDescription="Các cập nhật sẽ hiển thị ở đây."
+            />
+          </div>
+          <div className="bg-popover rounded-2xl border p-3">
+            <NotificationListSkeleton />
+          </div>
+        </div>
+      </Section>
       <Section title="ResultList">
         <ResultList>
           {SAMPLE.map((product, index) => (

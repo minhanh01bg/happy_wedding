@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import Link from "next/link";
-import { Bell, Check, CheckCheck, Loader2, X } from "lucide-react";
+import { Bell, CheckCheck, X } from "lucide-react";
 
-import { EmptyState } from "@/components/kit/empty-state";
+import { NotificationList } from "@/components/kit/notification-list";
 import type {
   CustomerNotificationDTO,
   CustomerNotificationsResponse,
@@ -25,54 +24,155 @@ export function CustomerNotificationButton({
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<CustomerNotificationDTO[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(enabled);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const hasOlderPages = useRef(false);
+  const mutationRevision = useRef(0);
+  const pendingMutations = useRef(0);
+  const generation = useRef(0);
   const [error, setError] = useState<string | null>(null);
 
   const panelId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const failedCursor = useRef<string | undefined>(undefined);
+  const itemsRef = useRef(items);
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
   const inFlight = useRef<Promise<void> | null>(null);
 
-  const fetchNotifications = useCallback(async () => {
-    if (!enabled) return;
-    if (inFlight.current) return inFlight.current;
-    const task = (async () => {
-      try {
-        setError(null);
-        const res = await fetch("/api/customer/notifications?limit=20", {
-          headers: { Accept: "application/json" },
-        });
-        if (!res.ok) {
-          if (res.status === 401) {
-            // Unauthenticated, hide or clear
-            setItems([]);
-            setUnreadCount(0);
+  const fetchNotificationsRef =
+    useRef<(cursor?: string) => Promise<void>>(null);
+  const fetchNotifications = useCallback(
+    async (cursor?: string): Promise<void> => {
+      if (!enabled) return;
+      if (inFlight.current) return inFlight.current;
+      const requestGeneration = generation.current;
+      const requestRevision = mutationRevision.current;
+      let revalidateStale = false;
+      if (cursor) setLoadingMore(true);
+      const task = (async () => {
+        try {
+          setError(null);
+          const res = await fetch(
+            `/api/customer/notifications?limit=6${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+            {
+              headers: { Accept: "application/json" },
+            },
+          );
+          if (requestGeneration !== generation.current) return;
+          if (!res.ok) {
+            if (res.status === 401) {
+              // Unauthenticated, hide or clear
+              setItems([]);
+              setUnreadCount(0);
+              setNextCursor(null);
+              return;
+            }
+            throw new Error("Không thể tải thông báo");
+          }
+          const data: CustomerNotificationsResponse = await res.json();
+          if (requestGeneration !== generation.current) return;
+          if (requestRevision !== mutationRevision.current) {
+            revalidateStale = true;
             return;
           }
-          throw new Error("Không thể tải thông báo");
+          if (
+            !cursor &&
+            itemsRef.current.length > 0 &&
+            !data.items.some((item) =>
+              itemsRef.current.some((existing) => existing.id === item.id),
+            )
+          )
+            hasOlderPages.current = false;
+          setItems((current) => {
+            const pageItems =
+              pendingMutations.current > 0
+                ? data.items.map((item) => {
+                    const existing = current.find((row) => row.id === item.id);
+                    return existing
+                      ? { ...item, readAt: existing.readAt }
+                      : item;
+                  })
+                : data.items;
+            const merged = cursor
+              ? [
+                  ...current,
+                  ...pageItems.filter(
+                    (item) =>
+                      !current.some((existing) => existing.id === item.id),
+                  ),
+                ]
+              : [
+                  ...pageItems,
+                  ...current.filter(
+                    (item) =>
+                      !data.items.some((newItem) => newItem.id === item.id),
+                  ),
+                ];
+            return merged.sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                  new Date(a.createdAt).getTime() || b.id.localeCompare(a.id),
+            );
+          });
+          if (cursor) hasOlderPages.current = true;
+          if (cursor || !hasOlderPages.current)
+            setNextCursor(data.nextCursor ?? null);
+          if (pendingMutations.current === 0) setUnreadCount(data.unreadCount);
+        } catch (err: unknown) {
+          if (requestGeneration !== generation.current) return;
+          failedCursor.current = cursor;
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Đã có lỗi xảy ra khi tải thông báo",
+          );
+        } finally {
+          if (requestGeneration === generation.current) {
+            setLoading(false);
+            setLoadingMore(false);
+            inFlight.current = null;
+            if (revalidateStale)
+              queueMicrotask(() => {
+                if (requestGeneration === generation.current)
+                  void fetchNotificationsRef.current?.(cursor);
+              });
+          }
         }
-        const data: CustomerNotificationsResponse = await res.json();
-        setItems(data.items);
-        setUnreadCount(data.unreadCount);
-      } catch (err: unknown) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Đã có lỗi xảy ra khi tải thông báo",
-        );
-      } finally {
-        setLoading(false);
-        inFlight.current = null;
-      }
-    })();
-    inFlight.current = task;
-    return task;
-  }, [enabled]);
+      })();
+      inFlight.current = task;
+      return task;
+    },
+    [enabled],
+  );
 
   useEffect(() => {
-    void fetchNotifications();
+    fetchNotificationsRef.current = fetchNotifications;
   }, [fetchNotifications]);
+  useEffect(() => {
+    generation.current += 1;
+    inFlight.current = null;
+    hasOlderPages.current = false;
+    const effectGeneration = generation.current;
+    queueMicrotask(() => {
+      if (effectGeneration !== generation.current) return;
+      setItems([]);
+      setUnreadCount(0);
+      setNextCursor(null);
+      setError(null);
+      setLoading(enabled);
+      setLoadingMore(false);
+      if (!enabled) setOpen(false);
+      void fetchNotifications();
+    });
+    return () => {
+      generation.current += 1;
+    };
+  }, [enabled, fetchNotifications]);
 
   // Focus close button when panel opens
   useEffect(() => {
@@ -111,6 +211,11 @@ export function CustomerNotificationButton({
   }, [open]);
 
   const markOne = async (id: string) => {
+    const previous = items.find((item) => item.id === id);
+    if (!previous || previous.readAt) return;
+    const requestGeneration = generation.current;
+    mutationRevision.current += 1;
+    pendingMutations.current += 1;
     // Optimistic update
     setItems((prev) =>
       prev.map((item) =>
@@ -120,18 +225,33 @@ export function CustomerNotificationButton({
     setUnreadCount((prev) => Math.max(0, prev - 1));
 
     try {
-      await fetch("/api/customer/notifications/read", {
+      const response = await fetch("/api/customer/notifications/read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ notificationId: id }),
       });
+      if (!response.ok) throw new Error("Không thể cập nhật thông báo");
     } catch {
+      if (requestGeneration !== generation.current) return;
+      setItems((current) =>
+        current.map((item) =>
+          item.id === id ? { ...item, readAt: previous.readAt } : item,
+        ),
+      );
       // Reconcile on failure
       void fetchNotifications();
+    } finally {
+      mutationRevision.current += 1;
+      pendingMutations.current -= 1;
     }
   };
 
   const markAll = async () => {
+    const previous = items;
+    const cutoff = new Date();
+    const requestGeneration = generation.current;
+    mutationRevision.current += 1;
+    pendingMutations.current += 1;
     // Optimistic update
     setItems((prev) =>
       prev.map((item) => ({ ...item, readAt: new Date().toISOString() })),
@@ -139,14 +259,37 @@ export function CustomerNotificationButton({
     setUnreadCount(0);
 
     try {
-      await fetch("/api/customer/notifications/read", {
+      const response = await fetch("/api/customer/notifications/read", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ all: true }),
       });
+      if (!response.ok) throw new Error("Không thể cập nhật thông báo");
+      if (requestGeneration !== generation.current) return;
+      setItems((current) =>
+        current.map((item) =>
+          !item.readAt && new Date(item.createdAt) <= cutoff
+            ? { ...item, readAt: new Date().toISOString() }
+            : item,
+        ),
+      );
     } catch {
+      if (requestGeneration !== generation.current) return;
+      const readAtById = new Map(
+        previous.map((item) => [item.id, item.readAt]),
+      );
+      setItems((current) =>
+        current.map((item) =>
+          readAtById.has(item.id)
+            ? { ...item, readAt: readAtById.get(item.id) }
+            : item,
+        ),
+      );
       // Reconcile on failure
       void fetchNotifications();
+    } finally {
+      mutationRevision.current += 1;
+      pendingMutations.current -= 1;
     }
   };
 
@@ -224,89 +367,20 @@ export function CustomerNotificationButton({
             </div>
           </header>
 
-          {loading && items.length === 0 ? (
-            <div
-              role="status"
-              className="text-muted-foreground flex flex-col items-center justify-center gap-2 p-8 text-sm"
-            >
-              <Loader2 className="size-5 animate-spin" />
-              <p>Đang tải thông báo…</p>
-            </div>
-          ) : error && items.length === 0 ? (
-            <div role="alert" className="p-4 text-center text-sm">
-              <p className="text-destructive font-medium">{error}</p>
-              <button
-                type="button"
-                onClick={() => void fetchNotifications()}
-                className="text-primary mt-2 font-semibold hover:underline"
-              >
-                Thử lại
-              </button>
-            </div>
-          ) : items.length === 0 ? (
-            <EmptyState
-              size="compact"
-              icon={Bell}
-              title="Chưa có thông báo"
-              description="Các cập nhật về đơn hàng của bạn sẽ hiển thị tại đây."
-            />
-          ) : (
-            <ul className="divide-border/40 space-y-1.5 divide-y">
-              {items.map((item) => {
-                const isRead = Boolean(item.readAt);
-                return (
-                  <li key={item.id} className="relative pt-1.5 first:pt-0">
-                    <Link
-                      href={item.href}
-                      onClick={() => {
-                        setOpen(false);
-                        if (!isRead) void markOne(item.id);
-                      }}
-                      className={`focus-visible:ring-ring block rounded-xl p-3 pr-10 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none ${
-                        isRead
-                          ? "hover:bg-muted/60 opacity-80"
-                          : "bg-primary/5 hover:bg-primary/10 font-medium"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        {!isRead && (
-                          <span
-                            className="bg-primary size-2 shrink-0 rounded-full"
-                            aria-hidden="true"
-                          />
-                        )}
-                        <span className="text-foreground truncate font-bold">
-                          {item.title}
-                        </span>
-                      </div>
-                      <p className="text-muted-foreground mt-1 line-clamp-2 text-xs leading-relaxed">
-                        {item.body}
-                      </p>
-                      <time
-                        className="text-muted-foreground/80 mt-1.5 block text-[0.7rem]"
-                        dateTime={String(item.createdAt)}
-                      >
-                        {new Intl.DateTimeFormat("vi-VN", {
-                          dateStyle: "short",
-                          timeStyle: "short",
-                        }).format(new Date(item.createdAt))}
-                      </time>
-                    </Link>
-                    {!isRead && (
-                      <button
-                        type="button"
-                        aria-label={`Đánh dấu đã đọc: ${item.title}`}
-                        onClick={() => void markOne(item.id)}
-                        className="hover:bg-muted text-muted-foreground hover:text-foreground absolute top-3 right-1.5 flex size-8 items-center justify-center rounded-lg"
-                      >
-                        <Check className="size-4" aria-hidden="true" />
-                      </button>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+          <NotificationList
+            items={items}
+            loading={loading}
+            loadingMore={loadingMore}
+            error={error}
+            hasMore={Boolean(nextCursor)}
+            onRetry={() => void fetchNotifications(failedCursor.current)}
+            onLoadMore={() => {
+              if (nextCursor) void fetchNotifications(nextCursor);
+            }}
+            onMarkRead={(id) => void markOne(id)}
+            onNavigate={() => setOpen(false)}
+            emptyDescription="Các cập nhật về đơn hàng của bạn sẽ hiển thị tại đây."
+          />
         </section>
       )}
     </div>

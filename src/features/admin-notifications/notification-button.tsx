@@ -2,11 +2,9 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
-import { Bell, CheckCircle, X } from "@phosphor-icons/react";
-import { BellOff } from "lucide-react";
+import { Bell, X } from "@phosphor-icons/react";
 
-import { EmptyState } from "@/components/kit/empty-state";
+import { NotificationList } from "@/components/kit/notification-list";
 
 import { useAdminNotifications } from "./notification-provider";
 
@@ -22,8 +20,18 @@ export function NotificationButton({
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLElement>(null);
   const [desktopPosition, setDesktopPosition] = useState({ top: 0, left: 0 });
-  const { items, unreadCount, loading, error, refresh, markOne, markAll } =
-    useAdminNotifications();
+  const {
+    items,
+    unreadCount,
+    loading,
+    loadingMore,
+    nextCursor,
+    error,
+    retry,
+    loadMore,
+    markOne,
+    markAll,
+  } = useAdminNotifications();
 
   useEffect(() => {
     if (open) closeRef.current?.focus();
@@ -168,68 +176,18 @@ export function NotificationButton({
                 </button>
               </div>
             </header>
-            {loading ? (
-              <p role="status" className="text-muted-foreground p-4 text-sm">
-                Đang tải thông báo…
-              </p>
-            ) : error ? (
-              <div role="alert" className="p-4 text-sm">
-                <p>{error}</p>
-                <button
-                  type="button"
-                  onClick={() => void refresh()}
-                  className="mt-2 font-semibold underline"
-                >
-                  Thử lại
-                </button>
-              </div>
-            ) : items.length === 0 ? (
-              <EmptyState
-                size="compact"
-                icon={BellOff}
-                title="Chưa có thông báo"
-                description="Đơn online mới và cảnh báo tồn kho sẽ hiện ở đây."
-              />
-            ) : (
-              <ul className="space-y-1">
-                {items.map((item) => (
-                  <li key={item.id} className="relative">
-                    <Link
-                      href={item.href}
-                      onClick={() => {
-                        setOpen(false);
-                        if (!item.readAt) void markOne(item.id);
-                      }}
-                      className={`focus-visible:ring-ring block rounded-xl p-3 pr-11 text-sm focus-visible:ring-3 focus-visible:outline-none ${item.readAt ? "hover:bg-muted" : "bg-primary/8 hover:bg-primary/12"}`}
-                    >
-                      <span className="block font-bold">{item.title}</span>
-                      <span className="text-muted-foreground mt-1 block">
-                        {item.body}
-                      </span>
-                      <time
-                        className="text-muted-foreground mt-1 block text-xs"
-                        dateTime={item.createdAt}
-                      >
-                        {new Intl.DateTimeFormat("vi-VN", {
-                          dateStyle: "short",
-                          timeStyle: "short",
-                        }).format(new Date(item.createdAt))}
-                      </time>
-                    </Link>
-                    {!item.readAt && (
-                      <button
-                        type="button"
-                        aria-label={`Đánh dấu đã đọc: ${item.title}`}
-                        onClick={() => void markOne(item.id)}
-                        className="hover:bg-background absolute top-2 right-1 flex size-11 items-center justify-center rounded-lg"
-                      >
-                        <CheckCircle aria-hidden="true" />
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <NotificationList
+              items={items}
+              loading={loading}
+              loadingMore={loadingMore}
+              error={error}
+              hasMore={Boolean(nextCursor)}
+              onRetry={() => void retry()}
+              onLoadMore={() => void loadMore()}
+              onMarkRead={(id) => void markOne(id)}
+              onNavigate={() => setOpen(false)}
+              emptyDescription="Đơn online mới và cảnh báo tồn kho sẽ hiện ở đây."
+            />
           </section>,
           document.body,
         )}

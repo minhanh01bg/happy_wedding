@@ -680,3 +680,23 @@ body > [data-print-receipt] {
     print-color-adjust: exact;
   }
 }
+
+@keyframes notification-row-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.notification-row-enter {
+  animation: notification-row-enter 180ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .notification-row-enter {
+    animation: none;
+    animation-delay: 0ms !important;
+  }
+}

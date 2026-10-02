@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CustomerNotificationButton } from "@/features/customer-notifications/notification-button";
@@ -156,5 +162,287 @@ describe("CustomerNotificationButton", () => {
 
     const title = await screen.findByText("Chưa có thông báo");
     expect(title.closest('[data-slot="empty-state"]')).not.toBeNull();
+  });
+  it("tải trang cursor và giữ thông báo cũ khi tải thêm lỗi", async () => {
+    const first = { ...mockNotificationsResponse, nextCursor: "older-cursor" };
+    const older = { ...first.items[0], id: "older", title: "Thông báo cũ" };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => first })
+      .mockResolvedValueOnce({ ok: true, json: async () => first })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          ...first,
+          items: [first.items[0], older],
+          nextCursor: "last-cursor",
+        }),
+      })
+      .mockResolvedValue({ ok: false });
+    vi.stubGlobal("fetch", fetchMock);
+    render(<CustomerNotificationButton enabled />);
+    await screen.findByTestId("customer-notification-badge");
+    fireEvent.click(screen.getByRole("button", { name: /Thông báo/ }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Tải thêm thông báo" }),
+    );
+    expect(await screen.findByText("Thông báo cũ")).toBeInTheDocument();
+    expect(screen.getAllByText(first.items[0].title)).toHaveLength(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("?limit=6"),
+      expect.anything(),
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("cursor=older-cursor"),
+      expect.anything(),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Tải thêm thông báo" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Không thể tải");
+    expect(screen.getByText("Thông báo cũ")).toBeInTheDocument();
+  });
+
+  it("hiện skeleton khi yêu cầu đầu tiên chưa hoàn thành", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise(() => {})),
+    );
+    render(<CustomerNotificationButton enabled />);
+    fireEvent.click(screen.getByRole("button", { name: /Thông báo/ }));
+    expect(screen.getByRole("status")).toHaveTextContent("Đang tải thông báo");
+    expect(
+      screen.getByTestId("notification-list-skeleton"),
+    ).toBeInTheDocument();
+  });
+  it("bỏ phản hồi cũ khi tài khoản đã bị tắt", async () => {
+    let resolve!: (value: unknown) => void;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        () =>
+          new Promise((done) => {
+            resolve = done;
+          }),
+      ),
+    );
+    const { rerender } = render(<CustomerNotificationButton enabled />);
+    await waitFor(() => expect(resolve).toBeTypeOf("function"));
+    rerender(<CustomerNotificationButton enabled={false} />);
+    await act(async () => {
+      resolve({ ok: true, json: async () => mockNotificationsResponse });
+    });
+    expect(
+      screen.queryByTestId("customer-notification-badge"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("khôi phục trạng thái chưa đọc khi API đánh dấu trả lỗi HTTP", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockImplementation((url: string) =>
+          Promise.resolve(
+            url.includes("/read")
+              ? { ok: false }
+              : { ok: true, json: async () => mockNotificationsResponse },
+          ),
+        ),
+    );
+    render(<CustomerNotificationButton enabled />);
+    await screen.findByTestId("customer-notification-badge");
+    fireEvent.click(screen.getByRole("button", { name: /Thông báo/ }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Đánh dấu đã đọc/ }),
+    );
+    expect(
+      await screen.findByRole("button", { name: /Đánh dấu đã đọc/ }),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByTestId("customer-notification-badge"),
+    ).toHaveTextContent("1");
+  });
+  it("cập nhật đầu danh sách không bỏ khoảng trống giữa các trang", async () => {
+    const first = { ...mockNotificationsResponse, nextCursor: "old-page" };
+    const older = { ...first.items[0], id: "older", title: "Tin trước" };
+    const fresh = { ...first.items[0], id: "fresh", title: "Tin mới" };
+    const gap = {
+      ...first.items[0],
+      id: "gap",
+      title: "Tin trong khoảng trống",
+    };
+    let headCalls = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) => {
+        const value = url.includes("cursor=new-page")
+          ? { ...first, items: [gap], nextCursor: "old-page" }
+          : url.includes("cursor=old-page")
+            ? { ...first, items: [older], nextCursor: "last-page" }
+            : ++headCalls > 2
+              ? { ...first, items: [fresh], nextCursor: "new-page" }
+              : first;
+        return Promise.resolve({ ok: true, json: async () => value });
+      }),
+    );
+    render(<CustomerNotificationButton enabled />);
+    await screen.findByTestId("customer-notification-badge");
+    fireEvent.click(screen.getByRole("button", { name: /Thông báo/ }));
+    await waitFor(() => expect(headCalls).toBe(2));
+    fireEvent.click(screen.getByRole("button", { name: "Tải thêm thông báo" }));
+    await screen.findByText("Tin trước");
+    fireEvent.click(screen.getByRole("button", { name: "Đóng thông báo" }));
+    fireEvent.click(screen.getByRole("button", { name: /Thông báo/ }));
+    await screen.findByText("Tin mới");
+    fireEvent.click(screen.getByRole("button", { name: "Tải thêm thông báo" }));
+    expect(
+      await screen.findByText("Tin trong khoảng trống"),
+    ).toBeInTheDocument();
+  });
+
+  it.each([false, true])(
+    "đọc tất cả kết quả %s giữ và đồng bộ trang tải trong lúc chờ",
+    async (success) => {
+      const first = { ...mockNotificationsResponse, nextCursor: "older-page" };
+      const older = {
+        ...first.items[0],
+        id: "older",
+        title: "Trang tải trong lúc chờ",
+      };
+      let rejectRead!: (value: {
+        ok: boolean;
+        json?: () => Promise<unknown>;
+      }) => void;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((url: string) => {
+          if (url.includes("/read"))
+            return new Promise((resolve) => {
+              rejectRead = resolve;
+            });
+          const value = url.includes("cursor=")
+            ? { ...first, items: [older], nextCursor: null }
+            : first;
+          return Promise.resolve({ ok: true, json: async () => value });
+        }),
+      );
+      render(<CustomerNotificationButton enabled />);
+      await screen.findByTestId("customer-notification-badge");
+      fireEvent.click(screen.getByRole("button", { name: /Thông báo/ }));
+      await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
+      fireEvent.click(screen.getByRole("button", { name: "Đọc tất cả" }));
+      fireEvent.click(
+        screen.getByRole("button", { name: "Tải thêm thông báo" }),
+      );
+      await screen.findByText("Trang tải trong lúc chờ");
+      await act(async () => {
+        rejectRead({
+          ok: success,
+          json: async () => ({ data: { unreadCount: 0 }, ok: true }),
+        });
+      });
+      expect(screen.getByText("Trang tải trong lúc chờ")).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Tải thêm thông báo" }),
+      ).not.toBeInTheDocument();
+      if (success)
+        expect(
+          screen.queryByRole("button", {
+            name: "Đánh dấu đã đọc: Trang tải trong lúc chờ",
+          }),
+        ).not.toBeInTheDocument();
+    },
+  );
+  it.each(["one", "all"])(
+    "GET cũ không ghi đè trạng thái đọc sau POST %s thành công",
+    async (mode) => {
+      const first = { ...mockNotificationsResponse, nextCursor: "older" };
+      let resolveHead!: (value: unknown) => void;
+      let marked = false;
+      let calls = 0;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn((url: string) => {
+          if (url.includes("/read")) {
+            marked = true;
+            return Promise.resolve({
+              ok: true,
+              json: async () => ({ ok: true }),
+            });
+          }
+          if (++calls === 3)
+            return new Promise((resolve) => {
+              resolveHead = resolve;
+            });
+          const value = marked
+            ? {
+                ...first,
+                unreadCount: 0,
+                items: first.items.map((item) => ({
+                  ...item,
+                  readAt: "2026-09-08T10:00:00.000Z",
+                })),
+              }
+            : first;
+          return Promise.resolve({ ok: true, json: async () => value });
+        }),
+      );
+      render(<CustomerNotificationButton enabled />);
+      await screen.findByTestId("customer-notification-badge");
+      fireEvent.click(screen.getByRole("button", { name: /Thông báo/ }));
+      await waitFor(() => expect(calls).toBe(2));
+      fireEvent.click(screen.getByRole("button", { name: "Đóng thông báo" }));
+      fireEvent.click(screen.getByRole("button", { name: /Thông báo/ }));
+      await waitFor(() => expect(resolveHead).toBeTypeOf("function"));
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: mode === "all" ? "Đọc tất cả" : /Đánh dấu đã đọc/,
+        }),
+      );
+      await waitFor(() => expect(marked).toBe(true));
+      await act(async () => {
+        const value = first;
+        resolveHead({ ok: true, json: async () => value });
+      });
+      expect(
+        screen.queryByTestId("customer-notification-badge"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /Đánh dấu đã đọc/ }),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  it("thử lại lỗi đầu danh sách không tải nhầm trang cũ", async () => {
+    const first = { ...mockNotificationsResponse, nextCursor: "older" };
+    const fresh = {
+      ...first.items[0],
+      id: "fresh",
+      title: "Đã cập nhật đầu danh sách",
+    };
+    let calls = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((url: string) => {
+        ++calls;
+        if (calls === 3) return Promise.resolve({ ok: false });
+        const value =
+          calls > 3 && !url.includes("cursor=")
+            ? { ...first, items: [fresh] }
+            : first;
+        return Promise.resolve({ ok: true, json: async () => value });
+      }),
+    );
+    render(<CustomerNotificationButton enabled />);
+    await screen.findByTestId("customer-notification-badge");
+    fireEvent.click(screen.getByRole("button", { name: /Thông báo/ }));
+    await waitFor(() => expect(calls).toBe(2));
+    fireEvent.click(screen.getByRole("button", { name: "Đóng thông báo" }));
+    fireEvent.click(screen.getByRole("button", { name: /Thông báo/ }));
+    await screen.findByRole("alert");
+    fireEvent.click(screen.getByRole("button", { name: "Thử lại" }));
+    expect(
+      await screen.findByText("Đã cập nhật đầu danh sách"),
+    ).toBeInTheDocument();
   });
 });

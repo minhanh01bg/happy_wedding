@@ -20,8 +20,12 @@ interface NotificationContextValue {
   unreadCount: number;
   cutoff: string | null;
   loading: boolean;
+  loadingMore: boolean;
+  nextCursor: string | null;
+  loadMore: () => Promise<void>;
   error: string | null;
   refresh: () => Promise<void>;
+  retry: () => Promise<void>;
   markOne: (id: string) => Promise<void>;
   markAll: () => Promise<void>;
 }
@@ -46,32 +50,113 @@ export function NotificationProvider({
   const [cutoff, setCutoff] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const hasOlderPages = useRef(false);
+  const itemsRef = useRef(items);
+  useEffect(() => {
+    itemsRef.current = items;
+  }, [items]);
+  const mutationRevision = useRef(0);
+  const pendingMutations = useRef(0);
+  const failedCursor = useRef<string | undefined>(undefined);
+  const mounted = useRef(true);
   const inFlight = useRef<Promise<void> | null>(null);
 
-  const refresh = useCallback(() => {
+  const fetchPageRef = useRef<(cursor?: string) => Promise<void>>(null);
+  const fetchPage = useCallback((cursor?: string): Promise<void> => {
     if (inFlight.current) return inFlight.current;
+    const requestRevision = mutationRevision.current;
+    let revalidateStale = false;
     const task = (async () => {
       try {
-        const response = await fetch("/api/admin/notifications?limit=20", {
-          cache: "no-store",
-        });
+        const response = await fetch(
+          `/api/admin/notifications?limit=6${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+          { cache: "no-store" },
+        );
         if (!response.ok) throw new Error("Không thể tải thông báo");
         const parsed = notificationListResponseSchema.parse(
           await response.json(),
-        );
-        setItems(parsed.data.items);
-        setUnreadCount(parsed.data.unreadCount);
-        setCutoff(parsed.data.cutoff);
+        ).data;
+        if (!mounted.current) return;
+        if (requestRevision !== mutationRevision.current) {
+          revalidateStale = true;
+          return;
+        }
+        if (
+          !cursor &&
+          itemsRef.current.length > 0 &&
+          !parsed.items.some((item) =>
+            itemsRef.current.some((existing) => existing.id === item.id),
+          )
+        )
+          hasOlderPages.current = false;
+        setItems((current) => {
+          const pageItems =
+            pendingMutations.current > 0
+              ? parsed.items.map((item) => {
+                  const existing = current.find((row) => row.id === item.id);
+                  return existing ? { ...item, readAt: existing.readAt } : item;
+                })
+              : parsed.items;
+          const ids = new Set(pageItems.map((item) => item.id));
+          const merged = cursor
+            ? [
+                ...current,
+                ...pageItems.filter(
+                  (item) =>
+                    !current.some((existing) => existing.id === item.id),
+                ),
+              ]
+            : [...pageItems, ...current.filter((item) => !ids.has(item.id))];
+          return merged.sort(
+            (a, b) =>
+              b.createdAt.localeCompare(a.createdAt) ||
+              b.id.localeCompare(a.id),
+          );
+        });
+        if (cursor) hasOlderPages.current = true;
+        if (cursor || !hasOlderPages.current) setNextCursor(parsed.nextCursor);
+        if (pendingMutations.current === 0) setUnreadCount(parsed.unreadCount);
+        if (!cursor) setCutoff(parsed.cutoff);
         setError(null);
       } catch {
-        setError("Không thể tải thông báo. Hãy thử lại.");
+        if (mounted.current) {
+          failedCursor.current = cursor;
+          setError("Không thể tải thông báo. Hãy thử lại.");
+        }
       } finally {
-        setLoading(false);
+        if (mounted.current) {
+          setLoading(false);
+          setLoadingMore(false);
+        }
         inFlight.current = null;
+        if (revalidateStale && mounted.current)
+          queueMicrotask(() => void fetchPageRef.current?.(cursor));
       }
     })();
     inFlight.current = task;
     return task;
+  }, []);
+  useEffect(() => {
+    fetchPageRef.current = fetchPage;
+  }, [fetchPage]);
+  const refresh = useCallback(() => fetchPage(), [fetchPage]);
+  const retry = useCallback(() => {
+    if (failedCursor.current && !inFlight.current) setLoadingMore(true);
+    return fetchPage(failedCursor.current);
+  }, [fetchPage]);
+  const loadMore = useCallback(() => {
+    if (!nextCursor || inFlight.current)
+      return inFlight.current ?? Promise.resolve();
+    setLoadingMore(true);
+    return fetchPage(nextCursor);
+  }, [fetchPage, nextCursor]);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -117,6 +202,10 @@ export function NotificationProvider({
 
   const markOne = useCallback(
     async (id: string) => {
+      const previous = items.find((item) => item.id === id);
+      if (!previous || previous.readAt) return;
+      mutationRevision.current += 1;
+      pendingMutations.current += 1;
       setItems((current) =>
         current.map((item) =>
           item.id === id && !item.readAt
@@ -128,15 +217,25 @@ export function NotificationProvider({
       try {
         await mutate({ id });
       } catch {
+        setItems((current) =>
+          current.map((item) =>
+            item.id === id ? { ...item, readAt: previous.readAt } : item,
+          ),
+        );
         void refresh();
+      } finally {
+        mutationRevision.current += 1;
+        pendingMutations.current -= 1;
       }
     },
-    [mutate, refresh],
+    [items, mutate, refresh],
   );
 
   const markAll = useCallback(async () => {
     if (!cutoff) return;
     const previous = items;
+    mutationRevision.current += 1;
+    pendingMutations.current += 1;
     setItems((current) =>
       current.map((item) =>
         new Date(item.createdAt) <= new Date(cutoff) && !item.readAt
@@ -147,9 +246,28 @@ export function NotificationProvider({
     setUnreadCount(0);
     try {
       await mutate({ allBefore: cutoff });
+      setItems((current) =>
+        current.map((item) =>
+          !item.readAt && new Date(item.createdAt) <= new Date(cutoff)
+            ? { ...item, readAt: new Date().toISOString() }
+            : item,
+        ),
+      );
     } catch {
-      setItems(previous);
+      const readAtById = new Map(
+        previous.map((item) => [item.id, item.readAt]),
+      );
+      setItems((current) =>
+        current.map((item) =>
+          readAtById.has(item.id)
+            ? { ...item, readAt: readAtById.get(item.id)! }
+            : item,
+        ),
+      );
       void refresh();
+    } finally {
+      mutationRevision.current += 1;
+      pendingMutations.current -= 1;
     }
   }, [cutoff, items, mutate, refresh]);
 
@@ -159,12 +277,29 @@ export function NotificationProvider({
       unreadCount,
       cutoff,
       loading,
+      loadingMore,
+      nextCursor,
+      loadMore,
       error,
       refresh,
+      retry,
       markOne,
       markAll,
     }),
-    [items, unreadCount, cutoff, loading, error, refresh, markOne, markAll],
+    [
+      items,
+      unreadCount,
+      cutoff,
+      loading,
+      loadingMore,
+      nextCursor,
+      loadMore,
+      error,
+      refresh,
+      retry,
+      markOne,
+      markAll,
+    ],
   );
   return (
     <NotificationContext.Provider value={value}>

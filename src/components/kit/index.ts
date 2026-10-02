@@ -52,3 +52,9 @@ export {
   Skeleton,
   TableSkeleton,
 } from "./skeleton-loader";
+
+export {
+  NotificationList,
+  NotificationListSkeleton,
+} from "./notification-list";
+export type { NotificationListItem } from "./notification-list";

@@ -65,6 +65,19 @@ afterEach(() => setReviewRateLimiter(null));
 afterAll(resetReviewFixtures);
 
 describe("POST /api/online/products/[id]/reviews", () => {
+  it("400 với mã script dù gọi trực tiếp API", async () => {
+    const response = await POST(
+      postRequest(
+        { rating: 5, content: "<script>alert(1)</script>" },
+        `customer_session=${token}`,
+      ),
+      context(),
+    );
+    expect(response.status).toBe(400);
+    expect((await response.json()).message).toMatch(/không nhập mã HTML/);
+    expect(await prisma.productReview.count()).toBe(0);
+  });
+
   it("401 khi chưa đăng nhập", async () => {
     const response = await POST(postRequest(validBody), context());
     expect(response.status).toBe(401);

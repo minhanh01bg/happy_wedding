@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+import {
+  containsReviewCode,
+  REVIEW_CODE_MESSAGE,
+} from "@/lib/reviews/review-content";
+
 z.config({ jitless: true });
 
 export const REVIEW_PAGE_SIZE = 10;
@@ -30,7 +35,10 @@ export const createReviewInputSchema = z
       .max(
         REVIEW_CONTENT_MAX,
         `Nội dung đánh giá tối đa ${REVIEW_CONTENT_MAX} ký tự`,
-      ),
+      )
+      .refine((content) => !containsReviewCode(content), {
+        message: REVIEW_CODE_MESSAGE,
+      }),
   })
   .strict();
 

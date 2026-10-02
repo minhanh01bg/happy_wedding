@@ -12,6 +12,10 @@ import {
 import { EmptyState } from "@/components/kit/empty-state";
 import { StarRating } from "@/components/kit/star-rating";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  containsReviewCode,
+  REVIEW_CODE_MESSAGE,
+} from "@/lib/reviews/review-content";
 import { cn } from "@/lib/utils";
 import {
   REVIEW_CONTENT_MAX,
@@ -111,6 +115,10 @@ export function ProductReviews({
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (submitting) return;
+    if (containsReviewCode(content)) {
+      setFormError(REVIEW_CODE_MESSAGE);
+      return;
+    }
     if (trimmedLength < REVIEW_CONTENT_MIN) {
       setFormError(`Nội dung đánh giá cần ít nhất ${REVIEW_CONTENT_MIN} ký tự`);
       return;

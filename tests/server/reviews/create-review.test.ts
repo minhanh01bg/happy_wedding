@@ -25,6 +25,42 @@ beforeEach(async () => {
 afterAll(resetReviewFixtures);
 
 describe("createReview", () => {
+  it.each([
+    "<script>alert(1)</script>",
+    '<img src=x onerror="alert(1)">',
+    "```javascript\nalert(1);\n```",
+    "const token = document.cookie;",
+    "SELECT * FROM customers;",
+    '<?php echo "hello"; ?>',
+    'print("hello world")',
+    "function () { return 1; }",
+    "body { color: red; }",
+    'fetch("/api/customers");',
+    'import os; os.system("ls")',
+  ])("không lưu đánh giá chứa mã: %s", async (content) => {
+    const result = await createReview({
+      productId: REVIEW_PRODUCT_ID,
+      accountId,
+      input: { rating: 5, content },
+    });
+    expect(result).toMatchObject({ ok: false, reason: "invalid" });
+    expect(await prisma.productReview.count()).toBe(0);
+  });
+
+  it.each([
+    "Bugi chạy tốt, giá < 100.000đ, sẽ mua lại!",
+    "Mã sản phẩm C7HSA đúng như mô tả, dùng rất ổn.",
+    "Shop đóng gói tốt :) giao nhanh; chất lượng 5/5.",
+    "Mình thích bản print (in chữ rõ nét).",
+  ])("giữ đánh giá tự nhiên có dấu câu: %s", async (content) => {
+    const result = await createReview({
+      productId: REVIEW_PRODUCT_ID,
+      accountId,
+      input: { rating: 5, content },
+    });
+    expect(result.ok).toBe(true);
+  });
+
   it("tạo đánh giá với tên hiển thị của tài khoản và cập nhật điểm trung bình", async () => {
     const first = await createReview({
       productId: REVIEW_PRODUCT_ID,

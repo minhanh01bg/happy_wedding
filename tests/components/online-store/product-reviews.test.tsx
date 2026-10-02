@@ -62,6 +62,31 @@ afterEach(() => {
 });
 
 describe("ProductReviews", () => {
+  it("chặn mã ngay trên form trước khi gửi lên server", async () => {
+    mockFetch(true);
+    render(
+      <ProductReviews
+        productId={PRODUCT.id}
+        productName={PRODUCT.name}
+        initialReviews={page([])}
+        summary={{ avg: 0, count: 0 }}
+      />,
+    );
+    fireEvent.click(
+      await screen.findByRole("button", { name: /viết đánh giá/i }),
+    );
+    fireEvent.change(screen.getByLabelText(/nội dung đánh giá/i), {
+      target: { value: "<script>alert(1)</script>" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /gửi đánh giá/i }));
+    expect(
+      await screen.findByText(/không nhập mã HTML hoặc mã lập trình/i),
+    ).toBeInTheDocument();
+    expect(
+      fetchMock.mock.calls.some(([, init]) => init?.method === "POST"),
+    ).toBe(false);
+  });
+
   it("hiển thị đánh giá thật từ server, điểm tổng hợp và nhãn đã mua", () => {
     mockFetch(false);
     render(

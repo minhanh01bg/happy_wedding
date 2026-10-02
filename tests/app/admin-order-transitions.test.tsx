@@ -72,9 +72,13 @@ describe("/admin/orders/[id] — nút chuyển trạng thái đơn online", () =
 
       const allowed = getNextOnlineOrderStatuses(status);
       for (const next of allowed) {
+        const buttonName =
+          next === "cancelled"
+            ? "Hủy đơn hàng"
+            : ONLINE_ORDER_STATUS_LABELS[next];
         expect(
           screen.getByRole("button", {
-            name: ONLINE_ORDER_STATUS_LABELS[next],
+            name: buttonName,
           }),
         ).toBeInTheDocument();
       }

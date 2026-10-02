@@ -85,7 +85,7 @@ export default async function CustomerOrdersPage({
                   variant: isActive ? "default" : "outline",
                   size: "sm",
                 }),
-                "min-h-10 rounded-full px-4 text-xs font-bold transition-all sm:text-sm",
+                "min-h-10 rounded-full px-4 text-xs font-bold transition-[color,background-color,border-color,box-shadow,transform] sm:text-sm",
               )}
             >
               {tab.label}

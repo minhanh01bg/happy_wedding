@@ -51,7 +51,7 @@ describe("CustomerOrderDetail", () => {
     expect(
       screen.getByText("Gạo ST25 Thượng Hạng × 2 túi 5kg"),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("180.000 ₫").length).toBe(2);
+    expect(screen.getAllByLabelText("180.000")).toHaveLength(2);
 
     // Timeline do trang truyen vao qua slot
     expect(

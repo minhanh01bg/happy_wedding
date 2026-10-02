@@ -15,6 +15,7 @@ import {
   verifyPassword,
 } from "@/server/auth/session";
 import { readJsonBody } from "@/server/http/read-json-body";
+import { hasSafeMutationOrigin } from "@/server/http/origin";
 
 const bodySchema = z.object({
   password: z.string().min(1),
@@ -22,6 +23,16 @@ const bodySchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    if (!hasSafeMutationOrigin(request)) {
+      return NextResponse.json(
+        { message: "Yêu cầu từ nguồn không tin cậy" },
+        {
+          status: 403,
+          headers: { "Cache-Control": "private, no-store" },
+        },
+      );
+    }
+
     // Layer 1: Streamed body cap (16 KB)
     const bodyResult = await readJsonBody(request, { maxBytes: 16_000 });
     if (!bodyResult.ok) {
@@ -105,7 +116,7 @@ export async function POST(request: Request) {
     // Rotate/replace any presented admin session cookie with new DB-backed session
     response.cookies.set(SESSION_COOKIE, token, {
       ...adminCookieOptions,
-      secure: isHttps,
+      secure: adminCookieOptions.secure || isHttps,
     });
 
     return response;

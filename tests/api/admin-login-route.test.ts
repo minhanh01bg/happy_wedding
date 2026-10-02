@@ -70,6 +70,17 @@ function makeRequest(
 }
 
 describe("POST /api/auth/login", () => {
+  it("rejects cross-site login attempts before reading credentials", async () => {
+    const req = makeRequest(
+      { password: "matkhau-cua-hang" },
+      { origin: "https://attacker.example", "sec-fetch-site": "cross-site" },
+    );
+    const res = await POST(req);
+
+    expect(res.status).toBe(403);
+    expect(res.headers.get("cache-control")).toContain("no-store");
+  });
+
   it("rejects oversized request bodies with 413 before verification", async () => {
     const req = makeRequest({ password: "a".repeat(70_000) });
     const res = await POST(req);

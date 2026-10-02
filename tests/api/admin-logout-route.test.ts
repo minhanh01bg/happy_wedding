@@ -63,4 +63,17 @@ describe("POST /api/auth/logout (Task 16)", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toContain("no-store");
   });
+
+  it("rejects cross-site logout attempts without revoking the session", async () => {
+    const admin = await ensureDefaultAdminIdentity();
+    const { token } = await createAdminSession(admin.id);
+    const req = makeLogoutRequest(`${SESSION_COOKIE}=${token}`);
+    req.headers.set("origin", "https://attacker.example");
+    req.headers.set("sec-fetch-site", "cross-site");
+
+    const res = await POST(req);
+
+    expect(res.status).toBe(403);
+    expect(await verifySession(token)).toBe(true);
+  });
 });

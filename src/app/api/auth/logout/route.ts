@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 
-import { revokeAdminSession, SESSION_COOKIE } from "@/server/auth/session";
+import {
+  adminCookieOptions,
+  revokeAdminSession,
+  SESSION_COOKIE,
+} from "@/server/auth/session";
+import { hasSafeMutationOrigin } from "@/server/http/origin";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +24,16 @@ function readCookie(cookieHeader: string | null, name: string): string | null {
 }
 
 export async function POST(request: Request) {
+  if (!hasSafeMutationOrigin(request)) {
+    return NextResponse.json(
+      { message: "Yêu cầu từ nguồn không tin cậy" },
+      {
+        status: 403,
+        headers: { "Cache-Control": "private, no-store" },
+      },
+    );
+  }
+
   const token = readCookie(request.headers.get("cookie"), SESSION_COOKIE);
   if (token) {
     await revokeAdminSession(token);
@@ -33,10 +48,7 @@ export async function POST(request: Request) {
   );
 
   response.cookies.set(SESSION_COOKIE, "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
+    ...adminCookieOptions,
     maxAge: 0,
   });
 

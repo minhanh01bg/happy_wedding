@@ -62,3 +62,28 @@ test("chưa đăng nhập truy cập trang quản lý hoặc /admin/login sẽ �
   await page.goto("/admin/login");
   await expect(page).toHaveURL(/\/login$/);
 });
+
+test("admin thay đổi độ rộng thanh điều hướng desktop và giữ lại sau tải trang", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/login");
+  await page.getByRole("textbox", { name: "Mật khẩu cửa hàng" }).fill("123456");
+  await page.getByRole("button", { name: /vào bán hàng/i }).click();
+  await page.waitForURL("**/pos");
+  await page.goto("/admin/orders");
+
+  const handle = page.getByRole("separator", {
+    name: "Thay đổi chiều rộng thanh điều hướng",
+  });
+  await expect(handle).toBeVisible();
+  await handle.focus();
+  await page.keyboard.press("End");
+  await expect(handle).toHaveAttribute("aria-valuenow", "360");
+
+  await page.reload();
+  await expect(handle).toHaveAttribute("aria-valuenow", "360");
+  await expect(
+    page.getByRole("navigation", { name: "Điều hướng quản lý", exact: true }),
+  ).toBeVisible();
+});

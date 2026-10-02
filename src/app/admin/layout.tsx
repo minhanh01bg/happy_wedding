@@ -24,7 +24,7 @@ export default async function AdminLayout({
     <QueryProvider>
       <NotificationProvider>
         <AdminSearchProvider>
-          <div className="grid min-h-dvh grid-cols-1 md:grid-cols-[250px_minmax(0,1fr)]">
+          <div className="grid min-h-dvh grid-cols-1 md:grid-cols-[auto_minmax(0,1fr)]">
             <AdminNav productsBadge={<LowStockNavBadge />} />
             <main
               id="admin-main-content"

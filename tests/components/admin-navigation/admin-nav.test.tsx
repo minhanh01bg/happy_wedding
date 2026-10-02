@@ -74,6 +74,25 @@ describe("AdminNav", () => {
     expect(aside).toHaveClass("md:overflow-y-auto");
   });
 
+  it("đổi chiều rộng sidebar bằng bàn phím và ghi nhớ lựa chọn", () => {
+    localStorage.removeItem("admin-sidebar-width");
+    const { container } = render(<AdminNav />);
+    const aside = container.querySelector("aside");
+    const handle = screen.getByRole("separator", {
+      name: "Thay đổi chiều rộng thanh điều hướng",
+    });
+
+    expect(aside).toHaveStyle({ width: "250px" });
+    fireEvent.keyDown(handle, { key: "ArrowRight" });
+    expect(aside).toHaveStyle({ width: "266px" });
+    expect(localStorage.getItem("admin-sidebar-width")).toBe("266");
+
+    fireEvent.keyDown(handle, { key: "Home" });
+    expect(aside).toHaveStyle({ width: "208px" });
+    fireEvent.keyDown(handle, { key: "End" });
+    expect(aside).toHaveStyle({ width: "360px" });
+  });
+
   it("có liên kết sang cửa hàng online", () => {
     render(<AdminNav />);
 

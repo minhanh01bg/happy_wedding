@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowsClockwise,
   ChartBar,
@@ -132,6 +132,16 @@ const MOBILE_PRIMARY_HREFS = new Set([
   "/admin/reports",
 ]);
 
+const SIDEBAR_STORAGE_KEY = "admin-sidebar-width";
+const SIDEBAR_DEFAULT_WIDTH = 250;
+const SIDEBAR_MIN_WIDTH = 208;
+const SIDEBAR_MAX_WIDTH = 360;
+const SIDEBAR_KEYBOARD_STEP = 16;
+
+function clampSidebarWidth(width: number) {
+  return Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, width));
+}
+
 type NavItem = (typeof NAV)[number];
 
 /** /pos va /admin (Tong quan) chi sang khi khop chinh xac. */
@@ -190,11 +200,53 @@ export function AdminNav({
 } = {}) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH);
   const currentHref = activeHref(pathname);
   const current = NAV.find((item) => item.href === currentHref);
   const primaryItems = NAV.filter((item) =>
     MOBILE_PRIMARY_HREFS.has(item.href),
   );
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      const storedWidth = Number(localStorage.getItem(SIDEBAR_STORAGE_KEY));
+      if (Number.isFinite(storedWidth) && storedWidth > 0) {
+        setSidebarWidth(clampSidebarWidth(storedWidth));
+      }
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  function updateSidebarWidth(width: number, persist = false) {
+    const nextWidth = clampSidebarWidth(width);
+    setSidebarWidth(nextWidth);
+    if (persist) {
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, String(nextWidth));
+    }
+  }
+
+  function handleResizeKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      updateSidebarWidth(sidebarWidth - SIDEBAR_KEYBOARD_STEP, true);
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      updateSidebarWidth(sidebarWidth + SIDEBAR_KEYBOARD_STEP, true);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      updateSidebarWidth(SIDEBAR_MIN_WIDTH, true);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      updateSidebarWidth(SIDEBAR_MAX_WIDTH, true);
+    }
+  }
+
+  function handleResizeEnd(event: React.PointerEvent<HTMLDivElement>) {
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    updateSidebarWidth(sidebarWidth, true);
+  }
 
   return (
     <>
@@ -224,7 +276,10 @@ export function AdminNav({
         </div>
       </header>
 
-      <aside className="bg-card/85 border-r p-5 backdrop-blur-xl max-md:hidden md:sticky md:top-0 md:z-40 md:h-dvh md:overflow-y-auto">
+      <aside
+        className="bg-card/85 relative border-r p-5 backdrop-blur-xl max-md:hidden md:sticky md:top-0 md:z-40 md:h-dvh md:overflow-y-auto"
+        style={{ width: sidebarWidth }}
+      >
         <div className="mb-5 flex items-center justify-between gap-3 px-2">
           <div className="flex items-center gap-3">
             <span className="bg-primary text-primary-foreground flex size-11 items-center justify-center rounded-2xl shadow-md">
@@ -255,6 +310,30 @@ export function AdminNav({
           </ul>
         </nav>
         <AdminLogoutButton className="border-border mt-5 border-t pt-3" />
+        <div
+          role="separator"
+          aria-label="Thay đổi chiều rộng thanh điều hướng"
+          aria-orientation="vertical"
+          aria-valuemin={SIDEBAR_MIN_WIDTH}
+          aria-valuemax={SIDEBAR_MAX_WIDTH}
+          aria-valuenow={sidebarWidth}
+          tabIndex={0}
+          className="group focus-visible:ring-primary absolute top-0 right-0 hidden h-full w-2 cursor-col-resize touch-none outline-none focus-visible:ring-2 md:block"
+          onDoubleClick={() => updateSidebarWidth(SIDEBAR_DEFAULT_WIDTH, true)}
+          onKeyDown={handleResizeKeyDown}
+          onPointerDown={(event) => {
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerMove={(event) => {
+            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+              updateSidebarWidth(event.clientX);
+            }
+          }}
+          onPointerCancel={handleResizeEnd}
+          onPointerUp={handleResizeEnd}
+        >
+          <span className="bg-border group-hover:bg-primary group-focus-visible:bg-primary absolute inset-y-0 right-0 w-px transition-colors" />
+        </div>
       </aside>
 
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>

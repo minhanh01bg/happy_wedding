@@ -8,6 +8,8 @@ type SearchParamValue = string | string[] | undefined;
 export interface PaginationProps {
   /** Duong dan trang, vi du `/admin/orders`. */
   pathname: string;
+  /** Independent list parameter for pages with multiple datasets. */
+  pageParam?: string;
   page: number;
   pageSize: number;
   total: number;
@@ -21,15 +23,16 @@ function buildHref(
   pathname: string,
   searchParams: Record<string, SearchParamValue>,
   page: number,
+  pageParam: string,
 ): string {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(searchParams)) {
-    if (key === "page" || value === undefined) continue;
+    if (key === pageParam || value === undefined) continue;
     for (const item of Array.isArray(value) ? value : [value]) {
       if (item !== "") query.append(key, item);
     }
   }
-  query.set("page", String(page));
+  query.set(pageParam, String(page));
   return `${pathname}?${query.toString()}`;
 }
 
@@ -41,6 +44,7 @@ const linkClass = cn(
 /** Phan trang bang link `?page=N` — khong can JS, dung duoc trong Server Component. */
 export function Pagination({
   pathname,
+  pageParam = "page",
   page,
   pageSize,
   total,
@@ -65,7 +69,7 @@ export function Pagination({
     >
       {hasPrev ? (
         <Link
-          href={buildHref(pathname, searchParams, current - 1)}
+          href={buildHref(pathname, searchParams, current - 1, pageParam)}
           className={linkClass}
         >
           Trang trước
@@ -84,7 +88,7 @@ export function Pagination({
       </span>
       {hasNext ? (
         <Link
-          href={buildHref(pathname, searchParams, current + 1)}
+          href={buildHref(pathname, searchParams, current + 1, pageParam)}
           className={linkClass}
         >
           Trang sau

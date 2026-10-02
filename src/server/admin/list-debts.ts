@@ -126,3 +126,94 @@ export async function listSettledDebts(
     settledAt: order.payments[0]?.receivedAt ?? order.payments[0]?.createdAt,
   }));
 }
+
+export const DEBT_CUSTOMERS_PAGE_SIZE = 20;
+
+/** Page customer groups in SQLite before reading their complete balances. */
+export function listDebtCustomers(
+  query: ListQuery = {},
+): Promise<PageResult<DebtCustomerBalance>> {
+  return paginate(
+    {
+      page: query.page ?? 1,
+      pageSize: query.pageSize ?? DEBT_CUSTOMERS_PAGE_SIZE,
+    },
+    async () => {
+      const [customers, anonymous] = await Promise.all([
+        prisma.customer.count({ where: { orders: { some: openDebtWhere } } }),
+        prisma.order.count({ where: { ...openDebtWhere, customerId: null } }),
+      ]);
+      return customers + (anonymous > 0 ? 1 : 0);
+    },
+    async ({ skip, take }) => {
+      const groups = await prisma.order.groupBy({
+        by: ["customerId"],
+        where: openDebtWhere,
+        orderBy: { customerId: "asc" },
+        skip,
+        take,
+      });
+      if (!groups.length) return [];
+      const customerIds = groups.flatMap((group) =>
+        group.customerId ? [group.customerId] : [],
+      );
+      const orders = await prisma.order.findMany({
+        where: {
+          ...openDebtWhere,
+          OR: [
+            { customerId: { in: customerIds } },
+            ...(groups.some((group) => group.customerId === null)
+              ? [{ customerId: null }]
+              : []),
+          ],
+        },
+        select: {
+          total: true,
+          customerId: true,
+          customer: { select: { name: true } },
+          payments: { where: receivedPaymentWhere, select: { amount: true } },
+        },
+      });
+      const balances = new Map<string, DebtCustomerBalance>();
+      for (const order of orders) {
+        const key = order.customerId ?? "unknown";
+        const current = balances.get(key) ?? {
+          key,
+          name: order.customer?.name ?? "Khách lẻ",
+          balance: 0,
+        };
+        current.balance += Math.max(0, order.total - sumPaid(order.payments));
+        balances.set(key, current);
+      }
+      return groups.flatMap((group) => {
+        const row = balances.get(group.customerId ?? "unknown");
+        return row ? [row] : [];
+      });
+    },
+  );
+}
+
+export async function listSettledDebtsPage(
+  query: ListQuery = {},
+): Promise<PageResult<SettledDebtItem>> {
+  const result = await paginate(
+    { page: query.page ?? 1, pageSize: query.pageSize ?? SETTLED_DEBTS_LIMIT },
+    () => prisma.order.count({ where: settledDebtWhere }),
+    ({ skip, take }) =>
+      prisma.order.findMany({
+        where: settledDebtWhere,
+        skip,
+        take,
+        orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+        select: debtOrderSelect,
+      }),
+  );
+  return {
+    ...result,
+    items: result.items.map((order) => ({
+      ...order,
+      paid: sumPaid(order.payments),
+      settledAt: order.payments[0]?.receivedAt ?? order.payments[0]?.createdAt,
+    })),
+  };
+}

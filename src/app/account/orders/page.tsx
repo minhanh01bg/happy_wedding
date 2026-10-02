@@ -2,16 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 
-import { EmptyState } from "@/components/kit";
+import { EmptyState, Pagination } from "@/components/kit";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { CustomerLogoutButton } from "@/features/customer-account/logout-button";
 import { CustomerOrderCard } from "@/features/customer-account/order-card";
 import { CustomerNotificationButton } from "@/features/customer-notifications/notification-button";
 import { cn } from "@/lib/utils";
+import { parsePageParam } from "@/server/admin/pagination";
 import { requireCustomerSession } from "@/server/customer-auth/session";
 import {
-  listCustomerOrders,
+  listCustomerOrdersPage,
   type CustomerOrderFilterStatus,
 } from "@/server/orders/order-access";
 
@@ -32,7 +33,7 @@ const STATUS_TABS: Array<{ value: CustomerOrderFilterStatus; label: string }> =
   ];
 
 interface CustomerOrdersPageProps {
-  searchParams?: Promise<{ status?: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export default async function CustomerOrdersPage({
@@ -43,11 +44,14 @@ export default async function CustomerOrdersPage({
     requireCustomerSession(),
   ]);
 
-  const activeStatus = (params.status as CustomerOrderFilterStatus) || "all";
-  const orders = await listCustomerOrders(
+  const activeStatus =
+    STATUS_TABS.find((tab) => tab.value === params.status)?.value ?? "all";
+  const result = await listCustomerOrdersPage(
     session.accountId,
     activeStatus === "all" ? undefined : activeStatus,
+    { page: parsePageParam(params.page) },
   );
+  const orders = result.items;
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-12">
@@ -130,6 +134,13 @@ export default async function CustomerOrdersPage({
           />
         </div>
       )}
+      <Pagination
+        pathname="/account/orders"
+        page={result.page}
+        pageSize={result.pageSize}
+        total={result.total}
+        searchParams={params}
+      />
     </main>
   );
 }

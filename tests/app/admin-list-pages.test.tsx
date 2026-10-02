@@ -12,8 +12,8 @@ import ReportsPage from "@/app/admin/reports/page";
 import { listCustomers } from "@/server/admin/list-customers";
 import {
   listDebts,
-  listSettledDebts,
-  summarizeOpenDebts,
+  listSettledDebtsPage,
+  listDebtCustomers,
 } from "@/server/admin/list-debts";
 import { listOrders } from "@/server/admin/list-orders";
 import {
@@ -41,8 +41,8 @@ vi.mock("@/server/admin/list-orders", () => ({ listOrders: vi.fn() }));
 vi.mock("@/server/admin/list-customers", () => ({ listCustomers: vi.fn() }));
 vi.mock("@/server/admin/list-debts", () => ({
   listDebts: vi.fn(),
-  listSettledDebts: vi.fn(),
-  summarizeOpenDebts: vi.fn(),
+  listSettledDebtsPage: vi.fn(),
+  listDebtCustomers: vi.fn(),
   SETTLED_DEBTS_LIMIT: 20,
 }));
 vi.mock("@/server/admin/list-products", () => ({
@@ -58,8 +58,8 @@ vi.mock("@/server/settings/store-settings", () => ({
 }));
 vi.mock("@/server/db/prisma", () => ({
   prisma: {
-    category: { findMany: vi.fn() },
-    storefrontPromotion: { findMany: vi.fn() },
+    category: { findMany: vi.fn(), count: vi.fn() },
+    storefrontPromotion: { findMany: vi.fn(), count: vi.fn() },
     order: { findUnique: vi.fn() },
   },
 }));
@@ -189,8 +189,8 @@ describe("/admin/debts", () => {
 
   it("khong ai no thi moi khoi deu dung EmptyState", async () => {
     vi.mocked(listDebts).mockResolvedValue({ ...EMPTY_PAGE, pageSize: 50 });
-    vi.mocked(summarizeOpenDebts).mockResolvedValue([]);
-    vi.mocked(listSettledDebts).mockResolvedValue([]);
+    vi.mocked(listDebtCustomers).mockResolvedValue(EMPTY_PAGE);
+    vi.mocked(listSettledDebtsPage).mockResolvedValue(EMPTY_PAGE);
     const { container } = render(await DebtsPage({}));
     emptyState(container, "Không ai đang nợ");
     emptyState(container, "Hiện không còn đơn nào chưa trả đủ");
@@ -204,16 +204,74 @@ describe("/admin/debts", () => {
       page: 1,
       pageSize: 50,
     });
-    vi.mocked(summarizeOpenDebts).mockResolvedValue([
-      { key: "k", name: "Chú Ba", balance: 200_000 },
-    ]);
-    vi.mocked(listSettledDebts).mockResolvedValue([]);
+    vi.mocked(listDebtCustomers).mockResolvedValue({
+      ...EMPTY_PAGE,
+      total: 1,
+      items: [{ key: "k", name: "Chú Ba", balance: 200_000 }],
+    });
+    vi.mocked(listSettledDebtsPage).mockResolvedValue(EMPTY_PAGE);
     const { container } = render(await DebtsPage({}));
     const { cards, table } = layouts(container);
     expect(within(cards).getByText("DH-201")).toBeInTheDocument();
     expect(within(table).getByText("DH-201")).toBeInTheDocument();
     expect(table.querySelector('[data-slot="table"]')).not.toBeNull();
     expect(listDebts).toHaveBeenCalledTimes(1);
+  });
+  it("each debt list preserves the other lists' current pages", async () => {
+    vi.mocked(listDebts).mockResolvedValue({
+      ...EMPTY_PAGE,
+      items: [debt],
+      total: 120,
+      page: 2,
+      pageSize: 50,
+    });
+    vi.mocked(listDebtCustomers).mockResolvedValue({
+      ...EMPTY_PAGE,
+      items: [{ key: "k", name: "Chú Ba", balance: 200_000 }],
+      total: 65,
+      page: 2,
+    });
+    vi.mocked(listSettledDebtsPage).mockResolvedValue({
+      ...EMPTY_PAGE,
+      total: 65,
+      page: 2,
+    });
+    render(
+      await DebtsPage({
+        searchParams: Promise.resolve({
+          page: "2",
+          customersPage: "2",
+          settledPage: "2",
+        }),
+      }),
+    );
+    const open = screen.getByRole("navigation", {
+      name: "Phân trang đơn còn nợ",
+    });
+    const customers = screen.getByRole("navigation", {
+      name: "Phân trang khách còn nợ",
+    });
+    const settled = screen.getByRole("navigation", {
+      name: "Phân trang đơn đã trả đủ",
+    });
+    expect(
+      within(open).getByRole("link", { name: "Trang sau" }),
+    ).toHaveAttribute(
+      "href",
+      "/admin/debts?customersPage=2&settledPage=2&page=3",
+    );
+    expect(
+      within(customers).getByRole("link", { name: "Trang sau" }),
+    ).toHaveAttribute(
+      "href",
+      "/admin/debts?page=2&settledPage=2&customersPage=3",
+    );
+    expect(
+      within(settled).getByRole("link", { name: "Trang sau" }),
+    ).toHaveAttribute(
+      "href",
+      "/admin/debts?page=2&customersPage=2&settledPage=3",
+    );
   });
 });
 
@@ -256,7 +314,10 @@ describe("/admin/products", () => {
 describe("/admin/categories", () => {
   it("dung PageHeader va EmptyState khi chua co danh muc", async () => {
     vi.mocked(prisma.category.findMany).mockResolvedValue([]);
-    const { container } = render(await CategoriesPage());
+    vi.mocked(prisma.category.count).mockResolvedValue(0);
+    const { container } = render(
+      await CategoriesPage({ searchParams: Promise.resolve({}) }),
+    );
     expect(
       screen.getByRole("heading", { level: 1, name: "Danh mục" }),
     ).toBeInTheDocument();
@@ -267,8 +328,72 @@ describe("/admin/categories", () => {
 describe("/admin/promotions", () => {
   it("chua co chien dich thi hien EmptyState", async () => {
     vi.mocked(prisma.storefrontPromotion.findMany).mockResolvedValue([]);
-    const { container } = render(await AdminPromotionsPage());
+    vi.mocked(prisma.storefrontPromotion.count).mockResolvedValue(0);
+    const { container } = render(
+      await AdminPromotionsPage({ searchParams: Promise.resolve({}) }),
+    );
     emptyState(container, "Chưa có chiến dịch khuyến mãi nào");
+  });
+});
+
+describe("admin catalog page navigation", () => {
+  it("preserves category movement across page boundaries and uses the global total when adding", async () => {
+    vi.mocked(prisma.category.count).mockResolvedValue(42);
+    vi.mocked(prisma.category.findMany).mockResolvedValue([
+      {
+        id: "c21",
+        name: "Danh mục 21",
+        slug: null,
+        sortOrder: 21,
+        _count: { products: 3 },
+      },
+      {
+        id: "c22",
+        name: "Danh mục 22",
+        slug: null,
+        sortOrder: 22,
+        _count: { products: 0 },
+      },
+    ] as unknown as Awaited<ReturnType<typeof prisma.category.findMany>>);
+    const { container } = render(
+      await CategoriesPage({
+        searchParams: Promise.resolve({ page: "2", view: "all" }),
+      }),
+    );
+    expect(
+      screen.getByRole("button", { name: "Đưa Danh mục 21 lên trên" }),
+    ).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Đưa Danh mục 22 xuống dưới" }),
+    ).toBeEnabled();
+    expect(screen.getByText("Danh sách (42)")).toBeInTheDocument();
+    expect(container.querySelector('input[name="sortOrder"]')).toHaveValue(
+      "43",
+    );
+    expect(screen.getByRole("link", { name: "Trang trước" })).toHaveAttribute(
+      "href",
+      "/admin/categories?view=all&page=1",
+    );
+    expect(screen.getByRole("link", { name: "Trang sau" })).toHaveAttribute(
+      "href",
+      "/admin/categories?view=all&page=3",
+    );
+  });
+
+  it("campaign navigation shows the global count and retains query parameters", async () => {
+    vi.mocked(prisma.storefrontPromotion.count).mockResolvedValue(42);
+    vi.mocked(prisma.storefrontPromotion.findMany).mockResolvedValue([]);
+    render(
+      await AdminPromotionsPage({
+        searchParams: Promise.resolve({ page: "2", view: "all" }),
+      }),
+    );
+    expect(screen.getByText("Danh sách chiến dịch (42)")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Trang sau" })).toHaveAttribute(
+      "href",
+      "/admin/promotions?view=all&page=3",
+    );
+    expect(screen.getByText("Trang 2/3")).toBeInTheDocument();
   });
 });
 

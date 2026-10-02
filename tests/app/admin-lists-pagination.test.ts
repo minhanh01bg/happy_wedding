@@ -57,7 +57,7 @@ describe("parsePageParam", () => {
 });
 
 describe("paginate", () => {
-  it("tinh skip/take theo trang va chay count song song voi findMany", async () => {
+  it("tinh skip/take theo trang sau khi dem tong so dong", async () => {
     const find = vi.fn(async ({ skip, take }: { skip: number; take: number }) =>
       Array.from(
         { length: Math.max(0, Math.min(take, 120 - skip)) },

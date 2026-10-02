@@ -29,36 +29,22 @@ export function totalPageCount(total: number, pageSize: number): number {
   return Math.max(1, Math.ceil(total / pageSize));
 }
 
-/**
- * Chay `count` va `findMany` cung luc. Neu trang yeu cau vuot qua trang cuoi
- * (vi du vua xoa bot du lieu) thi doc lai trang cuoi — truong hop hiem, chi
- * ton them mot truy van.
- */
+/** Count first so an oversized URL can never reach Prisma as an invalid offset. */
 export async function paginate<T>(
   request: { page: number; pageSize: number },
   count: () => PromiseLike<number>,
   find: (window: PageWindow) => PromiseLike<T[]>,
 ): Promise<PageResult<T>> {
-  const pageSize = Math.max(1, Math.floor(request.pageSize));
-  const requestedPage = Math.max(1, Math.floor(request.page));
-
-  const [total, items] = await Promise.all([
-    count(),
-    find({ skip: (requestedPage - 1) * pageSize, take: pageSize }),
-  ]);
-
+  const pageSize = Number.isFinite(request.pageSize)
+    ? Math.min(2_147_483_647, Math.max(1, Math.floor(request.pageSize)))
+    : 1;
+  const requestedPage = Number.isFinite(request.page)
+    ? Math.max(1, Math.floor(request.page))
+    : 1;
+  const total = await count();
   const lastPage = totalPageCount(total, pageSize);
-  if (requestedPage <= lastPage) {
-    return { items, total, page: requestedPage, pageSize };
-  }
-
-  if (total === 0) {
-    return { items: [], total, page: 1, pageSize };
-  }
-
-  const lastItems = await find({
-    skip: (lastPage - 1) * pageSize,
-    take: pageSize,
-  });
-  return { items: lastItems, total, page: lastPage, pageSize };
+  const page = Math.min(requestedPage, lastPage);
+  if (total === 0) return { items: [], total, page: 1, pageSize };
+  const items = await find({ skip: (page - 1) * pageSize, take: pageSize });
+  return { items, total, page, pageSize };
 }

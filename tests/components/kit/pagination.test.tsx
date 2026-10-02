@@ -59,3 +59,20 @@ describe("Pagination", () => {
     expect(container).toBeEmptyDOMElement();
   });
 });
+
+it("changes only its named page parameter when multiple lists share a route", () => {
+  render(
+    <Pagination
+      pathname="/admin/debts"
+      page={2}
+      pageSize={20}
+      total={55}
+      pageParam="settledPage"
+      searchParams={{ page: "3", customersPage: "4", settledPage: "2" }}
+    />,
+  );
+  expect(screen.getByRole("link", { name: "Trang sau" })).toHaveAttribute(
+    "href",
+    "/admin/debts?page=3&customersPage=4&settledPage=3",
+  );
+});

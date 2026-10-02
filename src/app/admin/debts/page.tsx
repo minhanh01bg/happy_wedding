@@ -18,9 +18,8 @@ import {
 } from "@/components/ui/table";
 import {
   listDebts,
-  listSettledDebts,
-  SETTLED_DEBTS_LIMIT,
-  summarizeOpenDebts,
+  listSettledDebtsPage,
+  listDebtCustomers,
   type OpenDebtItem,
 } from "@/server/admin/list-debts";
 import { parsePageParam } from "@/server/admin/pagination";
@@ -90,17 +89,19 @@ function PaymentHistory({ order }: { order: OpenDebtItem }) {
 }
 
 interface DebtsPageProps {
-  searchParams?: Promise<{ page?: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export default async function DebtsPage({ searchParams }: DebtsPageProps) {
   const params = searchParams ? await searchParams : {};
 
-  const [debtPage, byCustomer, settledRows] = await Promise.all([
+  const [debtPage, customersPage, settledPage] = await Promise.all([
     listDebts({ page: parsePageParam(params.page) }),
-    summarizeOpenDebts(),
-    listSettledDebts(),
+    listDebtCustomers({ page: parsePageParam(params.customersPage) }),
+    listSettledDebtsPage({ page: parsePageParam(params.settledPage) }),
   ]);
+  const byCustomer = customersPage.items;
+  const settledRows = settledPage.items;
   const { items: rows, total: openDebtCount, page, pageSize } = debtPage;
 
   return (
@@ -129,6 +130,15 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
               ))}
             </ul>
           )}
+          <Pagination
+            pathname="/admin/debts"
+            pageParam="customersPage"
+            page={customersPage.page}
+            pageSize={customersPage.pageSize}
+            total={customersPage.total}
+            searchParams={params}
+            label="Phân trang khách còn nợ"
+          />
         </CardContent>
       </Card>
 
@@ -238,6 +248,7 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
             page={page}
             pageSize={pageSize}
             total={openDebtCount}
+            searchParams={params}
           />
         </CardContent>
       </Card>
@@ -247,12 +258,12 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
           <div className="space-y-1">
             <CardTitle>Đã trả xong</CardTitle>
             <p className="text-muted-foreground text-sm">
-              {SETTLED_DEBTS_LIMIT} đơn công nợ đã tất toán gần nhất
+              Lịch sử đơn công nợ đã tất toán
             </p>
           </div>
           <Badge className="bg-success/12 text-success min-h-7 px-3 text-sm font-bold">
             <CheckCircle aria-hidden="true" weight="fill" />
-            {settledRows.length} đơn đã trả đủ
+            {settledPage.total} đơn đã trả đủ
           </Badge>
         </CardHeader>
         <CardContent>
@@ -329,6 +340,15 @@ export default async function DebtsPage({ searchParams }: DebtsPageProps) {
               ))}
             </ul>
           )}
+          <Pagination
+            pathname="/admin/debts"
+            pageParam="settledPage"
+            page={settledPage.page}
+            pageSize={settledPage.pageSize}
+            total={settledPage.total}
+            searchParams={params}
+            label="Phân trang đơn đã trả đủ"
+          />
         </CardContent>
       </Card>
     </div>

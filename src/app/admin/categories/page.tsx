@@ -1,14 +1,15 @@
 import { ArrowDown, ArrowUp } from "@phosphor-icons/react/dist/ssr";
 import { LayoutGrid } from "lucide-react";
 
-import { EmptyState, PageHeader } from "@/components/kit";
+import { EmptyState, PageHeader, Pagination } from "@/components/kit";
 import { ConfirmAction } from "@/components/shared/confirm-action";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { requireAdminSession } from "@/server/auth/require-admin-session";
-import { listCategoriesWithProductCount } from "@/server/categories/get-categories";
+import { listAdminCategories } from "@/server/admin/list-categories";
+import { parsePageParam } from "@/server/admin/pagination";
 
 import {
   deleteCategoryAction,
@@ -18,10 +19,19 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export default async function CategoriesPage() {
+export default async function CategoriesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   await requireAdminSession({ redirectToLogin: true });
 
-  const categories = await listCategoriesWithProductCount();
+  const params = await searchParams;
+  const result = await listAdminCategories({
+    page: parsePageParam(params.page),
+  });
+  const categories = result.items;
+  const offset = (result.page - 1) * result.pageSize;
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -38,11 +48,7 @@ export default async function CategoriesPage() {
               <Label htmlFor="category-name">Tên danh mục</Label>
               <Input id="category-name" name="name" required />
             </div>
-            <input
-              type="hidden"
-              name="sortOrder"
-              value={categories.length + 1}
-            />
+            <input type="hidden" name="sortOrder" value={result.total + 1} />
             <Button type="submit">Thêm</Button>
           </form>
         </CardContent>
@@ -50,7 +56,7 @@ export default async function CategoriesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Danh sách ({categories.length})</CardTitle>
+          <CardTitle>Danh sách ({result.total})</CardTitle>
         </CardHeader>
         <CardContent>
           {categories.length === 0 ? (
@@ -102,7 +108,7 @@ export default async function CategoriesPage() {
                           type="submit"
                           variant="outline"
                           size="icon"
-                          disabled={index === 0}
+                          disabled={offset + index === 0}
                           aria-label={`Đưa ${category.name} lên trên`}
                         >
                           <ArrowUp aria-hidden="true" weight="bold" />
@@ -119,7 +125,7 @@ export default async function CategoriesPage() {
                           type="submit"
                           variant="outline"
                           size="icon"
-                          disabled={index === categories.length - 1}
+                          disabled={offset + index === result.total - 1}
                           aria-label={`Đưa ${category.name} xuống dưới`}
                         >
                           <ArrowDown aria-hidden="true" weight="bold" />
@@ -146,6 +152,13 @@ export default async function CategoriesPage() {
               ))}
             </ul>
           )}
+          <Pagination
+            pathname="/admin/categories"
+            page={result.page}
+            pageSize={result.pageSize}
+            total={result.total}
+            searchParams={params}
+          />
         </CardContent>
       </Card>
     </div>

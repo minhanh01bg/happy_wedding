@@ -1,5 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
+import { paginate } from "@/server/admin/pagination";
 import { digestOpaqueToken } from "@/server/customer-auth/session";
 import { createCustomerOrderClaimedNotification } from "@/server/customer-notifications/create-customer-notification";
 import { prisma } from "@/server/db/prisma";
@@ -37,7 +38,7 @@ export const customerOrderSelect = {
   },
 } as const;
 
-/** Lich su don cua khach chi hien 50 don moi nhat. */
+/** Số đơn mỗi trang lịch sử của khách. */
 export const CUSTOMER_ORDER_HISTORY_LIMIT = 50;
 
 export type CustomerOrderFilterStatus =
@@ -47,10 +48,10 @@ export type CustomerOrderFilterStatus =
   | "completed"
   | "cancelled";
 
-export function listCustomerOrders(
+function customerOrdersWhere(
   accountId: string,
   filterStatus?: CustomerOrderFilterStatus | string,
-) {
+): Prisma.OrderWhereInput {
   let statusCondition: Prisma.OrderWhereInput = {};
 
   if (filterStatus === "pending") {
@@ -74,16 +75,43 @@ export function listCustomerOrders(
     };
   }
 
+  return {
+    customerAccountId: accountId,
+    channel: "online",
+    ...statusCondition,
+  };
+}
+
+export function listCustomerOrders(
+  accountId: string,
+  filterStatus?: CustomerOrderFilterStatus | string,
+) {
   return prisma.order.findMany({
-    where: {
-      customerAccountId: accountId,
-      channel: "online",
-      ...statusCondition,
-    },
+    where: customerOrdersWhere(accountId, filterStatus),
     orderBy: { createdAt: "desc" },
     take: CUSTOMER_ORDER_HISTORY_LIMIT,
     select: customerOrderSelect,
   });
+}
+
+export function listCustomerOrdersPage(
+  accountId: string,
+  filterStatus?: CustomerOrderFilterStatus | string,
+  query: { page?: number } = {},
+) {
+  const where = customerOrdersWhere(accountId, filterStatus);
+  return paginate(
+    { page: query.page ?? 1, pageSize: CUSTOMER_ORDER_HISTORY_LIMIT },
+    () => prisma.order.count({ where }),
+    ({ skip, take }) =>
+      prisma.order.findMany({
+        where,
+        skip,
+        take,
+        orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+        select: customerOrderSelect,
+      }),
+  );
 }
 
 export function findOwnedCustomerOrder(accountId: string, orderId: string) {

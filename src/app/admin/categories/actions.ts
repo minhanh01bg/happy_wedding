@@ -94,7 +94,7 @@ export async function moveCategoryAction(
 ): Promise<void> {
   await requireAdminSession();
   const categories = await prisma.category.findMany({
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }, { id: "asc" }],
     select: { id: true },
   });
   const index = categories.findIndex((category) => category.id === id);

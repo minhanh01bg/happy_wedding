@@ -1,19 +1,33 @@
 import { Megaphone } from "lucide-react";
 
-import { ActiveStatusBadge, EmptyState, PageHeader } from "@/components/kit";
+import {
+  ActiveStatusBadge,
+  EmptyState,
+  PageHeader,
+  Pagination,
+} from "@/components/kit";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PromotionForm } from "@/features/admin-promotions/promotion-form";
 import { PromotionRowActions } from "@/features/admin-promotions/promotion-row-actions";
 import { requireAdminSession } from "@/server/auth/require-admin-session";
-import { listStorefrontPromotions } from "@/server/promotions/get-promotions";
+import { listAdminPromotions } from "@/server/admin/list-promotions";
+import { parsePageParam } from "@/server/admin/pagination";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPromotionsPage() {
+export default async function AdminPromotionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   await requireAdminSession({ redirectToLogin: true });
 
-  const promotions = await listStorefrontPromotions();
+  const params = await searchParams;
+  const result = await listAdminPromotions({
+    page: parsePageParam(params.page),
+  });
+  const promotions = result.items;
 
   return (
     <div className="space-y-8">
@@ -33,7 +47,7 @@ export default async function AdminPromotionsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Danh sách chiến dịch ({promotions.length})</CardTitle>
+          <CardTitle>Danh sách chiến dịch ({result.total})</CardTitle>
         </CardHeader>
         <CardContent>
           {promotions.length > 0 ? (
@@ -99,6 +113,13 @@ export default async function AdminPromotionsPage() {
               description="Hãy tạo chiến dịch đầu tiên ở khung phía trên."
             />
           )}
+          <Pagination
+            pathname="/admin/promotions"
+            page={result.page}
+            pageSize={result.pageSize}
+            total={result.total}
+            searchParams={params}
+          />
         </CardContent>
       </Card>
     </div>

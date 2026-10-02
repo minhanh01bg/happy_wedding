@@ -19,6 +19,7 @@ export interface NotificationListItem {
 const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
   dateStyle: "short",
   timeStyle: "short",
+  timeZone: "Asia/Ho_Chi_Minh",
 });
 
 export function NotificationListSkeleton() {

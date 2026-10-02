@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 import { useOnlineCart } from "./cart-context";
 import { CartDrawer } from "./cart-drawer";
-import { SessionAwareActions } from "./session-aware-actions";
+import { AdminAccessLink, SessionAwareActions } from "./session-aware-actions";
 import { WishlistDrawer } from "./wishlist-drawer";
 
 export function StoreHeader({
@@ -100,6 +100,14 @@ export function StoreHeader({
             </Button>
           </div>
         </div>
+        <nav
+          aria-label="Truy cập quản trị cửa hàng"
+          className="border-border border-t"
+        >
+          <div className="mx-auto flex max-w-6xl justify-end px-4 sm:px-6">
+            <AdminAccessLink />
+          </div>
+        </nav>
       </header>
       <CartDrawer shipping={shipping} />
       <WishlistDrawer open={wishlistOpen} onOpenChange={setWishlistOpen} />

@@ -37,6 +37,20 @@ export function useStorefrontSession(): StorefrontSession {
   return session;
 }
 
+export function AdminAccessLink() {
+  const { isAdmin } = useStorefrontSession();
+
+  return (
+    <Link
+      href={isAdmin ? "/admin" : "/login?next=%2Fadmin"}
+      className="text-muted-foreground hover:text-primary focus-visible:ring-ring inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:outline-none"
+    >
+      <LayoutDashboard aria-hidden="true" className="size-4" />
+      {isAdmin ? "Quản trị cửa hàng" : "Đăng nhập quản trị"}
+    </Link>
+  );
+}
+
 /**
  * "Quản trị" và "Tài khoản" dài khác nhau: cùng min-width (>= nút dài hơn) để
  * đổi khách → admin không xô lệch header. Dưới `sm` chỉ còn icon nên đã bằng nhau.

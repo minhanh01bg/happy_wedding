@@ -80,6 +80,10 @@ describe("StoreHeader session island", () => {
     renderHeader();
 
     expect(
+      screen.getByRole("link", { name: "Đăng nhập quản trị" }),
+    ).toHaveAttribute("href", "/login?next=%2Fadmin");
+
+    expect(
       screen.getByRole("button", { name: /tài khoản khách hàng/i }),
     ).toBeInTheDocument();
     expect(
@@ -148,6 +152,12 @@ describe("StoreHeader session island", () => {
     expect(
       await screen.findByRole("button", { name: /quản trị/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Quản trị cửa hàng" }),
+    ).toHaveAttribute("href", "/admin");
+    expect(
+      screen.queryByRole("link", { name: "Đăng nhập quản trị" }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /tài khoản khách hàng/i }),
     ).not.toBeInTheDocument();

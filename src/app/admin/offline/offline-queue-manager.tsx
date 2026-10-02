@@ -15,14 +15,24 @@ import {
 } from "@/lib/sync/queue";
 import type { QueuedOrder } from "@/lib/sync/types";
 
+const QUEUE_PAGE_SIZE = 20;
+
 export function OfflineQueueManager() {
+  const [page, setPage] = useState(1);
   const [orders, setOrders] = useState<QueuedOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
 
   const refresh = useCallback(async () => {
-    setOrders(await listQueuedOrders());
+    const queued = await listQueuedOrders();
+    setOrders(queued);
+    setPage((current) =>
+      Math.min(
+        current,
+        Math.max(1, Math.ceil(queued.length / QUEUE_PAGE_SIZE)),
+      ),
+    );
     setLoading(false);
   }, []);
 
@@ -79,6 +89,12 @@ export function OfflineQueueManager() {
     );
   }
 
+  const totalPages = Math.max(1, Math.ceil(orders.length / QUEUE_PAGE_SIZE));
+  const visibleOrders = orders.slice(
+    (page - 1) * QUEUE_PAGE_SIZE,
+    page * QUEUE_PAGE_SIZE,
+  );
+
   return (
     <div className="space-y-4">
       {message ? (
@@ -90,7 +106,7 @@ export function OfflineQueueManager() {
         </p>
       ) : null}
       <ul className="space-y-3">
-        {orders.map((order) => {
+        {visibleOrders.map((order) => {
           const total = order.payload.payments.reduce(
             (sum, payment) => sum + payment.amount,
             0,
@@ -159,6 +175,34 @@ export function OfflineQueueManager() {
           );
         })}
       </ul>
+      {totalPages > 1 ? (
+        <nav
+          aria-label="Phân trang đơn chờ đồng bộ"
+          className="border-border flex items-center justify-between gap-2 border-t pt-4"
+        >
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11"
+            disabled={page === 1 || sendingId !== null}
+            onClick={() => setPage((current) => current - 1)}
+          >
+            Trang trước
+          </Button>
+          <span className="text-center text-xs font-bold tabular-nums sm:text-sm">
+            Trang {page}/{totalPages} · {orders.length} đơn
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11"
+            disabled={page === totalPages || sendingId !== null}
+            onClick={() => setPage((current) => current + 1)}
+          >
+            Trang sau
+          </Button>
+        </nav>
+      ) : null}
     </div>
   );
 }

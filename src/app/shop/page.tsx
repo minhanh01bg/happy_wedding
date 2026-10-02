@@ -111,15 +111,17 @@ export default async function ShopPage() {
         tagline="Hàng thiết yếu, đặt nhanh tại nhà"
         hotline={storeProfile.hotline}
       />
-      <CategorySection categories={catalog.categories} />
-      <FlashSaleSection products={flashSaleProducts} />
-      {products.length > 0 ? (
-        <ProductRail
-          title="Sản phẩm nổi bật"
-          subtitle="Lựa chọn phổ biến được nhiều khách hàng tin tưởng"
-          products={featuredProducts}
-        />
-      ) : null}
+      <div className="bg-[linear-gradient(180deg,transparent_0%,color-mix(in_oklab,var(--muted)_45%,transparent)_48%,transparent_100%)]">
+        <CategorySection categories={catalog.categories} />
+        <FlashSaleSection products={flashSaleProducts} />
+        {products.length > 0 ? (
+          <ProductRail
+            title="Sản phẩm nổi bật"
+            subtitle="Lựa chọn phổ biến được nhiều khách hàng tin tưởng"
+            products={featuredProducts}
+          />
+        ) : null}
+      </div>
       <CatalogBrowser catalog={{ categories: catalog.categories, products }} />
       <RecentlyViewedSection />
       <TrustSection

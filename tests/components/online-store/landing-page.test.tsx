@@ -245,6 +245,9 @@ describe("Storefront Landing Page Components", () => {
       expect(screen.getByText(/cam kết chất lượng/i)).toBeInTheDocument();
       expect(screen.getByText(/giá niêm yết rõ ràng/i)).toBeInTheDocument();
       expect(screen.getByText(/hỗ trợ trực tiếp/i)).toBeInTheDocument();
+      expect(
+        screen.getByRole("link", { name: /bắt đầu mua sắm/i }),
+      ).toHaveAttribute("href", "#catalog");
     });
   });
 });

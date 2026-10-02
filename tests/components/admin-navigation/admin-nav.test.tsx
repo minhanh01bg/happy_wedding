@@ -36,6 +36,12 @@ describe("AdminNav", () => {
     });
     expect(within(mobileNav).getByText("Bán hàng")).toBeInTheDocument();
     expect(
+      within(mobileNav).getByRole("link", { name: "Tổng quan" }),
+    ).toHaveAttribute("href", "/admin");
+    expect(
+      screen.queryByRole("link", { name: "Báo cáo" }),
+    ).not.toBeInTheDocument();
+    expect(
       within(mobileNav).getByText("Đơn hàng").closest("a"),
     ).toHaveAttribute("aria-current", "page");
   });

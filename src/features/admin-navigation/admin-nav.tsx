@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   ArrowsClockwise,
-  ChartBar,
   CreditCard,
   Gauge,
   Gear,
@@ -112,12 +111,6 @@ const NAV = [
     icon: ArrowsClockwise,
   },
   {
-    href: "/admin/reports",
-    label: "Báo cáo",
-    shortLabel: "Báo cáo",
-    icon: ChartBar,
-  },
-  {
     href: "/admin/settings",
     label: "Cài đặt",
     shortLabel: "Cài đặt",
@@ -129,7 +122,7 @@ const MOBILE_PRIMARY_HREFS = new Set([
   "/pos",
   "/admin/products",
   "/admin/orders",
-  "/admin/reports",
+  "/admin",
 ]);
 
 const SIDEBAR_STORAGE_KEY = "admin-sidebar-width";

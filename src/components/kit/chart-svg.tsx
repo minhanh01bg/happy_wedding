@@ -83,6 +83,12 @@ export function ChartSvg({
     ),
     1,
   );
+  const minValue = Math.min(
+    0,
+    ...data.map((d) =>
+      twoSeries ? Math.min(d.value, d.secondaryValue ?? 0) : d.value,
+    ),
+  );
   const width = 600;
   const paddingX = 40;
   const paddingY = 30;
@@ -92,7 +98,9 @@ export function ChartSvg({
   const xAt = (index: number) =>
     paddingX + (index / Math.max(data.length - 1, 1)) * chartWidth;
   const yAt = (value: number) =>
-    paddingY + chartHeight - (value / maxValue) * chartHeight;
+    paddingY +
+    chartHeight -
+    ((value - minValue) / (maxValue - minValue)) * chartHeight;
 
   const points = data.map((d, index) => ({
     x: xAt(index),
@@ -107,7 +115,7 @@ export function ChartSvg({
   const secondaryPathD = twoSeries ? smoothPath(secondaryPoints) : "";
 
   // Generate SVG path for area fill
-  const areaD = `${pathD} L ${points[points.length - 1].x},${height - paddingY} L ${points[0].x},${height - paddingY} Z`;
+  const areaD = `${pathD} L ${points[points.length - 1].x},${yAt(0)} L ${points[0].x},${yAt(0)} Z`;
 
   const summarize = (name: string, values: number[]): string => {
     let maxIndex = 0;
@@ -244,6 +252,18 @@ export function ChartSvg({
           })}
 
           {/* Area Fill */}
+          {minValue < 0 ? (
+            <line
+              data-zero-baseline
+              x1={paddingX}
+              x2={width - paddingX}
+              y1={yAt(0)}
+              y2={yAt(0)}
+              stroke="currentColor"
+              strokeOpacity="0.4"
+              strokeDasharray="4 4"
+            />
+          ) : null}
           <path d={areaD} fill={`url(#${gradientId})`} />
 
           {/* Smooth Line */}

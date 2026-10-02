@@ -4,6 +4,21 @@ import { describe, expect, it } from "vitest";
 import { ChartSvg } from "@/components/kit/chart-svg";
 
 describe("ChartSvg component", () => {
+  it("giá trị âm vẫn nằm trong vùng vẽ và có đường mốc 0", () => {
+    const { container } = render(
+      <ChartSvg
+        data={[
+          { label: "Lỗ", value: -100 },
+          { label: "Lãi", value: 100 },
+        ]}
+      />,
+    );
+    const ys = [...container.querySelectorAll("circle")].map((node) =>
+      Number(node.getAttribute("cy")),
+    );
+    expect(ys.every((y) => y >= 30 && y <= 190)).toBe(true);
+    expect(container.querySelector("[data-zero-baseline]")).toBeInTheDocument();
+  });
   const sampleData = [
     { label: "T2", value: 1_200_000 },
     { label: "T3", value: 2_500_000 },

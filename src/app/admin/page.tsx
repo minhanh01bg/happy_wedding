@@ -11,16 +11,20 @@ export const metadata: Metadata = {
   title: "Tổng quan",
 };
 
-export default function AdminDashboardPage() {
+export default function AdminDashboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+} = {}) {
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Quản trị"
         title="Tổng quan"
-        description="Doanh thu hôm nay, đơn online cần xử lý và hàng sắp hết."
+        description="Tình hình hôm nay, xu hướng bán hàng và sản phẩm đem lại lợi nhuận."
       />
       <Suspense fallback={<DashboardSkeleton />}>
-        <DashboardSection />
+        <DashboardSection searchParams={searchParams} />
       </Suspense>
     </div>
   );

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import AdminDashboardPage from "@/app/admin/page";
 import { DashboardSection } from "@/features/admin-dashboard/dashboard-section";
+import { summarizeSales } from "@/server/admin/sales-analytics";
 import {
   getDashboardSummary,
   type DashboardSummary,
@@ -13,6 +14,7 @@ vi.mock("@/server/admin/dashboard", () => ({
 }));
 
 const summary: DashboardSummary = {
+  analytics: summarizeSales([], 7, new Date("2026-09-24T10:00:00Z")),
   today: { revenue: 1_250_000, orderCount: 9 },
   awaitingOnlineCount: 3,
   lowStockCount: 7,
@@ -43,6 +45,7 @@ const summary: DashboardSummary = {
 };
 
 const emptySummary: DashboardSummary = {
+  analytics: summary.analytics,
   today: { revenue: 0, orderCount: 0 },
   awaitingOnlineCount: 0,
   lowStockCount: 0,
@@ -82,7 +85,7 @@ describe("Trang tổng quan /admin", () => {
     expect(screen.getByText("Sắp hết hàng")).toBeInTheDocument();
 
     expect(screen.getByText("Doanh thu 7 ngày")).toBeInTheDocument();
-    expect(screen.getByText("24/09")).toBeInTheDocument();
+    expect(screen.getAllByText("24/09")).toHaveLength(3);
 
     const orders = screen.getByRole("region", { name: "Đơn online mới nhất" });
     expect(
@@ -108,5 +111,40 @@ describe("Trang tổng quan /admin", () => {
 
     expect(screen.getByText("Chưa có đơn online nào")).toBeInTheDocument();
     expect(screen.getByText("Không có hàng nào sắp hết")).toBeInTheDocument();
+  });
+
+  it("một kỳ ngày điều khiển biểu đồ, xếp hạng và nhắc giá vốn chưa biết", async () => {
+    const analytics = {
+      ...summary.analytics,
+      days: 30 as const,
+      totals: { ...summary.analytics.totals, unknownCostLineCount: 2 },
+    };
+    vi.mocked(getDashboardSummary).mockResolvedValue({ ...summary, analytics });
+    render(
+      await DashboardSection({ searchParams: Promise.resolve({ days: "30" }) }),
+    );
+    expect(getDashboardSummary).toHaveBeenLastCalledWith(30);
+    expect(screen.getByRole("link", { name: "30 ngày" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "14 ngày" })).toHaveAttribute(
+      "href",
+      "/admin?days=14",
+    );
+    expect(screen.getByText("Doanh thu 30 ngày")).toBeInTheDocument();
+    expect(screen.getByText("Số đơn theo ngày")).toBeInTheDocument();
+    expect(screen.getByText("Lợi nhuận gộp theo ngày")).toBeInTheDocument();
+    expect(screen.getByText("Top 5 bán nhiều nhất")).toBeInTheDocument();
+    expect(screen.getByText("Top 5 lợi nhuận gộp")).toBeInTheDocument();
+    expect(screen.getByRole("note")).toHaveTextContent(
+      "2 dòng hàng chưa có giá vốn",
+    );
+  });
+
+  it("ngày không hợp lệ về kỳ mặc định 7 ngày", async () => {
+    vi.mocked(getDashboardSummary).mockResolvedValue(summary);
+    await DashboardSection({ searchParams: Promise.resolve({ days: "999" }) });
+    expect(getDashboardSummary).toHaveBeenLastCalledWith(7);
   });
 });

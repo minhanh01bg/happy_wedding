@@ -40,3 +40,5 @@ Red: two admin destinations in screenshot. Green: one accessible management entr
 ## Final verification
 
 Review each scoped diff before committing. Run focused tests during implementation with separate TEST_DATABASE_URL files. After all tasks: pnpm check && pnpm build; targeted Playwright for affected flows, React diagnostics, broad review. Push current branch only after gates pass. Preserve uploaded images and unrelated files.
+
+Cost snapshots record server-side product cost when the order is committed, including offline orders at synchronization time. Earlier costs are unknown and never backfilled; quantities are grouped by product and historical unit to avoid combining kg and g.

@@ -22,12 +22,14 @@ import {
   listProducts,
 } from "@/server/admin/list-products";
 import { prisma } from "@/server/db/prisma";
-import * as dailyRevenueModule from "@/server/reports/daily-revenue";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn() }),
   usePathname: () => "/admin",
   useSearchParams: () => new URLSearchParams(),
+  redirect: (href: string) => {
+    throw new Error(`NEXT_REDIRECT:${href}`);
+  },
   notFound: () => {
     throw new Error("NEXT_NOT_FOUND");
   },
@@ -398,14 +400,8 @@ describe("admin catalog page navigation", () => {
 });
 
 describe("/admin/reports", () => {
-  it("moi khoi rong deu dung EmptyState", async () => {
-    vi.spyOn(dailyRevenueModule, "getDailyRevenue").mockResolvedValue([]);
-    vi.spyOn(dailyRevenueModule, "getTopProducts").mockResolvedValue([]);
-    vi.spyOn(dailyRevenueModule, "getLowStockProducts").mockResolvedValue([]);
-    const { container } = render(await ReportsPage());
-    emptyState(container, "Chưa có đơn nào");
-    emptyState(container, "Chưa có hàng bán chạy");
-    emptyState(container, "Không có hàng nào sắp hết");
+  it("chuyển báo cáo cũ về tổng quan với kỳ mặc định", async () => {
+    await expect(ReportsPage()).rejects.toThrow("NEXT_REDIRECT:/admin?days=14");
   });
 });
 

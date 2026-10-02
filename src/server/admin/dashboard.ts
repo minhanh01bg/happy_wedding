@@ -3,15 +3,15 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/server/db/prisma";
 import { LOW_STOCK_WHERE } from "@/server/products/low-stock";
 import {
-  getDailyRevenue,
   toVietnamDateKey,
   type LowStockRow,
+  type ReportDays,
 } from "@/server/reports/daily-revenue";
 
+import { getSalesAnalytics, type SalesAnalytics } from "./sales-analytics";
+
 /** So ngay tren bieu do tong quan — `getDailyRevenue` nhan 7 | 14 | 30. */
-const DASHBOARD_DAYS = 7;
 const DASHBOARD_LIST_SIZE = 5;
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Don online dang doi cua hang ra tay: chua xac nhan hoac chua soan hang. */
 export const AWAITING_FULFILLMENT_STATUSES = ["new", "confirmed"] as const;
@@ -41,35 +41,31 @@ export interface DashboardSummary {
   today: { revenue: number; orderCount: number };
   awaitingOnlineCount: number;
   lowStockCount: number;
-  /** 7 ngay gan nhat (tinh ca hom nay), tang dan — ngay khong ban co revenue 0. */
+  /** Kỳ được chọn (mặc định 7 ngày), tăng dần; ngày không bán có doanh thu 0. */
   week: DashboardDayPoint[];
   latestOnlineOrders: DashboardOnlineOrder[];
   lowStockProducts: LowStockRow[];
-}
-
-/** Cac khoa ngay VN cua `days` ngay gan nhat, cu nhat truoc. */
-function recentVietnamDateKeys(now: Date, days: number): string[] {
-  return Array.from({ length: days }, (_, index) =>
-    toVietnamDateKey(new Date(now.getTime() - (days - 1 - index) * DAY_MS)),
-  );
+  analytics: SalesAnalytics;
 }
 
 /**
  * Tong quan cho trang /admin. Doanh thu/so don hom nay lay tu cung chuoi
- * `getDailyRevenue(7)` cua bieu do (bo don huy, chia ngay theo gio VN) nen
+ * dữ liệu analytics của biểu đồ (bo don huy, chia ngay theo gio VN) nen
  * o "Hôm nay" va diem cuoi bieu do luon khop nhau.
  */
-export async function getDashboardSummary(): Promise<DashboardSummary> {
+export async function getDashboardSummary(
+  days: ReportDays = 7,
+): Promise<DashboardSummary> {
   const now = new Date();
 
   const [
-    dailyRows,
+    analytics,
     awaitingOnlineCount,
     lowStockCount,
     latestOnlineOrders,
     lowStockProducts,
   ] = await Promise.all([
-    getDailyRevenue(DASHBOARD_DAYS),
+    getSalesAnalytics(days, now),
     prisma.order.count({
       where: {
         channel: "online",
@@ -93,11 +89,11 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     }),
   ]);
 
-  const byDate = new Map(dailyRows.map((row) => [row.date, row]));
-  const week = recentVietnamDateKeys(now, DASHBOARD_DAYS).map((date) => ({
+  const byDate = new Map(analytics.daily.map((row) => [row.date, row]));
+  const week = analytics.daily.map(({ date, revenue, orderCount }) => ({
     date,
-    revenue: byDate.get(date)?.revenue ?? 0,
-    orderCount: byDate.get(date)?.orderCount ?? 0,
+    revenue,
+    orderCount,
   }));
   const todayRow = byDate.get(toVietnamDateKey(now));
 
@@ -111,5 +107,6 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
     week,
     latestOnlineOrders,
     lowStockProducts,
+    analytics,
   };
 }

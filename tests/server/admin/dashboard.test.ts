@@ -69,6 +69,18 @@ afterAll(async () => {
 });
 
 describe("getDashboardSummary", () => {
+  it("kỳ được chọn dùng cùng dữ liệu cho hôm nay, biểu đồ và thống kê", async () => {
+    await createOrder({
+      total: 12345,
+      createdAt: new Date("2026-09-24T18:00:00Z"),
+    });
+    const summary = await getDashboardSummary(30);
+    expect(summary.week).toHaveLength(30);
+    expect(summary.analytics.daily).toHaveLength(30);
+    expect(summary.today.revenue).toBe(summary.analytics.daily.at(-1)?.revenue);
+    expect(summary.analytics.totals.revenue).toBe(12345);
+    expect(summary.analytics.days).toBe(30);
+  });
   it("cua hang trong: moi con so bang 0, bieu do van du 7 ngay", async () => {
     const summary = await getDashboardSummary();
 

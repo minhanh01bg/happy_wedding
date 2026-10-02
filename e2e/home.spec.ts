@@ -36,5 +36,23 @@ for (const width of [390, 1440]) {
     await expect(page.locator("#admin-main-content")).toBeVisible();
     await page.reload();
     await expect(page).toHaveURL(/\/admin$/);
+    await page.goto("/shop");
+    const adminEntry = page.locator("header").getByRole("button", {
+      name: "Quay lại trang quản trị",
+    });
+    await expect(adminEntry).toBeInViewport();
+    await expect(page.locator('header a[href^="/admin"]')).toHaveCount(1);
+    await expect(
+      page.getByRole("navigation", {
+        name: "Truy cập quản trị cửa hàng",
+      }),
+    ).toHaveCount(0);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(width);
+    await page.screenshot({
+      path: testInfo.outputPath("admin-entry-authenticated.png"),
+      clip: { x: 0, y: 0, width, height: 80 },
+    });
   });
 }

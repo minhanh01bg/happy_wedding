@@ -153,8 +153,14 @@ describe("StoreHeader session island", () => {
       await screen.findByRole("button", { name: /quản trị/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: "Quản trị cửa hàng" }),
-    ).toHaveAttribute("href", "/admin");
+      screen.queryByRole("link", { name: "Quản trị cửa hàng" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("navigation", { name: "Truy cập quản trị cửa hàng" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /quản trị/i })).toHaveLength(
+      1,
+    );
     expect(
       screen.queryByRole("link", { name: "Đăng nhập quản trị" }),
     ).not.toBeInTheDocument();

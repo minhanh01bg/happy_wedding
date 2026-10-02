@@ -2,8 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
+import { logger } from "@/lib/logger";
 import { expirePublicNow } from "@/server/cache/public-cache";
 import { CACHE_TAGS } from "@/server/cache/tags";
+import { prisma } from "@/server/db/prisma";
 import {
   saveShippingSettings,
   saveStoreBankAccount,
@@ -70,22 +72,43 @@ export async function saveSettingsAction(
     };
   }
 
-  await saveStoreProfile({
-    name: parsed.data.storeName,
-    hotline: parsed.data.hotline,
-    address: parsed.data.address,
-    openingHours: parsed.data.openingHours,
-    mapUrl: parsed.data.mapUrl,
-  });
+  try {
+    await prisma.$transaction(async (tx) => {
+      await saveStoreProfile(
+        {
+          name: parsed.data.storeName,
+          hotline: parsed.data.hotline,
+          address: parsed.data.address,
+          openingHours: parsed.data.openingHours,
+          mapUrl: parsed.data.mapUrl,
+        },
+        tx,
+      );
 
-  await saveStoreBankAccount({
-    bankBin: parsed.data.bankBin,
-    accountNumber: parsed.data.accountNumber,
-    accountName: parsed.data.accountName,
-  });
+      await saveStoreBankAccount(
+        {
+          bankBin: parsed.data.bankBin,
+          accountNumber: parsed.data.accountNumber,
+          accountName: parsed.data.accountName,
+        },
+        tx,
+      );
 
-  if (shippingFee !== undefined && freeShippingThreshold !== undefined) {
-    await saveShippingSettings({ shippingFee, freeShippingThreshold });
+      if (shippingFee !== undefined && freeShippingThreshold !== undefined) {
+        await saveShippingSettings({ shippingFee, freeShippingThreshold }, tx);
+      }
+    });
+  } catch (error) {
+    const correlationId = crypto.randomUUID();
+    logger.error("settings_save_failed", {
+      correlationId,
+      errorClass:
+        error instanceof Error ? error.constructor.name : typeof error,
+    });
+    return {
+      ok: false,
+      error: "Không thể lưu cài đặt lúc này. Vui lòng thử lại.",
+    };
   }
 
   await logAdminAction({

@@ -5,6 +5,7 @@ import SettingsPage from "@/app/admin/settings/page";
 import AdminLayout from "@/app/admin/layout";
 import { createAdminSession, SESSION_COOKIE } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
+import * as storeSettings from "@/server/settings/store-settings";
 
 const mockCookies = new Map<string, string>();
 const mockRedirect = vi.fn();
@@ -149,6 +150,25 @@ describe("Admin Settings Authorization & Protection", () => {
     expect(
       await prisma.setting.findUnique({ where: { key: "store.shippingFee" } }),
     ).toBeNull();
+  });
+
+  it("saveSettingsAction: trả lỗi an toàn khi không thể ghi cài đặt", async () => {
+    const { token } = await createAdminSession();
+    mockCookies.set(SESSION_COOKIE, token);
+    vi.spyOn(storeSettings, "saveStoreProfile").mockRejectedValueOnce(
+      new Error("database detail"),
+    );
+
+    const formData = new FormData();
+    formData.set("storeName", "Cửa Hàng Chính Hãng");
+    formData.set("bankBin", "970407");
+    formData.set("accountNumber", "0123456789");
+    formData.set("accountName", "CHỦ CỬA HÀNG");
+
+    await expect(saveSettingsAction(null, formData)).resolves.toEqual({
+      ok: false,
+      error: "Không thể lưu cài đặt lúc này. Vui lòng thử lại.",
+    });
   });
 
   it("SettingsPage: chuyển hướng đến /login khi chưa có phiên đăng nhập", async () => {

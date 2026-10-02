@@ -1,4 +1,5 @@
 import { cache } from "react";
+import type { Prisma } from "@prisma/client";
 
 import { resolveDefaultStoreName } from "@/config/store-name";
 import {
@@ -42,6 +43,7 @@ const BANK_SETTING_KEYS = [
 ] as const;
 
 type SettingValues = Partial<Record<string, string>>;
+type SettingsClient = Pick<Prisma.TransactionClient, "setting">;
 
 /** Mot query cho ca nhom khoa — thay cho N lan findUnique. */
 async function readSettings(keys: readonly string[]): Promise<SettingValues> {
@@ -79,8 +81,12 @@ const loadBankSettings = cache(
   (): Promise<SettingValues> => readSettings(BANK_SETTING_KEYS),
 );
 
-async function writeSetting(key: string, value: string): Promise<void> {
-  await prisma.setting.upsert({
+async function writeSetting(
+  client: SettingsClient,
+  key: string,
+  value: string,
+): Promise<void> {
+  await client.setting.upsert({
     where: { key },
     create: { key, value },
     update: { value },
@@ -104,13 +110,12 @@ export async function getStoreBankAccount(): Promise<BankAccount | null> {
 
 export async function saveStoreBankAccount(
   account: BankAccount,
+  client: SettingsClient = prisma,
 ): Promise<void> {
-  await Promise.all([
-    writeSetting(KEY_BANK_BIN, account.bankBin),
-    writeSetting(KEY_BANK_ACCOUNT, account.accountNumber),
-    writeSetting(KEY_BANK_NAME, account.accountName),
-  ]);
-  revalidatePublic(CACHE_TAGS.settings);
+  await writeSetting(client, KEY_BANK_BIN, account.bankBin);
+  await writeSetting(client, KEY_BANK_ACCOUNT, account.accountNumber);
+  await writeSetting(client, KEY_BANK_NAME, account.accountName);
+  if (client === prisma) revalidatePublic(CACHE_TAGS.settings);
 }
 
 /** Đọc `process.env` lúc gọi (không cố định lúc import) — cùng thứ tự với `siteConfig.name`. */
@@ -130,7 +135,7 @@ export async function getStoreName(): Promise<string> {
 }
 
 export async function saveStoreName(name: string): Promise<void> {
-  await writeSetting(KEY_STORE_NAME, name);
+  await writeSetting(prisma, KEY_STORE_NAME, name);
   revalidatePublic(CACHE_TAGS.settings);
 }
 
@@ -158,29 +163,30 @@ export async function getPublicStoreProfile(): Promise<PublicStoreProfile> {
 
 export async function saveStoreProfile(
   profile: Partial<PublicStoreProfile>,
+  client: SettingsClient = prisma,
 ): Promise<void> {
-  const writes: Promise<void>[] = [];
-
+  let changed = false;
   if (profile.name !== undefined) {
-    writes.push(writeSetting(KEY_STORE_NAME, profile.name));
+    await writeSetting(client, KEY_STORE_NAME, profile.name);
+    changed = true;
   }
   if (profile.hotline !== undefined) {
-    writes.push(writeSetting(KEY_STORE_HOTLINE, profile.hotline));
+    await writeSetting(client, KEY_STORE_HOTLINE, profile.hotline);
+    changed = true;
   }
   if (profile.address !== undefined) {
-    writes.push(writeSetting(KEY_STORE_ADDRESS, profile.address));
+    await writeSetting(client, KEY_STORE_ADDRESS, profile.address);
+    changed = true;
   }
   if (profile.openingHours !== undefined) {
-    writes.push(writeSetting(KEY_STORE_OPENING_HOURS, profile.openingHours));
+    await writeSetting(client, KEY_STORE_OPENING_HOURS, profile.openingHours);
+    changed = true;
   }
   if (profile.mapUrl !== undefined) {
-    writes.push(writeSetting(KEY_STORE_MAP_URL, profile.mapUrl));
+    await writeSetting(client, KEY_STORE_MAP_URL, profile.mapUrl);
+    changed = true;
   }
-
-  if (writes.length === 0) return;
-
-  await Promise.all(writes);
-  revalidatePublic(CACHE_TAGS.settings);
+  if (changed && client === prisma) revalidatePublic(CACHE_TAGS.settings);
 }
 
 /** Chuoi so nguyen VND >= 0; sai/thieu thi dung mac dinh. */
@@ -213,13 +219,17 @@ export async function getShippingSettings(): Promise<ShippingSettings> {
 
 export async function saveShippingSettings(
   settings: ShippingSettings,
+  client: SettingsClient = prisma,
 ): Promise<void> {
-  await Promise.all([
-    writeSetting(KEY_SHIPPING_FEE, String(Math.round(settings.shippingFee))),
-    writeSetting(
-      KEY_FREE_SHIPPING_THRESHOLD,
-      String(Math.round(settings.freeShippingThreshold)),
-    ),
-  ]);
-  revalidatePublic(CACHE_TAGS.settings);
+  await writeSetting(
+    client,
+    KEY_SHIPPING_FEE,
+    String(Math.round(settings.shippingFee)),
+  );
+  await writeSetting(
+    client,
+    KEY_FREE_SHIPPING_THRESHOLD,
+    String(Math.round(settings.freeShippingThreshold)),
+  );
+  if (client === prisma) revalidatePublic(CACHE_TAGS.settings);
 }

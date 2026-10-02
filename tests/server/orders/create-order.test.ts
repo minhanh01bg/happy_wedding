@@ -10,6 +10,7 @@ import {
 } from "vitest";
 
 import { logger } from "@/lib/logger";
+import { getSalesAnalytics } from "@/server/admin/sales-analytics";
 import { prisma as appPrisma } from "@/server/db/prisma";
 import { createOrder } from "@/server/orders/create-order";
 import { generateOrderCode } from "@/server/orders/order-code";
@@ -418,5 +419,53 @@ describe("createOrder", () => {
     expect(spy).toHaveBeenCalledTimes(1);
     expect(result.duplicated).toBe(true);
     expect(result.order.code).toBe("DH6060");
+  });
+  it("chụp giá vốn sản phẩm và dịch vụ tại thời điểm tạo đơn", async () => {
+    const product = await seedProduct();
+    await prisma.product.update({
+      where: { id: product.id },
+      data: { costPrice: 8000 },
+    });
+    const service = await prisma.product.create({
+      data: {
+        name: "Công lắp",
+        price: 20000,
+        costPrice: 5000,
+        isService: true,
+        searchText: "cong lap",
+      },
+    });
+    const result = await createOrder({
+      clientId: "cost-snapshot",
+      lines: [
+        cashLine(product.id),
+        cashLine(service.id, { isService: true }),
+        { ...cashLine(product.id), productId: null, isService: true },
+      ],
+      payments: [],
+    });
+    await prisma.product.update({
+      where: { id: product.id },
+      data: { costPrice: 12000 },
+    });
+    const lines = await prisma.orderItem.findMany({
+      where: { orderId: result.order.id },
+    });
+    expect(
+      lines.map(
+        (line) =>
+          (line as unknown as { costPriceSnapshot?: number | null })
+            .costPriceSnapshot,
+      ),
+    ).toEqual([8000, 5000, null]);
+    const analytics = await getSalesAnalytics(7);
+    expect(analytics.totals).toMatchObject({
+      revenue: 90000,
+      grossProfit: 34000,
+      unknownCostLineCount: 1,
+    });
+    expect(
+      analytics.topQuantity.reduce((sum, row) => sum + row.quantity, 0),
+    ).toBe(6);
   });
 });

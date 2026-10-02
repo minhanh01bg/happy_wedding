@@ -292,6 +292,25 @@ export async function createOrder(
         const sequence = await nextOrderSequence(tx);
         const code = await resolveOrderCode(tx, sequence, input.preferredCode);
 
+        // Sau khóa ghi, chụp cả giá vốn dịch vụ bằng chính transaction client.
+        const costProducts = await tx.product.findMany({
+          where: {
+            id: {
+              in: [
+                ...new Set(
+                  input.lines.flatMap((line) =>
+                    line.productId ? [line.productId] : [],
+                  ),
+                ),
+              ],
+            },
+          },
+          select: { id: true, costPrice: true },
+        });
+        const costById = new Map(
+          costProducts.map((product) => [product.id, product.costPrice]),
+        );
+
         if (money.voucherCode) {
           await consumeVoucherUse(tx, money.voucherCode);
         }
@@ -330,6 +349,9 @@ export async function createOrder(
                 nameSnapshot: line.name,
                 unitPrice: line.unitPrice,
                 originalPrice: line.originalPrice,
+                costPriceSnapshot: line.productId
+                  ? (costById.get(line.productId) ?? null)
+                  : null,
                 quantity: line.quantity,
                 discount: line.discount,
                 lineTotal: line.lineTotal,

@@ -222,20 +222,22 @@ model CustomerNotification {
 }
 
 model OrderItem {
-  id            String   @id @default(cuid())
-  orderId       String
-  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId     String?
-  product       Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  id                String   @id @default(cuid())
+  orderId           String
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId         String?
+  product           Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
   /// Ten TAI THOI DIEM BAN — doi ten hang sau nay khong lam sai don cu
-  nameSnapshot  String
-  unitPrice     Int
-  originalPrice Int
-  quantity      Float
-  discount      Int      @default(0)
-  lineTotal     Int
-  unit          String   @default("cái")
-  isService     Boolean  @default(false)
+  nameSnapshot      String
+  unitPrice         Int
+  originalPrice     Int
+  /// Giá vốn khi ghi nhận đơn; null với dữ liệu cũ hoặc dòng không liên kết sản phẩm.
+  costPriceSnapshot Int?
+  quantity          Float
+  discount          Int      @default(0)
+  lineTotal         Int
+  unit              String   @default("cái")
+  isService         Boolean  @default(false)
 
   @@index([orderId])
 }

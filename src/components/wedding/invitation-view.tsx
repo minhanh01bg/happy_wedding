@@ -12,6 +12,7 @@ import { RsvpForm } from "./rsvp-form";
 import { Music } from "./music";
 import { InvitationMotion } from "./invitation-motion";
 import { InvitationAlbum } from "./invitation-album";
+import { GiftAccounts, type GiftAccount } from "./gift-accounts";
 import { InvitationOpening } from "./invitation-opening";
 
 export function InvitationView({
@@ -31,6 +32,22 @@ export function InvitationView({
 }) {
   const events = readEvents(invitation.eventsJson);
   const photos = readPhotos(invitation.photosJson);
+  const giftAccounts: GiftAccount[] = [
+    {
+      side: "Nhà trai",
+      bank: invitation.giftBank,
+      account: invitation.giftAccount,
+      name: invitation.giftName,
+    },
+    {
+      side: "Nhà gái",
+      bank: invitation.brideGiftBank,
+      account: invitation.brideGiftAccount,
+      name: invitation.brideGiftName,
+    },
+  ].filter(
+    (account) => account.bank && account.account && account.name,
+  ) as GiftAccount[];
   const calendarDates = `${invitation.weddingDate
     .toISOString()
     .replace(/[-:]/g, "")
@@ -194,27 +211,32 @@ export function InvitationView({
             </div>
           </section>
         )}
-        {invitation.giftBank && invitation.giftAccount && (
-          <section className="wedding-section">
+        {(giftAccounts.length > 0 || (preview && invitation.isDemo)) && (
+          <section className="wedding-section" id="gifts">
             <p className="eyebrow">GỬI CHÚT YÊU THƯƠNG</p>
             <h2>Quà mừng ngày cưới</h2>
             <p>
-              Sự hiện diện của bạn đã là món quà quý giá nhất với chúng mình.
+              Sự hiện diện của bạn đã là món quà quý giá nhất. Nếu không thể
+              đến, bạn có thể gửi lời chúc hoặc mừng cưới từ xa.
             </p>
-            <div className="qr-box">
-              <Image
-                src={`https://img.vietqr.io/image/${invitation.giftBank}-${invitation.giftAccount}-compact2.png?accountName=${encodeURIComponent(invitation.giftName)}`}
-                alt={`QR chuyển khoản mừng cưới cho ${invitation.giftName}`}
-                width={240}
-                height={290}
-                unoptimized
-              />
-            </div>
-            <p style={{ marginTop: 0 }}>
-              {invitation.giftName}
-              <br />
-              {invitation.giftAccount} · BIN {invitation.giftBank}
-            </p>
+            {giftAccounts.length ? (
+              <>
+                <GiftAccounts accounts={giftAccounts} />
+                <p>
+                  Trước khi xác nhận chuyển khoản, kiểm tra tên người nhận trong
+                  ứng dụng ngân hàng. Tiền mừng được gửi trực tiếp đến tài khoản
+                  cặp đôi.
+                </p>
+              </>
+            ) : (
+              <div className="gift-preview">
+                <p>Chỗ dành cho mã QR nhà trai và nhà gái</p>
+                <p>
+                  Mẫu minh họa không có tài khoản nhận tiền. Khi tạo thiệp, bạn
+                  có thể thêm một hoặc cả hai tài khoản.
+                </p>
+              </div>
+            )}
           </section>
         )}
         <footer className="wedding-thanks">

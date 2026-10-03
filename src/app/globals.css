@@ -3013,3 +3013,50 @@ body:has(.invitation-opening[open]) {
     animation: none !important;
   }
 }
+
+.gift-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 24px;
+  margin-top: 32px;
+}
+.gift-card {
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--tone) 25%, transparent);
+  background: var(--tint);
+  border-radius: 12px;
+  padding: 28px 20px;
+}
+.gift-card h3 {
+  margin: 18px 0 12px;
+  font-size: 28px;
+}
+.gift-card p {
+  font-size: 16px;
+  margin-top: 10px;
+}
+.gift-card .gift-account-number {
+  user-select: all;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.gift-actions {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+.wedding-page .gift-actions button {
+  background: var(--tone);
+  color: var(--card);
+  border-color: var(--tone);
+  max-width: 100%;
+}
+.gift-preview {
+  padding: 28px;
+  margin-top: 24px;
+  border: 1px dashed var(--tone);
+  border-radius: 12px;
+}
+.gift-preview p + p {
+  margin-top: 12px;
+}

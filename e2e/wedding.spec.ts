@@ -18,6 +18,24 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
   await page.getByLabel("Đường dẫn thiệp").fill(slug);
   await page.getByLabel("Chú rể", { exact: true }).fill("Anh Trai");
   await page.getByLabel("Cô dâu", { exact: true }).fill("Chị Dâu");
+  await page
+    .getByRole("combobox", { name: "Ngân hàng nhà trai", exact: true })
+    .selectOption("970436");
+  await page
+    .getByLabel("Số tài khoản nhà trai", { exact: true })
+    .fill("1111122222");
+  await page
+    .getByLabel("Chủ tài khoản nhà trai", { exact: true })
+    .fill("NGUYEN VAN A");
+  await page
+    .getByRole("combobox", { name: "Ngân hàng nhà gái", exact: true })
+    .selectOption("970422");
+  await page
+    .getByLabel("Số tài khoản nhà gái", { exact: true })
+    .fill("3333344444");
+  await page
+    .getByLabel("Chủ tài khoản nhà gái", { exact: true })
+    .fill("TRAN THI B");
   await page.getByRole("button", { name: "Lưu bản nháp" }).click();
   await expect(page).toHaveURL(/\/dashboard\/c[a-z0-9]+$/);
   const invitationId = page.url().split("/").at(-1)!;
@@ -78,16 +96,45 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
   const guestHref = await guestLink.getAttribute("href");
   const guestContext = await browser.newContext();
   const guest = await guestContext.newPage();
+  await guest.route(
+    "https://img.vietqr.io/image/970436-1111122222-*",
+    (route) => route.abort(),
+  );
   await guest.goto(`http://127.0.0.1:3201${guestHref}`);
   await guest.getByRole("button", { name: "Mở thiệp", exact: true }).click();
   await expect(guest.locator(".invitation-opening")).not.toBeVisible();
   await expect(guest.getByText("Trân trọng kính mời Chị Lan")).toBeVisible();
+  await expect(
+    guest.getByRole("heading", { name: "NGUYEN VAN A", exact: true }),
+  ).toBeVisible();
+  await expect(
+    guest.getByRole("heading", { name: "TRAN THI B", exact: true }),
+  ).toBeVisible();
+  await expect(
+    guest.getByRole("button", {
+      name: "Sao chép số tài khoản nhà trai",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(
+    guest.getByRole("button", {
+      name: "Sao chép số tài khoản nhà gái",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await guest.locator(".gift-card").first().scrollIntoViewIfNeeded();
+  await expect(guest.locator(".gift-card").first()).toContainText(
+    "Chưa tải được mã QR",
+  );
+  await expect(guest.locator(".gift-card").first()).toContainText("1111122222");
   await guest.getByLabel("Số người tham dự").selectOption("2");
   await guest
     .getByLabel("Gửi đôi lời chúc")
     .fill("Chúc anh chị trăm năm hạnh phúc!");
   await guest.getByRole("button", { name: "Gửi xác nhận & lời chúc" }).click();
-  await expect(guest.getByRole("status")).toContainText("Đã lưu phản hồi");
+  await expect(guest.locator(".wedding-rsvp [role=status]")).toContainText(
+    "Đã lưu phản hồi",
+  );
   await page.reload();
   await expect(
     page.getByText("Chúc anh chị trăm năm hạnh phúc!", { exact: true }),

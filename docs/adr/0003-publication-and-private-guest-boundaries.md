@@ -23,3 +23,7 @@ Hết hạn ẩn khi đọc, không cần cron; người giữ link riêng có t
 ## Evidence / revisit
 
 `publicInvitation`, `publishInvitation`, `submitResponse`; `src/app/w/[slug]/page.tsx`; `src/lib/log-redaction.ts`; Next no-referrer header; domain và E2E tests. Xem xét lại khi khách yêu cầu RSVP xác thực, thu hồi từng link hoặc quản lý thiệp hết hạn theo chính sách khác.
+
+### Hai tài khoản mừng cưới (03/10/2026)
+
+Thông tin nhận mừng cưới nhà trai/nhà gái là nội dung chủ thiệp chủ động công khai khi xuất bản; không thuộc thanh toán dịch vụ. Giữ giftBank/giftAccount/giftName cho dữ liệu cũ, bổ sung brideGiftBank/brideGiftAccount/brideGiftName mặc định rỗng. Mỗi bên độc lập, điền đủ hoặc để trống. Ảnh QR có referrer-policy no-referrer, thông tin tài khoản và thao tác sao chép vẫn dùng được khi nhà cung cấp QR lỗi; không ghi nhận/giả lập việc khách đã chuyển tiền.

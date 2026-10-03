@@ -424,3 +424,60 @@ it("keeps event indices stable once guests have responded", async () => {
     ),
   ).rejects.toMatchObject({ status: 409 });
 });
+
+describe("Separate wedding gift accounts", () => {
+  it("saves and publishes both sides without changing service payment state", async () => {
+    const invitation = await saveInvitation(accountId, {
+      ...input(),
+      giftBank: "970436",
+      giftAccount: "1111122222",
+      giftName: "NGUYEN VAN A",
+      brideGiftBank: "970422",
+      brideGiftAccount: "3333344444",
+      brideGiftName: "TRAN THI B",
+    });
+    const order = await activate(invitation.id);
+    await publishInvitation(accountId, invitation.id, true);
+    const visible = await publicInvitation(invitation.slug);
+    expect(visible).toMatchObject({
+      giftBank: "970436",
+      brideGiftBank: "970422",
+      brideGiftName: "TRAN THI B",
+    });
+    expect(await prisma.weddingPayment.count()).toBe(1);
+    expect(
+      await prisma.serviceOrder.findUnique({ where: { id: order.id } }),
+    ).toMatchObject({ total: 199000, status: "paid" });
+  });
+  it("rejects an incomplete bride-side account and cross-owner changes", async () => {
+    await expect(
+      saveInvitation(accountId, { ...input(), brideGiftBank: "970422" }),
+    ).rejects.toThrow();
+    const invitation = await draft();
+    await expect(
+      saveInvitation(
+        otherId,
+        {
+          ...input(),
+          brideGiftBank: "970422",
+          brideGiftAccount: "3333344444",
+          brideGiftName: "TRAN THI B",
+        },
+        invitation.id,
+        invitation.version,
+      ),
+    ).rejects.toMatchObject({ status: 404 });
+  });
+  it("keeps bride-side fields empty on invitations created by older clients", async () => {
+    const legacy = { ...input() };
+    delete (legacy as Partial<typeof legacy>).brideGiftBank;
+    delete (legacy as Partial<typeof legacy>).brideGiftAccount;
+    delete (legacy as Partial<typeof legacy>).brideGiftName;
+    const invitation = await saveInvitation(accountId, legacy);
+    expect(invitation).toMatchObject({
+      brideGiftBank: "",
+      brideGiftAccount: "",
+      brideGiftName: "",
+    });
+  });
+});

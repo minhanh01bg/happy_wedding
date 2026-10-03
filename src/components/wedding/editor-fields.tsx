@@ -1,4 +1,5 @@
 "use client";
+import { BankSelect } from "./bank-select";
 import {
   useState,
   type Dispatch,
@@ -366,37 +367,56 @@ export function ExtraFields({
             nhạc.
           </small>
         </label>
-        <label>
-          BIN ngân hàng nhận quà
-          <input
-            inputMode="numeric"
-            maxLength={6}
-            placeholder="970436 (Vietcombank)"
-            value={data.giftBank}
-            onChange={(e) => field("giftBank", e.target.value)}
-          />
-          <small>
-            Ví dụ: VCB 970436 · BIDV 970418 · MB 970422 · Techcombank 970407.
-          </small>
-        </label>
-        <div className="grid-two">
-          <label>
-            Số tài khoản
-            <input
-              value={data.giftAccount}
-              maxLength={30}
-              onChange={(e) => field("giftAccount", e.target.value)}
-            />
-          </label>
-          <label>
-            Chủ tài khoản
-            <input
-              value={data.giftName}
-              maxLength={100}
-              onChange={(e) => field("giftName", e.target.value)}
-            />
-          </label>
-        </div>
+        <p className="fine">
+          Không bắt buộc. Bạn có thể thêm riêng tài khoản nhà trai và nhà gái,
+          hoặc chỉ một bên. Kiểm tra đúng chủ tài khoản trước khi gửi thiệp.
+        </p>
+        {(
+          [
+            {
+              side: "Nhà trai",
+              bank: "giftBank",
+              account: "giftAccount",
+              name: "giftName",
+            },
+            {
+              side: "Nhà gái",
+              bank: "brideGiftBank",
+              account: "brideGiftAccount",
+              name: "brideGiftName",
+            },
+          ] as const
+        ).map(({ side, bank, account, name }) => (
+          <fieldset key={side} className="form-stack">
+            <legend>Tài khoản mừng cưới {side.toLowerCase()}</legend>
+            <label>
+              Ngân hàng {side.toLowerCase()}
+              <BankSelect
+                value={data[bank]}
+                onChange={(e) => field(bank, e.target.value)}
+              />
+            </label>
+            <div className="grid-two">
+              <label>
+                Số tài khoản {side.toLowerCase()}
+                <input
+                  value={data[account]}
+                  maxLength={30}
+                  autoComplete="off"
+                  onChange={(e) => field(account, e.target.value)}
+                />
+              </label>
+              <label>
+                Chủ tài khoản {side.toLowerCase()}
+                <input
+                  value={data[name]}
+                  maxLength={100}
+                  onChange={(e) => field(name, e.target.value)}
+                />
+              </label>
+            </div>
+          </fieldset>
+        ))}
       </div>
     </section>
   );

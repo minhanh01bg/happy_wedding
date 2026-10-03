@@ -79,6 +79,17 @@ export const invitationSchema = z
       .trim()
       .regex(/^[A-Za-z0-9]{5,30}$|^$/, "Số tài khoản không hợp lệ"),
     giftName: z.string().trim().max(100),
+    brideGiftBank: z
+      .string()
+      .trim()
+      .regex(/^\d{6}$|^$/, "Hãy chọn ngân hàng nhà gái")
+      .default(""),
+    brideGiftAccount: z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z0-9]{5,30}$|^$/, "Số tài khoản nhà gái không hợp lệ")
+      .default(""),
+    brideGiftName: z.string().trim().max(100).default(""),
   })
   .superRefine((v, ctx) => {
     if (
@@ -89,6 +100,15 @@ export const invitationSchema = z
         code: "custom",
         message: "Điền đủ ngân hàng, số tài khoản và chủ tài khoản",
         path: ["giftBank"],
+      });
+    if (
+      (v.brideGiftBank || v.brideGiftAccount || v.brideGiftName) &&
+      !(v.brideGiftBank && v.brideGiftAccount && v.brideGiftName)
+    )
+      ctx.addIssue({
+        code: "custom",
+        message: "Điền đủ ngân hàng, số tài khoản và chủ tài khoản nhà gái",
+        path: ["brideGiftBank"],
       });
   });
 export const responseSchema = z.strictObject({
@@ -197,4 +217,7 @@ export const DEMO_CONTENT: Omit<InvitationInput, "templateId" | "slug"> = {
   giftBank: "",
   giftAccount: "",
   giftName: "",
+  brideGiftBank: "",
+  brideGiftAccount: "",
+  brideGiftName: "",
 };

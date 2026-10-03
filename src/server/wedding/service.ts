@@ -159,6 +159,9 @@ export async function publishInvitation(
       giftBank: invitation.giftBank,
       giftAccount: invitation.giftAccount,
       giftName: invitation.giftName,
+      brideGiftBank: invitation.brideGiftBank,
+      brideGiftAccount: invitation.brideGiftAccount,
+      brideGiftName: invitation.brideGiftName,
     });
   }
   const result = await prisma.invitation.updateMany({

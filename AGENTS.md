@@ -1,37 +1,34 @@
-# AGENTS.md
+# Wedding Studio — guidance
 
-This file provides guidance to agents when working with code in this repository.
+This repository was cloned from `my_task`. The active product is a wedding invitation service. Keep customer-facing text in Vietnamese.
 
-## Commands and test isolation
+## Commands
 
-- Use pnpm 10.28.2/Node 22. Full gate: `pnpm check && pnpm build`; E2E is separate: `pnpm test:e2e`.
-- One Vitest file: `pnpm exec vitest run tests/lib/money.test.ts`; one case: append `-t "dung dau cham"`.
-- One Playwright file: `pnpm test:e2e -- e2e/home.spec.ts`; do not call `pnpm exec playwright` because both `playwright` and `@playwright/test` are installed and direct invocation resolves the wrong runner.
-- Vitest global setup always pushes Prisma schema to `prisma/test.db`; files are deliberately serial because they mutate that shared SQLite DB.
-- Playwright global setup deletes transactional/catalog fixtures and reseeds; it preserves `Setting`. Override its occupied port with `PLAYWRIGHT_PORT`.
+- Node 22, pnpm 10.28.2.
+- Install/setup: `pnpm install && pnpm run setup` (use **run**, because `pnpm setup` is a built-in pnpm command).
+- Local: `pnpm dev` on port 3200.
+- Full gate: `pnpm check && pnpm build`; browser gate: `pnpm test:e2e`.
+- Unit/integration DB is isolated at `prisma/prisma/test.db`; tests run serially.
+- E2E uses only `prisma/e2e.db`, port 3201, and `.next-e2e`; its setup resets only that fixed test DB.
 
-## Project invariants
+## Invariants
 
-- SQLite runs through ONE pooled connection (`connection_limit=1`, WAL, `busy_timeout` set in `src/server/db/prisma.ts`). Inside `prisma.$transaction(async (tx) => ...)` use only `tx`; touching the root `prisma` client there deadlocks until `maxWait`. Keep interactive transactions short: they block every other query in the process.
-- `src/server/orders/create-order.ts` is the sole order-write path: it recalculates money server-side and uses `clientId` idempotency. POS stock may become negative; online stock must be atomically guarded.
-- Write products through `saveProduct()` in `src/server/products/save-product.ts`; bypassing it leaves denormalized `searchText` stale. Category renames must rebuild affected product search text.
-- Preserve offline queue failures in IndexedDB for manual recovery; never discard a paid order merely because syncing failed.
-- Public/protected routing is centralized in `src/lib/auth/public-paths.ts` plus `src/proxy.ts` (Next.js proxy convention); customer APIs are intentionally exempt from admin-session middleware.
-- Security-sensitive JSON endpoints should use `readJsonBody()` for streamed byte limits, then Zod `safeParse`; return discriminated `{ ok: true/false }` results from server actions.
-- Use `logger` from `src/lib/logger.ts`, not direct console calls: it redacts secrets/PII and normalizes paths. Unexpected API errors expose a correlation ID, not raw error details.
-- Public storefront data is tag-cached (`src/server/cache/public-cache.ts`, tags in `tags.ts`: `catalog`, `settings`, `promotions`, `vouchers`, `product:<id>`). Every write path must call `revalidatePublic(...)` AFTER its transaction commits; `/shop`, product, category and policy pages are static/ISR and must never read cookies or headers.
-- Product and category slugs are generated once (in `saveProduct()` / the category action) and never change on rename; old `/shop/products/[id]` URLs 308 to `/shop/p/[slug]`.
-- Vouchers are validated only on the server (`src/lib/vouchers/validate-voucher.ts` engine + `src/server/vouchers`); `usedCount` is incremented atomically inside the order transaction and restored on cancel. `Order.discount` includes `voucherDiscount`; `total = subtotal - discount + shippingFee`.
-- Voucher codes referenced by order history cannot be renamed, deleted, or reused; deactivate them instead. Cancellation restores usage by the historical code, including after other voucher settings change.
-- Order codes come from the atomic `order.sequence` counter in `Setting` (`src/server/orders/order-sequence.ts`), never from `count()`.
-- Production env validation fails closed for Redis rate limiting, HMAC secret, proxy mode, canonical origin, and password hash; build-only dummy values in `src/config/env.ts` must never become runtime defaults.
+- Every customer mutation authorizes via current session and Invitation.ownerId. Every admin mutation resolves a valid DB session and owner/manager role.
+- API cookie mutations require safe origin and streamed body limits. Validate with Zod. Expose Vietnamese domain errors and correlation IDs for unexpected failures.
+- `src/server/wedding/service.ts` owns order creation and payment activation. Calculate price from catalog; snapshot benefits and money in integer VND. Do not accept price/status from the browser.
+- Payment confirmation creates a unique transaction record and activates the order atomically with audit. A customer payment note must never mark the order paid.
+- A public invitation requires published status, an enabled owner and paid entitlement with future expiry. Never expose drafts through public URL.
+- Admin suspension cannot be reversed by the invitation owner. Version-check edits to avoid overwrites.
+- Personal guest tokens are opaque capabilities. Keep them out of logs and referrers. Never expose a complete guest list on public pages.
+- GuestResponse wishes default to pending and render publicly only after approval. RSVP replays update one response.
+- SQLite uses one pooled connection; use only `tx` within interactive transactions. Never call root Prisma from inside them.
+- Production fails closed for Redis, rate-limit HMAC, canonical origin, public URL and admin password hash. Build-only placeholders must never become runtime defaults.
+- Use logger, not direct console for application logging. Never commit `.env`, `.local-admin-password`, DB files or uploaded images.
+- Fresh migrations describe the new wedding domain; never apply them to the source my_task database.
 
-## Local style and workflow
+## Workflow
 
-- Imports are grouped as Node/external, blank line, `@/` aliases, then relative imports; use `import type` for type-only symbols. Prettier uses double quotes/trailing commas and sorts Tailwind classes.
-- Domain filenames are kebab-case; exported React components/types are PascalCase, functions/variables camelCase, constants UPPER_SNAKE_CASE. Monetary VND fields are integer numbers; stock/quantity may be fractional.
-- Keep user-facing copy in Vietnamese. Preserve narrow domain error classes/codes and rethrow unknown errors after handling known Prisma/domain cases.
-- Commit each verified subtask separately with scoped Conventional Commits and push the current branch when the whole task passes. Plans under `docs/superpowers/plans/` are test-first and dependency-ordered.
+Read relevant installed Next.js docs under `node_modules/next/dist/docs/` before changes. Verify before committing. The `base` remote points at the original local clone and intentionally has disabled pushes. Push only to an explicitly configured wedding project remote.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

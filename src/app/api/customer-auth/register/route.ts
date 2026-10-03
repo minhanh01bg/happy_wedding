@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { hasSafeMutationOrigin } from "@/server/http/origin";
 
 import { readJsonBody } from "@/server/http/read-json-body";
 import { hashCustomerPassword } from "@/server/customer-auth/password";
@@ -10,6 +11,11 @@ import { registerCustomerAccountWithOptionalSession } from "@/server/customer-au
 import { customerRegisterSchema } from "@/types/customer-auth";
 
 export async function POST(request: Request) {
+  if (!hasSafeMutationOrigin(request))
+    return NextResponse.json(
+      { message: "Yêu cầu từ nguồn không tin cậy" },
+      { status: 403 },
+    );
   // Layer 1: Streamed body cap (16 KB)
   const bodyResult = await readJsonBody(request, { maxBytes: 16_000 });
   if (!bodyResult.ok) {
@@ -80,7 +86,7 @@ export async function POST(request: Request) {
     {
       ok: true,
       message:
-        "Nếu thông tin hợp lệ, tài khoản đã được xử lý. Vui lòng đăng nhập hoặc sử dụng chức năng khôi phục tài khoản.",
+        "Nếu thông tin hợp lệ, tài khoản đã được xử lý. Vui lòng đăng nhập hoặc liên hệ quản trị viên nếu cần hỗ trợ.",
     },
     {
       status: 200,

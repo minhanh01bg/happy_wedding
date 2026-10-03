@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { hasSafeMutationOrigin } from "@/server/http/origin";
 
 import { readJsonBody } from "@/server/http/read-json-body";
 import { verifyCustomerPassword } from "@/server/customer-auth/password";
@@ -18,6 +19,11 @@ import { customerLoginSchema } from "@/types/customer-auth";
 const GENERIC_ERROR = { message: "Số điện thoại hoặc mật khẩu không đúng" };
 
 export async function POST(request: Request) {
+  if (!hasSafeMutationOrigin(request))
+    return NextResponse.json(
+      { message: "Yêu cầu từ nguồn không tin cậy" },
+      { status: 403 },
+    );
   // Layer 1: Streamed body cap (16 KB)
   const bodyResult = await readJsonBody(request, { maxBytes: 16_000 });
   if (!bodyResult.ok) {

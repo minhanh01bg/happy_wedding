@@ -106,6 +106,7 @@ export function buildCspHeader(options?: CspOptions): CspHeaderResult {
 
   // 4. Font sources
   directives["font-src"] = ["'self'", "data:"];
+  directives["media-src"] = ["'self'", "https:"];
 
   // 5. Connect sources (telemetry, Vercel insights, allowlisted Sentry origin)
   const connectSrc: string[] = [

@@ -1,5 +1,3 @@
-import type { Breadcrumb, ErrorEvent } from "@sentry/nextjs";
-
 const SENSITIVE_KEY_REGEX =
   /(?:password|passwd|token|secret|authorization|cookie|session|phone|address|nonce|recovery|hmackey|keysecret|creditcard|cvv)/i;
 
@@ -13,6 +11,7 @@ const SENSITIVE_PATH_PATTERNS = [
     replacement: "/order-success/[REDACTED]",
   },
   { pattern: /Bearer\s+[A-Za-z0-9._-]+/gi, replacement: "Bearer [REDACTED]" },
+  { pattern: /Apikey\s+[A-Za-z0-9._-]+/gi, replacement: "Apikey [REDACTED]" },
 ];
 
 /**
@@ -26,7 +25,7 @@ export function normalizeSafePath(input: string): string {
   }
   // Strip sensitive query parameter values
   result = result.replace(
-    /([?&](?:token|secret|recovery|key|code)=)[^&]+/gi,
+    /([?&](?:token|secret|recovery|key|code|guest)=)[^&]+/gi,
     "$1[REDACTED]",
   );
   return result;
@@ -116,81 +115,4 @@ export function redactLogData(
   }
 
   return result;
-}
-
-/**
- * Sanitizes Sentry breadcrumbs before they are added to telemetry.
- */
-export function sanitizeSentryBreadcrumb(
-  breadcrumb: Breadcrumb,
-): Breadcrumb | null {
-  if (breadcrumb.data && typeof breadcrumb.data === "object") {
-    breadcrumb.data = redactLogData(breadcrumb.data) as Record<string, unknown>;
-  }
-  if (breadcrumb.message) {
-    breadcrumb.message = normalizeSafePath(breadcrumb.message);
-  }
-  return breadcrumb;
-}
-
-/**
- * Central Sentry event scrubber for beforeSend.
- * Completely strips request bodies, redacts headers/cookies, normalizes URLs,
- * and cleans user and extra fields.
- */
-export function sanitizeSentryEvent(event: ErrorEvent): ErrorEvent | null {
-  if (event.request) {
-    // 1. Completely delete request payload data
-    if (event.request.data) {
-      delete (event.request as Record<string, unknown>).data;
-    }
-
-    // 2. Redact request headers
-    if (event.request.headers) {
-      const sanitizedHeaders: Record<string, string> = {};
-      for (const [k, v] of Object.entries(event.request.headers)) {
-        if (isSensitiveKey(k)) {
-          sanitizedHeaders[k] = "[REDACTED]";
-        } else {
-          sanitizedHeaders[k] = v;
-        }
-      }
-      event.request.headers = sanitizedHeaders;
-    }
-
-    // 3. Redact request cookies
-    if (event.request.cookies) {
-      const sanitizedCookies: Record<string, string> = {};
-      for (const k of Object.keys(event.request.cookies)) {
-        sanitizedCookies[k] = "[REDACTED]";
-      }
-      event.request.cookies = sanitizedCookies;
-    }
-
-    // 4. Normalize URL
-    if (event.request.url) {
-      event.request.url = normalizeSafePath(event.request.url);
-    }
-  }
-
-  // 5. Sanitize user identifiers and PII
-  if (event.user) {
-    if (event.user.ip_address) event.user.ip_address = "[REDACTED]";
-    if (event.user.email) event.user.email = "[REDACTED]";
-    if (event.user.username) event.user.username = "[REDACTED]";
-  }
-
-  // 6. Sanitize breadcrumbs
-  if (event.breadcrumbs) {
-    event.breadcrumbs = event.breadcrumbs.map(
-      (b) => sanitizeSentryBreadcrumb(b)!,
-    );
-  }
-
-  // 7. Sanitize extra payload
-  if (event.extra && typeof event.extra === "object") {
-    event.extra = redactLogData(event.extra) as Record<string, unknown>;
-  }
-
-  return event;
 }

@@ -28,7 +28,7 @@ This repository was cloned from `my_task`. The active product is a wedding invit
 
 ## Workflow
 
-Read relevant installed Next.js docs under `node_modules/next/dist/docs/` before changes. Verify before committing. The `base` remote points at the original local clone and intentionally has disabled pushes. Push only to an explicitly configured wedding project remote.
+Read relevant installed Next.js docs under `node_modules/next/dist/docs/` before changes. Verify before committing. The `base` remote points at the original local clone and intentionally has disabled pushes. The `origin` remote is `https://github.com/minhanh01bg/happy_wedding.git`; publish wedding project changes there. Commit each completed, verified piece of work separately with a focused message; do not accumulate unrelated work into one large commit.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

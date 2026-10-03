@@ -49,17 +49,22 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
       },
       { threshold: 0.08 },
     );
-    container
-      .querySelectorAll(
-        ".wedding-hero-copy, .wedding-hero-image, .wedding-section, .wedding-thanks",
-      )
-      .forEach((element) => observer.observe(element));
+    const observe = () => {
+      container
+        .querySelectorAll(
+          ".wedding-hero-copy, .wedding-hero-image, .wedding-section, .wedding-thanks",
+        )
+        .forEach((element) => observer.observe(element));
+    };
+    container.addEventListener("invitation-opened", observe);
+    if (!container.querySelector(".invitation-opening")) observe();
     const stop = () => {
       if (preference.matches)
         animations.forEach((animation) => animation.cancel());
     };
     preference.addEventListener("change", stop);
     return () => {
+      container.removeEventListener("invitation-opened", observe);
       observer.disconnect();
       animations.forEach((animation) => animation.cancel());
       preference.removeEventListener("change", stop);

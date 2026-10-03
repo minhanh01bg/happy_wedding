@@ -79,6 +79,8 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
   const guestContext = await browser.newContext();
   const guest = await guestContext.newPage();
   await guest.goto(`http://127.0.0.1:3201${guestHref}`);
+  await guest.getByRole("button", { name: "Mở thiệp", exact: true }).click();
+  await expect(guest.locator(".invitation-opening")).not.toBeVisible();
   await expect(guest.getByText("Trân trọng kính mời Chị Lan")).toBeVisible();
   await guest.getByLabel("Số người tham dự").selectOption("2");
   await guest
@@ -93,6 +95,8 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
   await page.getByRole("button", { name: "Duyệt lời chúc" }).click();
   await expect(page.getByText("Đã duyệt", { exact: true })).toBeVisible();
   await guest.reload();
+  await guest.getByRole("button", { name: "Mở thiệp", exact: true }).click();
+  await expect(guest.locator(".invitation-opening")).not.toBeVisible();
   await expect(
     guest.getByText("Chúc anh chị trăm năm hạnh phúc!", { exact: true }),
   ).toBeVisible();
@@ -135,6 +139,8 @@ test("catalog filters, full previews and home layout work on mobile", async ({
   await expect(page.getByRole("heading", { name: "Lời yêu" })).toHaveCount(0);
   await page.getByRole("link", { name: "Xem mẫu Song hỷ" }).click();
   await page.getByRole("link", { name: "Xem thiệp đầy đủ" }).click();
+  await page.getByRole("button", { name: "Mở thiệp", exact: true }).click();
+  await expect(page.locator(".invitation-opening")).not.toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Bạn sẽ đến chứ?" }),
   ).toBeVisible();
@@ -156,6 +162,8 @@ test("invitation album restores focus and respects reduced motion on mobile", as
   await page.goto("/templates");
   await page.getByRole("link", { name: "Xem mẫu Song hỷ" }).click();
   await page.getByRole("link", { name: "Xem thiệp đầy đủ" }).click();
+  await page.getByRole("button", { name: "Mở thiệp", exact: true }).click();
+  await expect(page.locator(".invitation-opening")).not.toBeVisible();
   const firstPhoto = page.getByRole("button", { name: /Xem ảnh kỷ niệm 1 / });
   await firstPhoto.click();
   const album = page.getByRole("dialog", { name: "Album ảnh cưới" });
@@ -192,4 +200,38 @@ test("invitation album restores focus and respects reduced motion on mobile", as
   await firstPhoto.click();
   await page.getByRole("button", { name: "Đóng album" }).click();
   await expect(album).not.toBeVisible();
+});
+
+test("opening doors introduce the invitation and release keyboard focus", async ({
+  page,
+  browser,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/preview/song-hy");
+  const opening = page.getByRole("dialog", { name: /Minh Anh.*Ngọc Hà/ });
+  await expect(opening).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Mở thiệp", exact: true }),
+  ).toBeFocused();
+  await expect(page.locator("body")).toHaveCSS("overflow", "hidden");
+  await page.keyboard.press("Enter");
+  await expect(opening).not.toBeVisible();
+  await expect(page.locator(".wedding-hero h1")).toBeFocused();
+  await expect(page.locator("body")).not.toHaveCSS("overflow", "hidden");
+  await page.reload();
+  await expect(opening).toBeVisible();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.keyboard.press("Escape");
+  await expect(opening).not.toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  const noScript = await browser.newContext({ javaScriptEnabled: false });
+  const fallback = await noScript.newPage();
+  await fallback.goto("/preview/song-hy");
+  await expect(fallback.locator(".wedding-hero h1")).toBeVisible();
+  await expect(fallback.locator(".invitation-opening")).not.toBeVisible();
+  await noScript.close();
 });

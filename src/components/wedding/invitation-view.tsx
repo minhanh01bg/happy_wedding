@@ -12,6 +12,7 @@ import { RsvpForm } from "./rsvp-form";
 import { Music } from "./music";
 import { InvitationMotion } from "./invitation-motion";
 import { InvitationAlbum } from "./invitation-album";
+import { InvitationOpening } from "./invitation-opening";
 
 export function InvitationView({
   invitation,
@@ -45,6 +46,12 @@ export function InvitationView({
       <article
         className={`wedding-page palette-${invitation.template.palette} layout-${invitation.template.layout}`}
       >
+        <InvitationOpening
+          groom={invitation.groom}
+          bride={invitation.bride}
+          date={dateLabel(invitation.weddingDate)}
+          guestName={guestName}
+        />
         {invitation.isDemo && (
           <div className="demo-banner">
             THIỆP MINH HỌA · Tên, lịch tiệc và địa điểm là dữ liệu mẫu.
@@ -65,7 +72,7 @@ export function InvitationView({
           </div>
           <div className="wedding-hero-copy">
             <p className="eyebrow">WE’RE GETTING MARRIED</p>
-            <h1>
+            <h1 tabIndex={-1}>
               {invitation.groom}
               <em>&</em>
               {invitation.bride}

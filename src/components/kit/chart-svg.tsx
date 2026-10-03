@@ -63,7 +63,7 @@ export function ChartSvg({
     return (
       <div
         data-testid="chart-svg-root"
-        className={`surface-panel rounded-2xl border p-5 ${className}`}
+        className={`surface-panel min-w-0 rounded-2xl border p-5 ${className}`}
       >
         {title && <h3 className="text-base font-bold">{title}</h3>}
         {subtitle && (
@@ -151,12 +151,13 @@ export function ChartSvg({
 
   const labelStep =
     data.length > MAX_AXIS_LABELS ? Math.ceil(data.length / 10) : 1;
+  const mobileLabelStep = Math.max(1, Math.ceil((data.length - 1) / 5));
   const hovered = hoverIndex !== null ? points[hoverIndex] : undefined;
 
   return (
     <div
       data-testid="chart-svg-root"
-      className={`surface-panel rounded-2xl border p-5 ${className}`}
+      className={`surface-panel min-w-0 rounded-2xl border p-5 ${className}`}
     >
       <div className="mb-3 flex items-center justify-between gap-4">
         <div>
@@ -332,24 +333,31 @@ export function ChartSvg({
 
         {/* Labels below chart */}
         <div
-          className="text-muted-foreground flex justify-between pt-2 text-xs"
+          className="text-muted-foreground relative mt-2 h-4 text-xs"
           style={{
-            paddingLeft: `${(paddingX / width) * 100}%`,
-            paddingRight: `${(paddingX / width) * 100}%`,
+            marginLeft: `${(paddingX / width) * 100}%`,
+            marginRight: `${(paddingX / width) * 100}%`,
           }}
         >
-          {data.map((d, index) => (
-            <span
-              key={index}
-              className={`text-center font-medium ${
-                hoverIndex === index ? "text-primary font-bold" : ""
-              }`}
-            >
-              {index % labelStep === 0 || index === data.length - 1
-                ? d.label
-                : null}
-            </span>
-          ))}
+          {data.map((d, index) => {
+            const last = index === data.length - 1;
+            const desktopVisible = index % labelStep === 0 || last;
+            const mobileVisible = index % mobileLabelStep === 0 || last;
+            if (!desktopVisible && !mobileVisible) return null;
+            return (
+              <span
+                key={index}
+                style={{
+                  left: `${(index / Math.max(data.length - 1, 1)) * 100}%`,
+                }}
+                className={`absolute -translate-x-1/2 text-center font-medium whitespace-nowrap ${mobileVisible ? (desktopVisible ? "" : "sm:hidden") : "hidden sm:block"} ${
+                  hoverIndex === index ? "text-primary font-bold" : ""
+                }`}
+              >
+                {d.label}
+              </span>
+            );
+          })}
         </div>
       </div>
     </div>

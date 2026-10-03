@@ -48,6 +48,9 @@ function ProductRanking({
                   )}
                   <p className="text-muted-foreground mt-1 text-xs">
                     Doanh thu tiền hàng <Money amount={row.revenue} size="sm" />
+                    {metric === "grossProfit"
+                      ? ` · ${row.quantity.toLocaleString("vi-VN")} ${row.unit}`
+                      : ""}
                     {metric === "grossProfit" && row.unknownCostLineCount > 0
                       ? " · Chỉ tính phần có giá vốn"
                       : ""}
@@ -113,7 +116,7 @@ export function SalesAnalyticsSection({
           ))}
         </nav>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <StatTile
           label="Doanh thu trong kỳ"
           value={totals.revenue}
@@ -153,7 +156,7 @@ export function SalesAnalyticsSection({
         seriesLabels={["Tại quầy", "Online"]}
         valueFormat="vnd-k"
       />
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ChartSvg
           title="Số đơn theo ngày"
           subtitle="Đơn bán được ghi nhận trong kỳ"
@@ -178,7 +181,7 @@ export function SalesAnalyticsSection({
           <CardTitle>Cơ cấu kênh bán</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             {(["pos", "online"] as const).map((channel) => {
               const name = channel === "pos" ? "Tại quầy" : "Online";
               const share = totals.orderCount
@@ -212,7 +215,7 @@ export function SalesAnalyticsSection({
           </div>
         </CardContent>
       </Card>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <ProductRanking
           title="Top 5 bán nhiều nhất"
           rows={analytics.topQuantity}

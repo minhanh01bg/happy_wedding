@@ -80,6 +80,24 @@ test("tổng quan hợp nhất biểu đồ và sản phẩm bán nhiều, lãi 
     await expect(
       page.getByRole("link", { name: "Báo cáo", exact: true }),
     ).toHaveCount(0);
+    await page.setViewportSize({ width: 390, height: 844 });
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(390);
+    await page.screenshot({
+      path: testInfo.outputPath("unified-dashboard-mobile.png"),
+      fullPage: true,
+    });
+    await page.getByRole("link", { name: "30 ngày", exact: true }).click();
+    await expect(
+      page.getByRole("img", { name: /^Doanh thu 30 ngày:/ }),
+    ).toBeVisible();
+    for (const width of [390, 320]) {
+      await page.setViewportSize({ width, height: 844 });
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth),
+      ).toBeLessThanOrEqual(width);
+    }
   } finally {
     await prisma.order.deleteMany({
       where: { clientId: { startsWith: prefix } },

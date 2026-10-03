@@ -18,6 +18,28 @@ describe("LoginPage & LoginForm (Dynamic Store Name)", () => {
     refresh.mockReset();
   });
 
+  it("LoginForm: báo lỗi trống bằng tiếng Việt và cho phép thử lại khi mất mạng", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockRejectedValue(new TypeError("offline"));
+    render(<LoginForm storeName="Cửa Hàng Xanh" />);
+    fireEvent.submit(
+      screen.getByLabelText("Mật khẩu cửa hàng").closest("form")!,
+    );
+    expect(
+      await screen.findByText("Vui lòng nhập mật khẩu cửa hàng."),
+    ).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Mật khẩu cửa hàng"), {
+      target: { value: "123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Vào bán hàng" }));
+    expect(
+      await screen.findByText("Không thể kết nối. Vui lòng thử lại."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Vào bán hàng" })).toBeEnabled();
+  });
+
   it("generateMetadata: trả về title chứa tên cửa hàng động", async () => {
     vi.spyOn(storeSettings, "getStoreName").mockResolvedValue(
       "Tiệm Bách Hóa ABC",

@@ -12,6 +12,36 @@ describe("CustomerAuthForm", () => {
     replace.mockReset();
     refresh.mockReset();
   });
+  it("hiển thị lỗi từng trường thay cho bong bóng required", async () => {
+    render(<CustomerAuthForm mode="login" />);
+    fireEvent.submit(
+      screen.getByRole("button", { name: "Đăng nhập" }).closest("form")!,
+    );
+    expect(
+      await screen.findByText("Vui lòng nhập số điện thoại."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Vui lòng nhập mật khẩu.")).toBeInTheDocument();
+    expect(screen.getByLabelText("Số điện thoại")).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(screen.getByLabelText("Số điện thoại")).toHaveFocus();
+  });
+  it("khôi phục nút gửi khi mất kết nối", async () => {
+    vi.spyOn(globalThis, "fetch").mockRejectedValue(new TypeError("offline"));
+    render(<CustomerAuthForm mode="login" />);
+    fireEvent.change(screen.getByLabelText("Số điện thoại"), {
+      target: { value: "0901234567" },
+    });
+    fireEvent.change(screen.getByLabelText("Mật khẩu"), {
+      target: { value: "a-secure-password" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Đăng nhập" }));
+    expect(
+      await screen.findByText("Không thể kết nối. Vui lòng thử lại."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Đăng nhập" })).toBeEnabled();
+  });
   it("gửi đúng boundary login và điều hướng account", async () => {
     const fetchMock = vi
       .spyOn(globalThis, "fetch")

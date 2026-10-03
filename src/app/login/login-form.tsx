@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Eye, EyeOff, LockKeyhole, Store } from "lucide-react";
@@ -27,33 +28,39 @@ export function LoginForm({ storeName, next }: LoginFormProps) {
   const displayStoreName =
     storeName || process.env.NEXT_PUBLIC_STORE_NAME || "Cửa hàng";
 
-  async function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setPending(true);
-    setError(null);
-
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
-
-    setPending(false);
-
-    if (!response.ok) {
-      const data = (await response.json().catch(() => null)) as {
-        message?: string;
-      } | null;
-      setError(
-        data?.message ||
-          "Đăng nhập thất bại. Vui lòng kiểm tra kết nối máy chủ.",
-      );
+    if (pending) return;
+    if (!password) {
+      setError("Vui lòng nhập mật khẩu cửa hàng.");
+      event.currentTarget
+        .querySelector<HTMLInputElement>("#store-password")
+        ?.focus();
       return;
     }
-
-    invalidateStorefrontSession();
-    router.push(resolvePostLoginPath(next));
-    router.refresh();
+    setPending(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      if (!response.ok) {
+        const data = (await response.json().catch(() => null)) as {
+          message?: string;
+        } | null;
+        setError(data?.message || "Đăng nhập thất bại. Vui lòng thử lại.");
+        return;
+      }
+      invalidateStorefrontSession();
+      router.push(resolvePostLoginPath(next));
+      router.refresh();
+    } catch {
+      setError("Không thể kết nối. Vui lòng thử lại.");
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -76,7 +83,7 @@ export function LoginForm({ storeName, next }: LoginFormProps) {
         </div>
       </CardHeader>
       <CardContent className="p-6 pt-4 sm:p-8 sm:pt-4">
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form noValidate onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="store-password" className="text-sm font-bold">
               Mật khẩu cửa hàng
@@ -90,10 +97,14 @@ export function LoginForm({ storeName, next }: LoginFormProps) {
                 id="store-password"
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setError(null);
+                }}
                 placeholder="Nhập mật khẩu"
                 autoFocus
-                required
+                autoComplete="current-password"
+                aria-required="true"
                 aria-invalid={Boolean(error)}
                 aria-describedby={error ? "login-error" : undefined}
                 className="h-13 pr-12 pl-12 text-base"
@@ -118,22 +129,22 @@ export function LoginForm({ storeName, next }: LoginFormProps) {
               role="alert"
               className="bg-destructive/10 text-destructive rounded-xl px-3 py-2 text-sm font-semibold"
             >
-              {error.endsWith(".") ? error : `${error}.`} Vui lòng thử lại.
+              {error}
             </p>
           ) : null}
           <Button
             type="submit"
-            disabled={pending || password.length === 0}
+            disabled={pending}
             className="h-13 w-full text-base"
           >
             {pending ? "Đang kiểm tra..." : "Vào bán hàng"}
           </Button>
-          <div className="border-border/80 bg-muted/30 text-muted-foreground rounded-xl border border-dashed p-2.5 text-center text-xs">
-            Mật khẩu mặc định hệ thống:{" "}
-            <code className="bg-muted text-foreground rounded px-1.5 py-0.5 font-mono font-bold">
-              123456
-            </code>
-          </div>
+          <Link
+            href="/shop"
+            className="text-muted-foreground hover:text-primary block py-2 text-center text-sm font-semibold"
+          >
+            Quay lại cửa hàng
+          </Link>
         </form>
       </CardContent>
     </Card>

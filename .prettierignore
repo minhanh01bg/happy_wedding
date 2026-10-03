@@ -5,3 +5,7 @@ coverage
 playwright-report
 test-results
 pnpm-lock.yaml
+
+.next-e2e
+.playwright-cli
+.local-admin-password

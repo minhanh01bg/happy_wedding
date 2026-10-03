@@ -54,10 +54,10 @@ Public invitation, tên khách riêng, lịch/Maps/Calendar, RSVP dedupe, duyệ
 - [ ] **Step 2: Chạy regression public/RSVP/privacy.**
 
 ```bash
-pnpm exec vitest run tests/server/wedding/service.test.ts tests/lib/log-redaction.test.ts -t 'unpaid|activation permits|expired|disabled owners|public responses|RSVP|tiệc|token|Apikey'
+pnpm exec vitest run tests/server/wedding/service.test.ts tests/lib/log-redaction.test.ts
 ```
 
-Expected: selected tests PASS. Kiểm tên test thực tế; nếu pattern không chọn được case cần thiết thì chạy toàn bộ hai file. Assertion RSVP hiện có trong fixture file:
+Expected: cả hai file PASS; không bỏ qua case đổi số lượng tiệc sau RSVP hoặc redact guest URL/Authorization. Assertion RSVP hiện có trong fixture file:
 
 ```ts
 expect(await prisma.guestResponse.count()).toBe(1);

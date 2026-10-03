@@ -26,6 +26,10 @@ This repository was cloned from `my_task`. The active product is a wedding invit
 - Use logger, not direct console for application logging. Never commit `.env`, `.local-admin-password`, DB files or uploaded images.
 - Fresh migrations describe the new wedding domain; never apply them to the source my_task database.
 
+## Domain documentation
+
+Read `CONTEXT.md` and `docs/README.md` before changing wedding behavior. The baseline specification is `docs/superpowers/specs/2026-10-03-wedding-platform-design.md`; subsystem plans are in `docs/superpowers/plans/`, API contracts in `docs/API-CONTRACTS.md`, and decisions in `docs/adr/`. These documents were added after implementation: do not infer prior brainstorming approval or TDD from their existence. Keep plan checkboxes open until the stated action has fresh evidence; documentation work does not authorize production deployment or invent real couple/bank details. Update the relevant spec, contracts, ADR and verification together with behavior changes.
+
 ## Workflow
 
 Read relevant installed Next.js docs under `node_modules/next/dist/docs/` before changes. Verify before committing. The `base` remote points at the original local clone and intentionally has disabled pushes. The `origin` remote is `https://github.com/minhanh01bg/happy_wedding.git`; publish wedding project changes there. Commit each completed, verified piece of work separately with a focused message; do not accumulate unrelated work into one large commit.

@@ -1,6 +1,6 @@
 # Hỷ Studio / Wedding Studio
 
-Nền tảng thiệp cưới online và bán dịch vụ, clone từ `my_task`. Xem [nghiên cứu & phạm vi](docs/RESEARCH.md) và [hướng dẫn vận hành](docs/OPERATIONS.md).
+Nền tảng thiệp cưới online và bán dịch vụ, clone từ `my_task`. Bắt đầu từ [mục lục tài liệu](docs/README.md), [ngữ cảnh nghiệp vụ](CONTEXT.md), [nghiên cứu & phạm vi](docs/RESEARCH.md) và [hướng dẫn vận hành](docs/OPERATIONS.md).
 
 ## Chạy dự án
 
@@ -37,7 +37,7 @@ Unit/integration và E2E dùng các SQLite test độc lập. Playwright cần C
 
 Giữ Next.js/React/TypeScript, Prisma/SQLite, customer/admin auth, session revocation, guards HTTP/CSRF, rate limiting Redis, logger và test bảo mật từ base. Thay nghiệp vụ bán hàng/POS/kho/voucher/giao hàng bằng template, service plan, invitation, service order, payment, personal guest và RSVP.
 
-Dự án không sao chép dữ liệu, mật khẩu hoặc ảnh upload của `my_task`. Git remote `base` chỉ phục vụ đối chiếu lịch sử và bị chặn push; chưa cấu hình remote GitHub riêng.
+Dự án không sao chép dữ liệu, mật khẩu hoặc ảnh upload của `my_task`. Git remote `base` chỉ phục vụ đối chiếu lịch sử và bị chặn push; remote `origin` là [happy_wedding](https://github.com/minhanh01bg/happy_wedding), nhánh `main`. Commit và push riêng từng phần đã hoàn thành, không gom các thay đổi không liên quan.
 
 ## Lưu ý nội dung
 

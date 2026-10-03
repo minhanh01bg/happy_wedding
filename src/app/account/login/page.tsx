@@ -1,19 +1,10 @@
-import type { Metadata } from "next";
-
-import { CustomerAuthForm } from "@/features/customer-account/auth-form";
-import { CustomerAuthShell } from "@/features/customer-account/auth-shell";
-import { getStoreName } from "@/server/settings/store-settings";
-
-export const metadata: Metadata = {
-  title: "Đăng nhập khách hàng",
-  robots: { index: false, follow: false },
-};
-
-export default async function CustomerLoginPage() {
-  const storeName = await getStoreName();
-  return (
-    <CustomerAuthShell storeName={storeName} mode="login">
-      <CustomerAuthForm mode="login" />
-    </CustomerAuthShell>
-  );
+import { AuthPage } from "@/components/wedding/auth-page";
+import { safeNext } from "@/lib/auth-next";
+export const metadata = { title: "Đăng nhập", robots: { index: false } };
+export default async function Login({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  return <AuthPage mode="login" next={safeNext((await searchParams).next)} />;
 }

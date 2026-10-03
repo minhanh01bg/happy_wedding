@@ -1,41 +1,52 @@
-import type { Metadata } from "next";
-
-import { ServiceWorkerRegistrar } from "@/components/pos/service-worker-registrar";
-import { AdminNav } from "@/features/admin-navigation/admin-nav";
-import { LowStockNavBadge } from "@/features/admin-navigation/low-stock-nav-badge";
-import { NotificationProvider } from "@/features/admin-notifications/notification-provider";
-import { AdminSearchProvider } from "@/features/admin-search/admin-search-provider";
-import { QueryProvider } from "@/providers/query-provider";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { Brand } from "@/components/wedding/shell";
+import { Logout } from "@/components/wedding/actions";
 import { requireAdminSession } from "@/server/auth/require-admin-session";
-
-export const metadata: Metadata = {
-  manifest: "/manifest.webmanifest",
-  robots: { index: false, follow: false },
-};
-
+export const dynamic = "force-dynamic";
+export const metadata = { robots: { index: false, follow: false } };
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await requireAdminSession({ redirectToLogin: true });
-
+  const session = await requireAdminSession({ redirectToLogin: true });
+  if (
+    !session.identity ||
+    !["owner", "manager"].includes(session.identity.role)
+  )
+    redirect("/login");
   return (
-    <QueryProvider>
-      <NotificationProvider>
-        <AdminSearchProvider>
-          <div className="grid min-h-dvh grid-cols-1 md:grid-cols-[auto_minmax(0,1fr)]">
-            <AdminNav productsBadge={<LowStockNavBadge />} />
-            <main
-              id="admin-main-content"
-              className="min-w-0 p-4 pb-24 sm:p-6 sm:pb-24 md:pb-6 lg:p-8"
-            >
-              {children}
-            </main>
-          </div>
-        </AdminSearchProvider>
-      </NotificationProvider>
-      <ServiceWorkerRegistrar />
-    </QueryProvider>
+    <>
+      <header className="workspace-header">
+        <Brand />
+        <span className="eyebrow">QUẢN TRỊ DỊCH VỤ</span>
+        <div>
+          <Link className="text-link" href="/">
+            Xem website ↗
+          </Link>
+          <Logout admin />
+        </div>
+      </header>
+      <main className="workspace">
+        <nav className="admin-navigation" aria-label="Quản trị">
+          {[
+            ["/admin", "Tổng quan"],
+            ["/admin/orders", "Đơn dịch vụ"],
+            ["/admin/templates", "Mẫu thiệp"],
+            ["/admin/plans", "Gói dịch vụ"],
+            ["/admin/invitations", "Thiệp khách hàng"],
+            ["/admin/customers", "Khách hàng"],
+            ["/admin/settings", "Cấu hình"],
+            ["/admin/audit", "Nhật ký"],
+          ].map(([href, label]) => (
+            <Link href={href} key={href}>
+              {label}
+            </Link>
+          ))}
+        </nav>
+        {children}
+      </main>
+    </>
   );
 }

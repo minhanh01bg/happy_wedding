@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
 
 import { CustomerAuthForm } from "@/features/customer-account/auth-form";
+import { CustomerAuthShell } from "@/features/customer-account/auth-shell";
+import { getStoreName } from "@/server/settings/store-settings";
 
 export const metadata: Metadata = {
   title: "Tạo tài khoản",
   robots: { index: false, follow: false },
 };
 
-export default function CustomerRegisterPage() {
+export default async function CustomerRegisterPage() {
+  const storeName = await getStoreName();
   return (
-    <main className="mx-auto max-w-3xl px-4 py-16">
-      <h1 className="text-center text-4xl font-bold">Tạo tài khoản</h1>
+    <CustomerAuthShell storeName={storeName} mode="register">
       <CustomerAuthForm mode="register" />
-    </main>
+    </CustomerAuthShell>
   );
 }

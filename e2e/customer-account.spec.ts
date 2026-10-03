@@ -25,7 +25,7 @@ test("customer notification hiển thị thông báo trong tài khoản khách h
   await page.goto("/account/register");
   await page.getByLabel("Họ và tên").fill("Khách Hàng Test");
   await page.getByLabel("Số điện thoại").fill(phone);
-  await page.getByLabel("Mật khẩu").fill("matkhau123456");
+  await page.getByLabel("Mật khẩu", { exact: true }).fill("matkhau123456");
   await page.getByRole("button", { name: /tạo tài khoản/i }).click();
 
   await expect(page.getByText(/tài khoản đã được xử lý/i)).toBeVisible();
@@ -33,7 +33,7 @@ test("customer notification hiển thị thông báo trong tài khoản khách h
   await page.waitForURL("**/account/login");
 
   await page.getByLabel("Số điện thoại").fill(phone);
-  await page.getByLabel("Mật khẩu").fill("matkhau123456");
+  await page.getByLabel("Mật khẩu", { exact: true }).fill("matkhau123456");
   await page.getByRole("button", { name: /^đăng nhập$/i }).click();
   await page.waitForURL("**/account/orders");
 

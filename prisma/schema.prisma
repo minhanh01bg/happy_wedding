@@ -7,68 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Category {
-  id        String    @id @default(cuid())
-  name      String
-  /// URL SEO /shop/c/<slug>; sinh tu ten luc luu (src/server/categories/category-slug.ts)
-  slug      String?   @unique
-  sortOrder Int       @default(0)
-  products  Product[]
-
-  @@index([sortOrder])
-}
-
-model Product {
-  id          String    @id @default(cuid())
-  name        String
-  /// URL SEO /shop/p/<slug>; sinh boi saveProduct tu ten
-  slug        String?   @unique
-  sku         String?   @unique
-  categoryId  String?
-  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  unit        String    @default("cái")
-  /// Tien: so nguyen VND
-  price       Int       @default(0)
-  costPrice   Int       @default(0)
-  /// So luong: so thuc (kg, met)
-  stock       Float     @default(0)
-  /// Ten goi khac, ngan cach bang dau phay
-  aliases     String?
-  /// Chuoi da chuan hoa, sinh boi buildSearchText luc luu
-  searchText  String    @default("")
-  imageUrl    String?
-  isActive    Boolean   @default(true)
-  isService   Boolean   @default(false)
-  /// Phuc vu xep hang tim kiem
-  soldCount   Int       @default(0)
-  /// Diem danh gia trung binh (chi tinh review published); cap nhat boi createReview/moderation
-  ratingAvg   Float     @default(0)
-  ratingCount Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
-
-  orderItems     OrderItem[]
-  stockMovements StockMovement[]
-  reviews        ProductReview[]
-
-  @@index([isActive])
-  @@index([categoryId])
-  @@index([isActive, deletedAt, isService, soldCount])
-  @@index([isActive, deletedAt, name])
-  @@index([categoryId, isActive, soldCount])
-  @@index([deletedAt, isService, stock])
-}
-
-model Customer {
-  id     String  @id @default(cuid())
-  name   String
-  phone  String?
-  orders Order[]
-
-  @@index([name])
-}
-
 model CustomerAccount {
   id              String    @id @default(cuid())
   phoneNormalized String    @unique
@@ -80,9 +18,8 @@ model CustomerAccount {
   disabledAt      DateTime?
 
   sessions      CustomerSession[]
-  orders        Order[]
-  notifications CustomerNotification[]
-  reviews       ProductReview[]
+  invitations   Invitation[]
+  serviceOrders ServiceOrder[]
 }
 
 model CustomerSession {
@@ -97,185 +34,6 @@ model CustomerSession {
 
   @@index([accountId, expiresAt])
   @@index([expiresAt])
-}
-
-model Order {
-  id                String           @id @default(cuid())
-  code              String           @unique
-  /// pos | online
-  channel           String           @default("pos")
-  /// paid | pending | debt | cancelled
-  status            String           @default("paid")
-  subtotal          Int              @default(0)
-  discount          Int              @default(0)
-  total             Int              @default(0)
-  customerId        String?
-  customer          Customer?        @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  customerAccountId String?
-  customerAccount   CustomerAccount? @relation(fields: [customerAccountId], references: [id], onDelete: SetNull)
-  note              String?
-  /// Ma duy nhat do may ban sinh TRUOC khi gui — chong trung don
-  clientId          String           @unique
-  createdAt         DateTime         @default(now())
-  syncedAt          DateTime?
-  /// Danh dau don co dong lam ton kho bi am
-  hasStockWarning   Boolean          @default(false)
-  /// Online-only fulfillment metadata; null for POS orders
-  fulfillmentStatus String?
-  fulfillmentType   String?
-  paymentMethod     String?
-  contactName       String?
-  contactPhone      String?
-  deliveryAddress   String?
-  deliveryWard      String?
-  deliveryDistrict  String?
-  deliveryProvince  String?
-  shippingFee       Int              @default(0)
-  /// Ma voucher da ap dung (UPPER); null khi khong dung voucher
-  voucherCode       String?
-  /// Phan giam tien hang cua voucher — da nam trong `discount`
-  voucherDiscount   Int              @default(0)
-  /// Khung gio giao hang khach chon (don giao tan noi)
-  deliverySlot      String?
-  /// Nonce SHA-256 digest for non-enumerable public receipt lookup
-  receiptNonceHash  String?          @unique
-  anonymizedAt      DateTime?
-  legalHold         Boolean          @default(false)
-
-  items       OrderItem[]
-  payments    Payment[]
-  guestAccess GuestOrderAccess?
-  idempotency CheckoutIdempotency?
-
-  @@index([createdAt])
-  @@index([status])
-  @@index([channel])
-  @@index([fulfillmentStatus])
-  @@index([customerAccountId])
-  @@index([status, createdAt])
-  @@index([channel, createdAt])
-  @@index([customerAccountId, channel, createdAt])
-  @@index([anonymizedAt, legalHold, createdAt])
-}
-
-model GuestOrderAccess {
-  id        String    @id @default(cuid())
-  orderId   String    @unique
-  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  tokenHash String    @unique
-  expiresAt DateTime
-  createdAt DateTime  @default(now())
-  revokedAt DateTime?
-
-  @@index([expiresAt])
-}
-
-model CheckoutIdempotency {
-  id                  String    @id @default(cuid())
-  clientId            String    @unique
-  requestFingerprint  String
-  orderId             String    @unique
-  order               Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  recoveryDigest      String?
-  encryptedGuestToken String?
-  responsePayload     String
-  recoveredAt         DateTime?
-  expiresAt           DateTime
-  createdAt           DateTime  @default(now())
-
-  @@index([createdAt])
-  @@index([expiresAt])
-}
-
-model AdminNotification {
-  id         String    @id @default(cuid())
-  eventKey   String    @unique
-  kind       String
-  title      String
-  body       String
-  entityType String
-  entityId   String
-  href       String
-  createdAt  DateTime  @default(now())
-  readAt     DateTime?
-
-  @@index([readAt, createdAt])
-  @@index([createdAt, id])
-}
-
-model CustomerNotification {
-  id        String          @id @default(cuid())
-  accountId String
-  account   CustomerAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
-  eventKey  String          @unique
-  kind      String
-  title     String
-  body      String
-  orderId   String?
-  href      String
-  createdAt DateTime        @default(now())
-  readAt    DateTime?
-
-  @@index([accountId, readAt, createdAt])
-  @@index([accountId, createdAt, id])
-  @@index([createdAt])
-}
-
-model OrderItem {
-  id                String   @id @default(cuid())
-  orderId           String
-  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId         String?
-  product           Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
-  /// Ten TAI THOI DIEM BAN — doi ten hang sau nay khong lam sai don cu
-  nameSnapshot      String
-  unitPrice         Int
-  originalPrice     Int
-  /// Giá vốn khi ghi nhận đơn; null với dữ liệu cũ hoặc dòng không liên kết sản phẩm.
-  costPriceSnapshot Int?
-  quantity          Float
-  discount          Int      @default(0)
-  lineTotal         Int
-  unit              String   @default("cái")
-  isService         Boolean  @default(false)
-
-  @@index([orderId])
-}
-
-model Payment {
-  id         String    @id @default(cuid())
-  orderId    String
-  order      Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  /// cash | transfer | debt
-  method     String
-  amount     Int
-  receivedAt DateTime?
-  note       String?
-  createdAt  DateTime  @default(now())
-
-  @@index([orderId])
-  @@index([orderId, method])
-}
-
-model StockMovement {
-  id        String   @id @default(cuid())
-  productId String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  /// Am khi ban ra, duong khi nhap vao
-  delta     Float
-  /// sale | adjust | purchase | count | cancel
-  reason    String
-  /// Id cua don hang hoac phieu lien quan
-  refId     String?
-  createdAt DateTime @default(now())
-
-  @@index([productId])
-  @@index([createdAt])
-}
-
-model Setting {
-  key   String @id
-  value String
 }
 
 model AdminIdentity {
@@ -327,61 +85,144 @@ model AdminAuditEvent {
   @@index([identityId, createdAt])
 }
 
-model StorefrontPromotion {
-  id        String    @id @default(cuid())
-  title     String
-  body      String?
-  imageUrl  String?
-  ctaLabel  String?
-  ctaHref   String?
-  placement String    @default("announcement")
-  startsAt  DateTime?
-  endsAt    DateTime?
-  priority  Int       @default(0)
-  isActive  Boolean   @default(true)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  @@index([placement, isActive, priority])
-  @@index([isActive, startsAt, endsAt])
+model Setting {
+  key   String @id
+  value String
 }
 
-/// Ma giam gia nhap khi dat hang online. `code` luon UPPER.
-model Voucher {
-  id            String    @id @default(cuid())
-  code          String    @unique
-  /// percent | fixed | freeship
-  type          String
-  /// percent: 1-100; fixed: so tien VND; freeship: 0 (khong dung)
-  value         Int
-  /// Tran giam (percent) hoac tran giam phi ship (freeship)
-  maxDiscount   Int?
-  minOrderTotal Int       @default(0)
-  maxUses       Int?
-  usedCount     Int       @default(0)
-  startsAt      DateTime?
-  endsAt        DateTime?
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+model WeddingTemplate {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String
+  category    String
+  description String
+  palette     String       @default("rose")
+  layout      String       @default("editorial")
+  premium     Boolean      @default(false)
+  active      Boolean      @default(true)
+  sortOrder   Int          @default(0)
+  invitations Invitation[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
-/// Danh gia san pham tu khach da dang nhap. `status`: published | hidden
-model ProductReview {
-  id                 String           @id @default(cuid())
-  productId          String
-  product            Product          @relation(fields: [productId], references: [id], onDelete: Cascade)
-  accountId          String?
-  account            CustomerAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
-  authorName         String
-  /// 1..5
-  rating             Int
-  content            String
-  isVerifiedPurchase Boolean          @default(false)
-  status             String           @default("published")
-  createdAt          DateTime         @default(now())
+model ServicePlan {
+  id               String         @id @default(cuid())
+  name             String
+  description      String
+  price            Int
+  months           Int            @default(12)
+  maxPhotos        Int            @default(12)
+  premiumTemplates Boolean        @default(false)
+  removeBranding   Boolean        @default(false)
+  active           Boolean        @default(true)
+  sortOrder        Int            @default(0)
+  orders           ServiceOrder[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
 
-  /// Mỗi tài khoản một đánh giá / sản phẩm (accountId NULL không bị ràng buộc).
-  @@unique([productId, accountId])
-  @@index([productId, status, createdAt])
+model Invitation {
+  id           String          @id @default(cuid())
+  ownerId      String
+  owner        CustomerAccount @relation(fields: [ownerId], references: [id])
+  templateId   String
+  template     WeddingTemplate @relation(fields: [templateId], references: [id])
+  slug         String          @unique
+  groom        String
+  bride        String
+  weddingDate  DateTime
+  headline     String          @default("Một đời thương, một đời bên nhau.")
+  story        String          @default("")
+  groomParents String          @default("")
+  brideParents String          @default("")
+  eventsJson   String          @default("[]")
+  photosJson   String          @default("[]")
+  coverUrl     String          @default("/images/couple.jpg")
+  musicUrl     String          @default("")
+  giftBank     String          @default("")
+  giftAccount  String          @default("")
+  giftName     String          @default("")
+  status       String          @default("draft")
+  isDemo       Boolean         @default(false)
+  version      Int             @default(1)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  orders       ServiceOrder[]
+  responses    GuestResponse[]
+  guests       WeddingGuest[]
+
+  @@index([ownerId, createdAt])
+  @@index([status, weddingDate])
+}
+
+model ServiceOrder {
+  id               String           @id @default(cuid())
+  code             String           @unique
+  clientId         String           @unique
+  accountId        String
+  account          CustomerAccount  @relation(fields: [accountId], references: [id])
+  invitationId     String
+  invitation       Invitation       @relation(fields: [invitationId], references: [id])
+  planId           String
+  plan             ServicePlan      @relation(fields: [planId], references: [id])
+  planName         String
+  total            Int
+  months           Int
+  maxPhotos        Int
+  premiumTemplates Boolean
+  removeBranding   Boolean
+  status           String           @default("pending")
+  paymentNote      String           @default("")
+  paidAt           DateTime?
+  expiresAt        DateTime?
+  createdAt        DateTime         @default(now())
+  payments         WeddingPayment[]
+
+  @@index([accountId, createdAt])
+  @@index([invitationId, status, expiresAt])
+  @@index([status, createdAt])
+}
+
+model WeddingPayment {
+  id            String       @id @default(cuid())
+  orderId       String
+  order         ServiceOrder @relation(fields: [orderId], references: [id])
+  provider      String
+  transactionId String       @unique
+  amount        Int
+  receivedAt    DateTime     @default(now())
+}
+
+model WeddingGuest {
+  id           String          @id @default(cuid())
+  invitationId String
+  invitation   Invitation      @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  name         String
+  group        String          @default("Bạn bè")
+  token        String          @unique
+  createdAt    DateTime        @default(now())
+  responses    GuestResponse[]
+
+  @@index([invitationId, createdAt])
+}
+
+model GuestResponse {
+  id           String        @id @default(cuid())
+  invitationId String
+  invitation   Invitation    @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  guestId      String?
+  guest        WeddingGuest? @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  clientId     String
+  name         String
+  attendance   String
+  partySize    Int           @default(1)
+  eventIndex   Int           @default(0)
+  message      String        @default("")
+  wishStatus   String        @default("pending")
+  createdAt    DateTime      @default(now())
+
+  @@unique([invitationId, clientId])
+  @@index([invitationId, createdAt])
+  @@index([invitationId, wishStatus])
 }

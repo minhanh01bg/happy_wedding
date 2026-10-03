@@ -1,4 +1,3 @@
-import "fake-indexeddb/auto";
 import "@testing-library/jest-dom/vitest";
 
 class MemoryStorage implements Storage {

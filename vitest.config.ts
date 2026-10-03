@@ -17,11 +17,6 @@ export default defineConfig({
     // Several test files talk to the SAME sqlite file and delete/reseed
     // shared tables in beforeEach — running files in parallel would race.
     fileParallelism: false,
-    coverage: {
-      provider: "v8",
-      reporter: ["text", "html"],
-      exclude: ["node_modules/", ".next/", "playwright.config.ts"],
-    },
   },
   resolve: {
     alias: {

@@ -144,3 +144,16 @@ describe("Log Redaction and Data Protection (Task 13)", () => {
     consoleErrorSpy.mockRestore();
   });
 });
+
+describe("Wedding capability privacy", () => {
+  it("scrubs personal guest URLs and webhook authorization values", () => {
+    expect(
+      normalizeSafePath(
+        "https://example.com/w/couple?guest=private-token&other=public",
+      ),
+    ).toBe("https://example.com/w/couple?guest=[REDACTED]&other=public");
+    expect(normalizeSafePath("Apikey sepay-private-key")).toBe(
+      "Apikey [REDACTED]",
+    );
+  });
+});

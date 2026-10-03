@@ -116,6 +116,21 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
     data: { id: invitationId, publish: false },
   });
   expect(denied.status()).toBe(401);
+  // Customer and admin shells also adapt; wide tables scroll within their panel.
+  await admin.goto("http://127.0.0.1:3201/admin/orders");
+  for (const width of [320, 768, 1024]) {
+    for (const workspacePage of [page, admin]) {
+      await workspacePage.setViewportSize({ width, height: 844 });
+      expect(
+        await workspacePage.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+      await expect(
+        workspacePage.getByRole("button", { name: "Đăng xuất", exact: true }),
+      ).toBeVisible();
+    }
+  }
   await adminContext.close();
   await guestContext.close();
 });
@@ -235,3 +250,74 @@ test("opening doors introduce the invitation and release keyboard focus", async 
   await expect(fallback.locator(".invitation-opening")).not.toBeVisible();
   await noScript.close();
 });
+
+for (const viewport of [
+  { width: 320, height: 568 },
+  { width: 390, height: 844 },
+  { width: 844, height: 390 },
+  { width: 768, height: 1024 },
+  { width: 1024, height: 768 },
+  { width: 1440, height: 900 },
+]) {
+  test(`responsive pages and all invitation layouts at ${viewport.width}x${viewport.height}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    const noOverflow = async () => {
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+    };
+    await page.goto("/");
+    const navigation = page.getByRole("navigation", {
+      name: "Điều hướng chính",
+    });
+    await expect(navigation).toBeVisible();
+    await expect(
+      navigation.getByRole("link", { name: "Bộ sưu tập" }),
+    ).toBeVisible();
+    await noOverflow();
+    await navigation.getByRole("link", { name: "Bộ sưu tập" }).click();
+    await expect(page).toHaveURL(/\/templates$/);
+    await noOverflow();
+    for (const path of ["/pricing", "/account/login"]) {
+      await page.goto(path);
+      await noOverflow();
+    }
+    for (const slug of ["loi-yeu", "vuon-thuong", "song-hy"]) {
+      await page.goto(`/preview/${slug}`);
+      const open = page.getByRole("button", { name: "Mở thiệp", exact: true });
+      await expect(open).toBeVisible();
+      const box = await open.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.y).toBeGreaterThanOrEqual(0);
+      expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
+      await open.click();
+      await expect(page.locator(".invitation-opening")).not.toBeVisible();
+      await noOverflow();
+      // Editable wedding names may be much longer than the sample content.
+      await page.locator(".wedding-hero h1").evaluate((heading) => {
+        heading.textContent = "Nguyễn Minh Anh Hoàng Phương & Trần Thị Ngọc Hà";
+      });
+      await noOverflow();
+      await expect(page.locator(".wedding-rsvp input[name=name]")).toHaveCSS(
+        "font-size",
+        viewport.width <= 800 ? "16px" : "13px",
+      );
+      await page.getByRole("button", { name: /Xem ảnh kỷ niệm 1 / }).click();
+      await expect(
+        page.getByRole("dialog", { name: "Album ảnh cưới" }),
+      ).toBeVisible();
+      const close = page.getByRole("button", { name: "Đóng album" });
+      const closeBox = await close.boundingBox();
+      expect(closeBox!.y + closeBox!.height).toBeLessThanOrEqual(
+        viewport.height,
+      );
+      await close.click();
+      await noOverflow();
+    }
+  });
+}

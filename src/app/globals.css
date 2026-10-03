@@ -2624,6 +2624,384 @@ body:has(.invitation-opening[open]) {
     display: none;
   }
 }
+
+/* Responsive refinements: keep content readable and controls reachable. */
+:is(
+    .home-hero,
+    .template-detail,
+    .editor-grid,
+    .checkout-grid,
+    .grid-two,
+    .template-grid,
+    .invitation-grid,
+    .stats-grid,
+    .wedding-hero,
+    .family-grid,
+    .event-grid,
+    .wedding-wishes,
+    .wedding-album
+  )
+  > * {
+  min-width: 0;
+}
+:is(.workspace-title, .wedding-page, .template-detail, .panel)
+  :is(h1, h2, h3, p, strong) {
+  overflow-wrap: anywhere;
+}
+.wedding-page :is(h1, h2, h3) {
+  text-wrap: balance;
+}
+.wedding-page .wedding-hero h1:focus {
+  outline: none;
+}
+.qr-box {
+  max-width: 100%;
+}
+.qr-box img {
+  max-width: 100%;
+  height: auto;
+}
+.site-header nav a,
+.workspace-nav a,
+.admin-navigation a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  white-space: nowrap;
+}
+.invitation-opening {
+  padding: max(16px, env(safe-area-inset-top))
+    max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+}
+.invitation-seal {
+  max-height: 100%;
+  min-height: 0;
+  overscroll-behavior: contain;
+}
+.music-button {
+  bottom: max(20px, env(safe-area-inset-bottom));
+  right: max(20px, env(safe-area-inset-right));
+}
+@media (max-width: 1050px) {
+  .workspace-header {
+    height: auto;
+    min-height: 75px;
+    flex-wrap: wrap;
+    padding: 12px 24px;
+    gap: 12px;
+  }
+  .workspace-header > .workspace-nav {
+    order: 3;
+    flex-basis: 100%;
+    gap: 24px;
+  }
+  .workspace-header > div {
+    margin-left: auto;
+  }
+  .pricing-grid {
+    gap: 18px;
+  }
+}
+@media (max-width: 800px) {
+  .site-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    height: auto;
+    padding: 16px 24px 8px;
+    gap: 12px 16px;
+  }
+  .site-header > .button {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 44px;
+  }
+  .site-header nav {
+    display: flex;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 13px;
+    border-top: 1px solid var(--line);
+    padding-top: 4px;
+  }
+  .workspace-header {
+    position: static;
+  }
+  .workspace-nav {
+    gap: 16px;
+  }
+  .workspace-title {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .workspace-title > div {
+    flex: 1 1 240px;
+  }
+  .workspace-title > .button {
+    white-space: normal;
+  }
+  .wedding-top {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 20px;
+    text-align: center;
+  }
+  .wedding-top a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .wedding-hero-image {
+    height: clamp(330px, 95vw, 500px);
+  }
+  .wedding-hero-copy h1 {
+    font-size: clamp(36px, 7vw, 50px);
+  }
+  .wedding-section h2 {
+    font-size: clamp(30px, 5vw, 36px);
+  }
+  .wedding-page .event-card p,
+  .family-grid p {
+    font-size: 14px;
+  }
+  .event-card a {
+    min-height: 44px;
+    font-size: 14px;
+  }
+  .wedding-rsvp {
+    padding: 24px;
+  }
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+    min-width: 0;
+  }
+  .preview-toolbar {
+    flex-wrap: wrap;
+    padding: 8px 16px;
+    gap: 8px 16px;
+    font-size: 11px;
+  }
+  .preview-toolbar a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .preview-toolbar .button {
+    min-height: 44px;
+    font-size: 12px;
+  }
+  .circle-link {
+    width: 44px;
+    height: 44px;
+  }
+  .filter-tabs button,
+  .button.small,
+  button.small,
+  .editor-event button {
+    min-height: 44px;
+    font-size: 12px;
+  }
+  .site-footer > div:nth-child(2) a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+  .site-footer > div:nth-child(2) {
+    gap: 8px 20px;
+  }
+  .lightbox-image {
+    height: min(65dvh, calc(95dvh - 164px));
+  }
+  .wedding-lightbox {
+    padding: 16px;
+  }
+  .lightbox-navigation button {
+    padding: 10px 12px;
+  }
+}
+@media (max-width: 480px) {
+  .site-header {
+    padding-inline: 16px;
+    gap: 12px;
+  }
+  .site-header .brand {
+    gap: 6px;
+  }
+  .site-header .brand-small {
+    letter-spacing: 1px;
+    margin-left: 0;
+  }
+  .site-header .button {
+    font-size: 12px;
+    padding-inline: 12px;
+    gap: 6px;
+  }
+  .home-hero {
+    padding: 36px 20px 48px;
+    gap: 32px;
+  }
+  .hero-copy h1 {
+    font-size: clamp(36px, 10vw, 45px);
+  }
+  .hero-actions {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .hero-actions .button {
+    width: 100%;
+  }
+  .section {
+    padding: 48px 20px;
+  }
+  .template-caption {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .template-caption h3 {
+    font-size: 22px;
+  }
+  .template-caption .fine {
+    font-size: 12px;
+  }
+  .section-heading-row .text-link {
+    font-size: 13px;
+  }
+  .wedding-hero {
+    padding-inline: 20px;
+  }
+  .wedding-hero-copy .button {
+    width: 100%;
+    padding-inline: 12px;
+  }
+  .layout-classic.wedding-page .wedding-hero-copy {
+    padding: 28px 16px;
+    width: 94%;
+  }
+  .wedding-date {
+    letter-spacing: 3px;
+  }
+  .countdown {
+    gap: 12px;
+  }
+  .countdown > div {
+    min-width: 0;
+    flex: 1;
+    max-width: 65px;
+  }
+  .countdown strong {
+    font-size: clamp(28px, 8vw, 35px);
+  }
+  .wedding-rsvp {
+    padding: 20px 16px;
+  }
+  .wedding-album {
+    gap: 10px;
+  }
+  .wedding-album button span {
+    font-size: 11px;
+    padding: 5px 8px;
+    bottom: 8px;
+    right: 8px;
+  }
+  .invitation-seal {
+    padding: 28px 18px;
+  }
+  .opening-hint {
+    font-size: 12px;
+  }
+  .workspace-header {
+    padding-inline: 16px;
+  }
+  .workspace {
+    padding-inline: 16px;
+  }
+  .workspace-header > .eyebrow {
+    order: 3;
+    width: 100%;
+  }
+  .workspace-header > div {
+    gap: 8px;
+  }
+  .workspace-header > div .text-link {
+    font-size: 12px;
+  }
+  .admin-navigation {
+    gap: 8px 16px;
+  }
+  .panel {
+    padding-inline: 16px;
+  }
+  fieldset {
+    min-width: 0;
+    padding: 16px;
+  }
+  .editor-event {
+    padding: 16px;
+  }
+}
+@media (max-width: 360px) {
+  .template-grid {
+    grid-template-columns: 1fr;
+    max-width: 280px;
+    margin-inline: auto;
+  }
+  .template-grid .template-art {
+    padding: 18px;
+  }
+  .template-grid .art-names {
+    font-size: 30px;
+  }
+  .template-grid .art-kicker {
+    font-size: 8px;
+  }
+  .template-grid .art-date,
+  .template-grid .art-footer {
+    font-size: 10px;
+  }
+  .template-grid .art-symbol {
+    margin: 18px 0;
+    font-size: 24px;
+  }
+  .workspace-header .brand-small {
+    display: none;
+  }
+}
+@media (max-height: 600px) and (orientation: landscape) {
+  .invitation-seal {
+    width: min(600px, 100%);
+    border-radius: 12px;
+    padding: 16px 24px;
+  }
+  .invitation-seal h2 {
+    font-size: 30px;
+    margin: 8px 0;
+  }
+  .invitation-seal h2 em {
+    display: inline;
+    font-size: 24px;
+    margin-inline: 12px;
+  }
+  .opening-button {
+    margin-top: 12px;
+  }
+  .opening-hint {
+    margin-top: 8px;
+  }
+  .opening-guest {
+    margin-top: 6px;
+    font-size: 18px;
+  }
+  .lightbox-image {
+    height: calc(95dvh - 150px);
+  }
+  .preview-toolbar {
+    position: static;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

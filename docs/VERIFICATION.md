@@ -45,3 +45,11 @@ Kiểm tra mới: `pnpm check` đạt lint/TypeScript và 111 tests; `pnpm build
 Thêm màn mở thiệp bằng hai cánh cửa xoay, theo palette/layout của mẫu; tên cặp đôi, ngày cưới và tên khách riêng khi có. Native dialog khóa focus/scroll trong lúc mở, nút Mở thiệp hoặc Escape mở cửa; sau đó focus tiêu đề và bắt đầu animation nội dung. Reduced motion mở tức thì; không JavaScript vẫn xem được thiệp. Đã xem giao diện ở 390×844 và 1440×900.
 
 `pnpm check` đạt lint/TypeScript và 111 tests; `pnpm build` đạt; `pnpm test:e2e` đạt 4/4. Kịch bản mới kiểm tra mở bằng Enter/Escape, focus/scroll sau mở, tải lại, reduced motion và fallback không JavaScript. Kịch bản RSVP/album chờ cửa đóng trước khi tương tác.
+
+## Responsive theo UI UX Pro Max — 03/10/2026
+
+Áp dụng skill local `my_task/.agents/skills/ui-ux-pro-max/SKILL.md`: tra cứu domain UX (responsive/table handling/touch friendly) và stack Next.js (responsive images). Giữ màu và phong cách hiện tại; menu chính hiển thị trên điện thoại, control có vùng bấm lớn hơn, form 16px ở ≤800px, grid xử lý tên dài, ảnh bìa/QR/countdown/album co theo màn hình, cửa mở thu gọn ở landscape. Header workspace xuống dòng và không sticky trên mobile.
+
+`pnpm check` đạt lint/TypeScript và 111 tests; `pnpm build` đạt. `pnpm test:e2e` đạt 10/10: sáu viewport 320×568, 390×844, 844×390, 768×1024, 1024×768, 1440×900; trang chủ/kho mẫu/bảng giá/login, ba layout editorial/botanical/classic, tên dài, cửa mở và nút đóng album nằm trong màn hình, không tràn ngang. Đã xem ảnh chụp mobile và landscape. Kiểm tra bằng Chromium mô phỏng viewport; chưa xác minh trên thiết bị iOS/Android thật.
+
+Sau bổ sung kiểm tra vùng đăng nhập, chạy lại `pnpm test:e2e --grep 'customer buys'` đạt 1/1: workspace khách hàng và danh sách đơn admin không tràn ngang ở 320/768/1024px, nút đăng xuất luôn hiển thị; luồng thanh toán, xuất bản, RSVP và duyệt lời chúc vẫn đạt.

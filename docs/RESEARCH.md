@@ -81,3 +81,27 @@ Hướng ưu tiên sau bản đầu:
 4. Sau khi có khách: bổ sung OTP/khôi phục, object storage, giao dịch hoàn tiền và analytics.
 
 Ảnh minh họa tải từ Unsplash (không thuộc hai trang tham khảo): photo-1519741497674-611481863552, photo-1523438885200-e635ba2c371e, photo-1519225421980-715cb0215aed. Cần thay bằng ảnh của cặp đôi cho thiệp chính thức.
+
+## 7. Rà soát để mở bán — 03/10/2026
+
+Nguồn đối chiếu bổ sung: [bảng quyền lợi MeHappy](https://mehappy.vn/pricing), [giới thiệu iWedding](https://biihappy.com/iwedding), [hướng dẫn iWedding](https://biihappy.com/help), [W3C cho người lớn tuổi](https://www.w3.org/WAI/older-users/), [danh mục ngân hàng VietQR](https://api.vietqr.io/v2/banks). Chỉ dùng mô tả công khai, không coi số lượng khách/đánh giá quảng cáo là bằng chứng độc lập; không sao chép mẫu/ảnh/mã hoặc áp dụng giá đối thủ vào catalog hiện có.
+
+MeHappy phân biệt gói theo ảnh, thời hạn, quyền thiết kế và tiện ích; trang công khai có cả mục add-on lẫn bảng tính năng nên không suy diễn mọi quyền lợi thuộc mọi gói. iWedding giới thiệu RSVP, chia sẻ QR và quản lý khách; hướng dẫn của họ có tài khoản cô dâu/chú rể riêng. W3C chỉ ra nhu cầu liên quan thị lực, thao tác và khả năng hiểu; hướng thiết kế của dự án là chữ dễ đọc, nhãn rõ, thao tác bằng bàn phím, zoom/reflow và giảm chuyển động. Danh mục VietQR dùng để hiển thị tên ngân hàng; không phải xác minh chủ tài khoản.
+
+### Hai hành trình phải hoàn chỉnh
+
+- Người mua: xem mẫu đủ nội dung trước đăng ký → chọn phong cách/gói theo nhu cầu → tạo và xem nháp → sửa thông tin hai nhà/ảnh/ngân hàng → thanh toán với hướng dẫn rõ → theo dõi trạng thái → xuất bản → chia sẻ link/QR → quản lý phản hồi/gia hạn.
+- Người nhận: thấy tên/ngày/giờ/địa điểm dễ đọc → mở thiệp hoặc đi thẳng nội dung khi giảm chuyển động → chỉ đường/thêm lịch → xác nhận người/tiệc → gửi lời chúc → mừng cưới từ xa đúng bên. Không cần tài khoản; không bị lộ danh sách khách hoặc ép bật nhạc.
+
+### Khoảng trống và tiêu chí bàn giao
+
+| Phần               | Hiện trạng khi rà soát                                   | Kết quả cần có                                                                                                                                      |
+| ------------------ | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Quà mừng           | Một bộ ngân hàng chung, yêu cầu nhập BIN                 | Hai bên độc lập, chọn ngân hàng theo tên, QR/sao chép/lưu ảnh, fallback khi QR lỗi; giữ dữ liệu cũ                                                  |
+| Quản trị           | Có danh sách khách/mẫu/gói, bốn số tổng, thiếu biểu đồ   | Tổng và trạng thái tài khoản, mẫu/gói đang bán, thiệp công khai, doanh thu thực theo kỳ, biểu đồ và dữ liệu đọc được, đơn gần đây, tác vụ vận hành  |
+| Thanh toán dịch vụ | Cấu hình bank/account/name/support và webhook env có sẵn | Chọn ngân hàng dễ hiểu, xem trước thông tin/QR, trạng thái sẵn sàng, hướng dẫn đối chiếu và hỗ trợ; không giả lập thanh toán                        |
+| Mẫu                | Sáu phối màu trên ba bố cục; preview toàn trang có sẵn   | Thêm phong cách/bố cục thực sự khác biệt, preview rõ từ thẻ mẫu và editor, lọc theo nhu cầu; giữ nội dung khi đổi mẫu                               |
+| Gói                | Quyền lợi snapshot nhưng mô tả còn thiên về kỹ thuật     | So sánh rõ thời hạn/ảnh/mẫu/branding và tiện ích chung; gợi ý nhu cầu, dùng thử bản nháp, FAQ thanh toán/gia hạn; không quảng cáo tính năng chưa có |
+| Mọi lứa tuổi       | Form/mobile đã cải thiện, còn chữ tiếng Anh và chữ nhỏ   | Tiếng Việt nhất quán trên thiệp, giờ tiệc rõ, lối tắt nội dung, cỡ chữ/contrast/zoom/bàn phím; kiểm tra mobile/tablet/desktop                       |
+
+Mỗi phần phải có bằng chứng server và trình duyệt phù hợp, cập nhật contract/migration/đặc tả khi thay dữ liệu, commit riêng. Những dữ liệu thương mại cần chủ dịch vụ nhập (ngân hàng, hỗ trợ, bảng giá/chính sách chính thức) không được bịa để làm dashboard có vẻ sẵn sàng. Chưa có khảo sát trực tiếp người lớn tuổi; cần ghi rõ giới hạn này và kiểm tra trên thiết bị thật trước mở bán.

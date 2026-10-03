@@ -9,7 +9,8 @@ export function Music({ url }: { url: string }) {
     <>
       <audio ref={audio} src={url} preload="none" loop />
       <button
-        className="music-button"
+        className={`music-button${playing ? " is-playing" : ""}`}
+        aria-pressed={playing}
         aria-label={playing ? "Tắt nhạc nền" : "Bật nhạc nền"}
         title={error || (playing ? "Tắt nhạc" : "Bật nhạc")}
         onClick={async () => {

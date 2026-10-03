@@ -1672,7 +1672,7 @@ button.small {
   gap: 13px;
   margin-top: 35px;
 }
-.wedding-album > div {
+.wedding-album > button {
   position: relative;
   aspect-ratio: 0.85;
   overflow: hidden;
@@ -2312,6 +2312,210 @@ button.small {
     font-size: 9px;
   }
   .workspace-header .fine {
+    display: none;
+  }
+}
+
+/* Invitation motion uses the existing palette and only compositor properties. */
+.wedding-hero-image img {
+  animation: wedding-cover 16s ease-in-out infinite alternate;
+}
+@keyframes wedding-cover {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.075);
+  }
+}
+.wedding-petals {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 2;
+}
+.wedding-petals i {
+  position: absolute;
+  top: -25px;
+  left: 8%;
+  width: 10px;
+  height: 17px;
+  border-radius: 80% 0 80% 0;
+  background: var(--tone);
+  opacity: 0;
+  animation: wedding-petal 13s linear infinite;
+}
+.wedding-petals i:nth-child(2) {
+  left: 25%;
+  animation-delay: 2s;
+}
+.wedding-petals i:nth-child(3) {
+  left: 42%;
+  animation-delay: 5s;
+}
+.wedding-petals i:nth-child(4) {
+  left: 57%;
+  animation-delay: 1s;
+}
+.wedding-petals i:nth-child(5) {
+  left: 70%;
+  animation-delay: 8s;
+}
+.wedding-petals i:nth-child(6) {
+  left: 84%;
+  animation-delay: 4s;
+}
+.wedding-petals i:nth-child(7) {
+  left: 92%;
+  animation-delay: 10s;
+}
+.layout-classic .wedding-petals i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+.layout-editorial .wedding-petals i {
+  width: 6px;
+  height: 10px;
+}
+@keyframes wedding-petal {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(0);
+  }
+  12%,
+  75% {
+    opacity: 0.18;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-45px, 850px, 0) rotate(280deg);
+  }
+}
+.wedding-page :is(.button, button, .event-card, .text-link) {
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+.wedding-page :is(.button, button):active {
+  transform: scale(0.97);
+}
+.wedding-page :is(a, button):focus-visible {
+  outline: 2px solid var(--tone);
+  outline-offset: 5px;
+}
+.wedding-section[id] {
+  scroll-margin-top: 65px;
+}
+.wedding-album > button {
+  padding: 0;
+  border: 0;
+  background: var(--tint);
+  color: var(--card);
+  cursor: zoom-in;
+}
+.wedding-album img {
+  transition: transform 0.7s ease;
+}
+.wedding-album button span {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: var(--tone);
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+}
+@media (hover: hover) {
+  .wedding-page .button:hover,
+  .wedding-page .event-card:hover {
+    transform: translateY(-3px);
+  }
+  .wedding-album button:hover img {
+    transform: scale(1.055);
+  }
+}
+.music-button.is-playing {
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--tone) 15%, transparent);
+}
+.music-button.is-playing svg {
+  animation: wedding-sway 2s ease-in-out infinite;
+}
+@keyframes wedding-sway {
+  50% {
+    transform: rotate(12deg);
+  }
+}
+.wedding-rsvp .notice[role] {
+  animation: wedding-feedback 0.4s ease both;
+}
+@keyframes wedding-feedback {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.wedding-lightbox {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(1000px, 95vw);
+  max-width: 95vw;
+  max-height: 95dvh;
+  padding: 18px;
+  border: 1px solid var(--tone);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--tone);
+}
+.wedding-lightbox::backdrop {
+  background: rgb(0 0 0 / 0.8);
+}
+.wedding-lightbox[open] {
+  animation: wedding-feedback 0.3s ease;
+}
+.lightbox-toolbar,
+.lightbox-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.lightbox-toolbar {
+  margin-bottom: 12px;
+}
+.wedding-lightbox button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--tone);
+  color: var(--card);
+}
+.lightbox-image {
+  position: relative;
+  height: min(65dvh, 700px);
+  animation: wedding-feedback 0.35s ease;
+}
+.lightbox-image img {
+  object-fit: contain;
+}
+.lightbox-navigation {
+  margin-top: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wedding-petals {
+    display: none;
+  }
+}
+@media print {
+  .wedding-petals,
+  .wedding-lightbox,
+  .music-button {
     display: none;
   }
 }

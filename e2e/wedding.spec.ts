@@ -147,3 +147,49 @@ test("catalog filters, full previews and home layout work on mobile", async ({
     ),
   ).toBe(true);
 });
+
+test("invitation album restores focus and respects reduced motion on mobile", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/templates");
+  await page.getByRole("link", { name: "Xem mẫu Song hỷ" }).click();
+  await page.getByRole("link", { name: "Xem thiệp đầy đủ" }).click();
+  const firstPhoto = page.getByRole("button", { name: /Xem ảnh kỷ niệm 1 / });
+  await firstPhoto.click();
+  const album = page.getByRole("dialog", { name: "Album ảnh cưới" });
+  await expect(album).toBeVisible();
+  await expect(page.getByRole("button", { name: "Đóng album" })).toBeFocused();
+  await page.keyboard.press("ArrowRight");
+  await expect(album.getByText(/^Ảnh 2 \/ /)).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(album).not.toBeVisible();
+  await expect(firstPhoto).toBeFocused();
+  expect(
+    await page
+      .locator(".wedding-hero-image img")
+      .evaluate((image) => getComputedStyle(image).animationName),
+  ).toBe("none");
+  expect(
+    await page.evaluate(
+      () =>
+        document
+          .getAnimations()
+          .filter((animation) => animation.playState === "running").length,
+    ),
+  ).toBe(0);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await expect(page.locator(".wedding-hero-image img")).toHaveCSS(
+    "animation-name",
+    "wedding-cover",
+  );
+  await firstPhoto.click();
+  await page.getByRole("button", { name: "Đóng album" }).click();
+  await expect(album).not.toBeVisible();
+});

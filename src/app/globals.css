@@ -3060,3 +3060,115 @@ body:has(.invitation-opening[open]) {
 .gift-preview p + p {
   margin-top: 12px;
 }
+
+.report-filter {
+  display: flex;
+  align-items: end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.report-filter label {
+  min-width: 180px;
+}
+.report-filter p {
+  flex: 1 1 260px;
+  align-self: center;
+}
+.stats-grid .stat-card strong {
+  font-size: clamp(23px, 2.4vw, 34px);
+  overflow-wrap: anywhere;
+}
+.stat-card .fine {
+  display: block;
+  margin-top: 8px;
+}
+a.stat-card:focus-visible {
+  outline-offset: 2px;
+}
+.admin-report-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.admin-report-grid > * {
+  min-width: 0;
+}
+.admin-tasks {
+  display: grid;
+  gap: 12px;
+}
+.admin-tasks a {
+  min-height: 44px;
+  padding-block: 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+.report-comparison {
+  margin-bottom: 8px;
+}
+.revenue-chart {
+  margin-top: 20px;
+}
+.revenue-chart svg {
+  display: block;
+  width: 100%;
+  margin: 20px 0;
+  color: var(--rose);
+  overflow: visible;
+}
+.revenue-chart svg text {
+  font-size: 12px;
+  fill: var(--muted);
+}
+.chart-gridline {
+  stroke: var(--line);
+}
+.chart-line {
+  stroke: currentColor;
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+.chart-marker {
+  stroke: var(--muted);
+  stroke-dasharray: 4 4;
+}
+.chart-point {
+  fill: var(--rose);
+  stroke: var(--paper);
+  stroke-width: 2;
+}
+.chart-selection {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+.chart-selection p {
+  color: var(--ink);
+}
+.chart-data summary {
+  padding: 12px 0;
+  cursor: pointer;
+}
+.chart-data caption {
+  text-align: left;
+  padding-block: 12px;
+}
+@media (max-width: 800px) {
+  .admin-report-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+@media (max-width: 480px) {
+  .report-filter label {
+    width: 100%;
+  }
+  .revenue-chart svg {
+    min-height: 130px;
+  }
+  .chart-selection {
+    gap: 12px;
+  }
+}

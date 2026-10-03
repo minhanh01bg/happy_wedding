@@ -13,6 +13,11 @@ import { POST as sepayWebhook } from "@/app/api/payments/sepay/route";
 import { prisma } from "@/server/db/prisma";
 import { DEMO_CONTENT } from "@/lib/wedding";
 import {
+  weddingReport,
+  reportPeriod,
+  vietnamDay,
+} from "@/server/wedding/reporting";
+import {
   confirmPayment,
   createServiceOrder,
   entitlement,
@@ -479,5 +484,120 @@ describe("Separate wedding gift accounts", () => {
       brideGiftAccount: "",
       brideGiftName: "",
     });
+  });
+});
+
+describe("Admin reporting", () => {
+  it("uses actual payments, Vietnam day boundaries and excludes demo revenue", async () => {
+    const now = new Date("2026-10-03T16:30:00Z");
+    const dates = [
+      "2026-10-03T16:00:00Z",
+      "2026-09-26T17:00:00Z",
+      "2026-09-26T16:59:59Z",
+    ];
+    for (const [index, receivedAt] of dates.entries()) {
+      const invitation = await saveInvitation(accountId, {
+        ...input(),
+        slug: `real-report-${index}`,
+      });
+      const order = await activate(invitation.id);
+      await prisma.weddingPayment.updateMany({
+        where: { orderId: order.id },
+        data: { receivedAt: new Date(receivedAt) },
+      });
+      if (index === 0) {
+        await publishInvitation(accountId, invitation.id, true);
+        const pending = await createServiceOrder(
+          accountId,
+          invitation.id,
+          planId,
+          randomUUID(),
+        );
+        await prisma.serviceOrder.update({
+          where: { id: pending.id },
+          data: { paymentNote: "Đã chuyển khoản" },
+        });
+      }
+    }
+    const demo = await saveInvitation(accountId, {
+      ...input(),
+      slug: "demo-report",
+    });
+    await prisma.invitation.update({
+      where: { id: demo.id },
+      data: { isDemo: true },
+    });
+    const demoOrder = await activate(demo.id);
+    await prisma.weddingPayment.updateMany({
+      where: { orderId: demoOrder.id },
+      data: { receivedAt: now },
+    });
+    await prisma.customerAccount.create({
+      data: {
+        phoneNormalized: "+84000000000",
+        displayName: "Demo",
+        passwordHash: "unused",
+      },
+    });
+    await prisma.customerAccount.update({
+      where: { id: otherId },
+      data: { disabledAt: now },
+    });
+    await prisma.weddingTemplate.create({
+      data: {
+        slug: "inactive-report",
+        name: "Hidden",
+        category: "Tối giản",
+        description: "",
+        active: false,
+      },
+    });
+    const report = await weddingReport(7, now);
+    expect(report).toMatchObject({
+      revenue: 398000,
+      allRevenue: 597000,
+      previousRevenue: 199000,
+      paidOrders: 2,
+      customers: 2,
+      activeCustomers: 1,
+      disabledCustomers: 1,
+      invitations: 3,
+      published: 1,
+      pending: 1,
+      awaitingReview: 1,
+      templates: 2,
+      activeTemplates: 1,
+      activePlans: 1,
+    });
+    expect(report.daily[0]).toEqual({
+      date: "2026-09-27",
+      amount: 199000,
+      orders: 1,
+    });
+    expect(report.daily.at(-1)).toEqual({
+      date: "2026-10-03",
+      amount: 199000,
+      orders: 1,
+    });
+    expect(report.daily.slice(1, -1).every((point) => point.amount === 0)).toBe(
+      true,
+    );
+    expect(report.sales).toEqual([
+      { name: "Essential", amount: 398000, orders: 2 },
+    ]);
+    expect(
+      report.recentOrders.every((order) => order.invitationId !== demo.id),
+    ).toBe(true);
+  });
+  it("validates supported periods and includes zero days without fabricating growth", async () => {
+    expect(reportPeriod("7")).toBe(7);
+    expect(reportPeriod("999")).toBe(30);
+    expect(reportPeriod("invalid")).toBe(30);
+    expect(vietnamDay(new Date("2026-10-03T17:00:00Z"))).toBe("2026-10-04");
+    const report = await weddingReport(30);
+    expect(report.daily).toHaveLength(30);
+    expect(report.revenue).toBe(0);
+    expect(report.previousRevenue).toBe(0);
+    expect(report.sales).toEqual([]);
   });
 });

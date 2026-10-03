@@ -164,6 +164,37 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
   });
   expect(denied.status()).toBe(401);
   // Customer and admin shells also adapt; wide tables scroll within their panel.
+  await admin.goto("http://127.0.0.1:3201/admin?period=7");
+  await expect(
+    admin.getByRole("heading", {
+      name: "Tổng quan dịch vụ thiệp cưới",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await expect(admin.locator(".stats-grid")).toContainText("199.000");
+  await admin.getByText("Xem bảng số liệu theo ngày", { exact: true }).click();
+  await expect(admin.getByRole("table").first()).toBeVisible();
+  await admin
+    .getByRole("combobox", { name: "Khoảng thời gian", exact: true })
+    .selectOption("90");
+  await admin
+    .getByRole("button", { name: "Xem thống kê", exact: true })
+    .click();
+  await expect(admin).toHaveURL(/period=90/);
+  await expect(admin.locator(".revenue-chart svg")).toBeVisible();
+  await admin.goto("http://127.0.0.1:3201/admin/customers");
+  await expect(admin.locator(".stats-grid")).toContainText("Đang hoạt động");
+  await expect(
+    admin.getByRole("cell", { name: "Khách kiểm thử", exact: true }),
+  ).toBeVisible();
+  await expect(admin.locator(".data-table")).toContainText("199.000");
+  await admin
+    .getByRole("combobox", { name: "Trạng thái tài khoản", exact: true })
+    .selectOption("disabled");
+  await admin.getByRole("button", { name: "Tìm kiếm", exact: true }).click();
+  await expect(
+    admin.getByText("Không có tài khoản phù hợp.", { exact: false }),
+  ).toBeVisible();
   await admin.goto("http://127.0.0.1:3201/admin/orders");
   for (const width of [320, 768, 1024]) {
     for (const workspacePage of [page, admin]) {

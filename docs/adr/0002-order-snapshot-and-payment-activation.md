@@ -23,3 +23,7 @@ Retry cùng giao dịch không kéo dài hạn hai lần. Gia hạn cộng UTC m
 ## Evidence / revisit
 
 `createServiceOrder`, `confirmPayment`, `entitlement` trong `src/server/wedding/service.ts`; `src/app/api/payments/sepay/route.ts`; `tests/server/wedding/service.test.ts`. Xem xét lại khi cần nâng/hạ gói, hoàn tiền, tiền trả thừa, webhook nhiều ngân hàng hoặc đối soát manual/SePay. Mọi thay đổi phải giữ lịch sử thu tiền và có regression test về retry.
+
+### Báo cáo tiền dịch vụ (03/10/2026)
+
+Dashboard thống kê tiền thực ghi nhận từ WeddingPayment.amount/receivedAt, loại thiệp demo; biểu đồ chia ngày theo UTC+7 và có bảng số liệu. Không dùng ghi chú khách hoặc tổng đơn pending để tính tiền đã nhận. So sánh kỳ ghi rõ kỳ hiện tại có ngày đang diễn ra, không bịa phần trăm tăng trưởng khi kỳ trước bằng 0. Danh sách khách hiển thị số đơn paid và tổng giá snapshot các đơn paid của khách; chưa trừ chi phí và không phải lợi nhuận.

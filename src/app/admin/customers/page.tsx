@@ -1,16 +1,25 @@
 import Link from "next/link";
 import { prisma } from "@/server/db/prisma";
 import { MutationButton } from "@/components/wedding/actions";
-import { dateLabel } from "@/lib/wedding";
+import { dateLabel, money } from "@/lib/wedding";
 export default async function Customers({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; status?: string }>;
 }) {
   const query = await searchParams;
   const q = (query.q || "").slice(0, 100);
   const page = Math.max(1, Math.min(1000, Math.floor(Number(query.page) || 1)));
+  const status = ["active", "disabled"].includes(query.status || "")
+    ? query.status!
+    : "all";
+  const base = { phoneNormalized: { not: "+84000000000" } };
   const where = {
+    ...(status === "active"
+      ? { disabledAt: null }
+      : status === "disabled"
+        ? { disabledAt: { not: null } }
+        : {}),
     phoneNormalized: { not: "+84000000000" },
     ...(q
       ? {
@@ -21,7 +30,7 @@ export default async function Customers({
         }
       : {}),
   };
-  const [customers, count] = await Promise.all([
+  const [customers, count, total, active] = await Promise.all([
     prisma.customerAccount.findMany({
       where,
       select: {
@@ -37,7 +46,20 @@ export default async function Customers({
       take: 30,
     }),
     prisma.customerAccount.count({ where }),
+    prisma.customerAccount.count({ where: base }),
+    prisma.customerAccount.count({ where: { ...base, disabledAt: null } }),
   ]);
+  const paid = await prisma.serviceOrder.groupBy({
+    by: ["accountId"],
+    where: {
+      accountId: { in: customers.map((customer) => customer.id) },
+      status: "paid",
+      invitation: { isDemo: false },
+    },
+    _count: { id: true },
+    _sum: { total: true },
+  });
+  const paidByCustomer = new Map(paid.map((row) => [row.accountId, row]));
   return (
     <>
       <div className="workspace-title">
@@ -46,6 +68,19 @@ export default async function Customers({
           <h1>Tài khoản & hoạt động</h1>
           <p>{count} tài khoản phù hợp</p>
         </div>
+      </div>
+      <div className="stats-grid">
+        {[
+          ["Tổng tài khoản", total],
+          ["Đang hoạt động", active],
+          ["Đã khóa", total - active],
+          ["Phù hợp bộ lọc", count],
+        ].map(([label, value]) => (
+          <div className="stat-card" key={label}>
+            <p>{label}</p>
+            <strong>{value}</strong>
+          </div>
+        ))}
       </div>
       <form className="panel inline-actions">
         <label>
@@ -56,6 +91,14 @@ export default async function Customers({
             placeholder="Tên hoặc số điện thoại"
           />
         </label>
+        <label>
+          Trạng thái tài khoản
+          <select name="status" defaultValue={status}>
+            <option value="all">Tất cả</option>
+            <option value="active">Hoạt động</option>
+            <option value="disabled">Đã khóa</option>
+          </select>
+        </label>
         <button type="submit">Tìm kiếm</button>
       </form>
       <section className="panel data-table-wrap">
@@ -65,6 +108,7 @@ export default async function Customers({
               <th>Khách hàng</th>
               <th>Điện thoại</th>
               <th>Thiệp / đơn</th>
+              <th>Gói đã thanh toán</th>
               <th>Ngày tạo</th>
               <th>Trạng thái</th>
               <th />
@@ -77,6 +121,10 @@ export default async function Customers({
                 <td>{c.phoneNormalized}</td>
                 <td>
                   {c._count.invitations} thiệp / {c._count.serviceOrders} đơn
+                </td>
+                <td>
+                  {paidByCustomer.get(c.id)?._count.id || 0} đơn
+                  <p>{money(paidByCustomer.get(c.id)?._sum.total || 0)}</p>
                 </td>
                 <td>{dateLabel(c.createdAt)}</td>
                 <td>
@@ -98,6 +146,12 @@ export default async function Customers({
             ))}
           </tbody>
         </table>
+        {!customers.length && (
+          <p className="notice">
+            Không có tài khoản phù hợp. Hãy thử đổi tên, số điện thoại hoặc
+            trạng thái.
+          </p>
+        )}
         <p className="fine" style={{ marginTop: 20 }}>
           Khóa tài khoản thu hồi phiên đăng nhập và ngừng truy cập công khai các
           thiệp của khách.
@@ -106,12 +160,16 @@ export default async function Customers({
           <span>Trang {page}</span>
           <div className="inline-actions">
             {page > 1 && (
-              <Link href={`?q=${encodeURIComponent(q)}&page=${page - 1}`}>
+              <Link
+                href={`?q=${encodeURIComponent(q)}&status=${status}&page=${page - 1}`}
+              >
                 ← Trước
               </Link>
             )}
             {page * 30 < count && (
-              <Link href={`?q=${encodeURIComponent(q)}&page=${page + 1}`}>
+              <Link
+                href={`?q=${encodeURIComponent(q)}&status=${status}&page=${page + 1}`}
+              >
                 Sau →
               </Link>
             )}

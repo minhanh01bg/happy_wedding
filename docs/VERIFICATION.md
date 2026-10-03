@@ -59,3 +59,9 @@ Sau bổ sung kiểm tra vùng đăng nhập, chạy lại `pnpm test:e2e --grep
 Migration additive giữ tài khoản cũ ở nhà trai và thêm ba trường nhà gái mặc định rỗng. Đã chạy toàn bộ migrations trên DB mới ở `/tmp`, kiểm tra giữ tài khoản cũ bằng fixture SQLite, áp dụng migration vào `prisma/dev.db` của dự án (không dùng DB `my_task`). Server tests kiểm tra lưu/xuất bản hai bên, ngân hàng nhà gái thiếu dữ liệu, ownership và input từ client cũ.
 
 `pnpm check` đạt lint/TypeScript và 114 tests; `pnpm build` đạt. Chín kịch bản preview/responsive E2E đạt; sau sửa locator ngân hàng theo role combobox, `pnpm test:e2e --grep 'customer buys'` đạt toàn luồng với hai tài khoản, fallback khi chủ động chặn QR nhà trai, thông tin tài khoản vẫn hiện và RSVP vẫn hoạt động. Test phải cuộn đến QR để kích hoạt ảnh lazy-load. Tiền mừng không tạo payment/order hoặc cộng doanh thu; chưa thử chuyển khoản thật.
+
+## Dashboard và thống kê khách — 03/10/2026
+
+Thêm báo cáo 7/30/90 ngày với tám chỉ số, tiền thực nhận toàn thời gian/trong kỳ, kỳ trước, biểu đồ đường tương tác và bảng ngày, tổng theo gói snapshot, trạng thái catalog/khách/thiệp và tác vụ vận hành. Danh sách khách có bộ lọc hoạt động/khóa, tổng theo trạng thái và số tiền gói đã thanh toán. Role/session được xác minh lại ở dashboard trước lấy số liệu.
+
+`pnpm check` đạt 116 tests/lint/typecheck, `pnpm build` đạt. E2E toàn bộ 10/10 đạt cho QR và dashboard; sau thêm danh sách khách, chạy lại `pnpm test:e2e --grep 'customer buys'` đạt 1/1 với biểu đồ/bảng, đổi kỳ 7→90, số tiền khách và bộ lọc tài khoản khóa. Server regression xác minh ranh giới 17:00 UTC thành ngày VN mới, loại demo/pending, tiền theo ngày/kỳ/gói và dữ liệu 0. Đã xem screenshot dashboard 390/1440px và xác nhận không cuộn ngang. Tiền này chưa trừ chi phí; chưa có hoàn tiền/đối soát hai kênh ngoài luồng hiện có.

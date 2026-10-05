@@ -8,6 +8,7 @@ import {
 } from "react";
 import type { WeddingTemplate } from "@prisma/client";
 import Image from "next/image";
+import Link from "next/link";
 import { Plus, Upload } from "lucide-react";
 import {
   toLocalDateTime,
@@ -59,6 +60,16 @@ export function IdentityFields({
             ))}
           </select>
         </label>
+        {templates.find((t) => t.id === data.templateId)?.active && (
+          <Link
+            className="text-link"
+            target="_blank"
+            rel="noopener noreferrer"
+            href={`/preview/${templates.find((t) => t.id === data.templateId)!.slug}`}
+          >
+            Xem thiệp minh họa của mẫu đang chọn ↗
+          </Link>
+        )}
         <label>
           Đường dẫn thiệp
           <input

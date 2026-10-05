@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import type { WeddingTemplate } from "@prisma/client";
 
@@ -34,6 +35,15 @@ export function TemplateArtwork({
     <div
       className={`template-art palette-${template.palette} layout-${template.layout} ${large ? "large" : ""}`}
     >
+      {template.layout === "cinematic" && (
+        <Image
+          src="/images/couple.jpg"
+          alt=""
+          fill
+          sizes="(max-width:800px) 90vw, 440px"
+          className="art-photo"
+        />
+      )}
       <Botanical className="branch-left" />
       <Botanical className="branch-right" />
       <div className="art-border">

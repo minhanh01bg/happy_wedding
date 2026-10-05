@@ -8,7 +8,13 @@ export const PALETTES = [
   "midnight",
   "terracotta",
 ] as const;
-export const LAYOUTS = ["editorial", "botanical", "classic"] as const;
+export const LAYOUTS = [
+  "editorial",
+  "botanical",
+  "classic",
+  "minimal",
+  "cinematic",
+] as const;
 const imageSchema = z
   .string()
   .max(300)

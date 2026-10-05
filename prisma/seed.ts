@@ -63,6 +63,50 @@ const templates = [
     layout: "botanical",
     premium: true,
   },
+  {
+    id: "template-minimal-sand",
+    slug: "loi-hen",
+    name: "Lời hẹn",
+    category: "Tối giản",
+    description:
+      "Bố cục thư mời thoáng, tên hai người ở trung tâm và ảnh ngang bên dưới.",
+    palette: "sand",
+    layout: "minimal",
+    premium: false,
+  },
+  {
+    id: "template-minimal-rose",
+    slug: "thu-tinh",
+    name: "Thư tình",
+    category: "Tối giản",
+    description:
+      "Tấm thư hồng dịu, không gian rộng và những dòng chữ trang nhã.",
+    palette: "rose",
+    layout: "minimal",
+    premium: true,
+  },
+  {
+    id: "template-cinematic-midnight",
+    slug: "khoanh-khac",
+    name: "Khoảnh khắc",
+    category: "Hiện đại",
+    description:
+      "Ảnh cưới phủ khung mở đầu, tên hai người nổi bật trong bảng lời mời tối.",
+    palette: "midnight",
+    layout: "cinematic",
+    premium: true,
+  },
+  {
+    id: "template-cinematic-terracotta",
+    slug: "ben-nhau",
+    name: "Bên nhau",
+    category: "Hiện đại",
+    description:
+      "Ảnh cưới khổ lớn và bảng lời mời ấm áp, dành cho câu chuyện của hai bạn.",
+    palette: "terracotta",
+    layout: "cinematic",
+    premium: false,
+  },
 ];
 export async function seed() {
   await prisma.$transaction(

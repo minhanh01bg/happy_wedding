@@ -104,3 +104,5 @@ GET `/admin?period=7|30|90` yêu cầu phiên owner/manager ở server; query kh
 SePay chỉ kích hoạt khi tài khoản ngân hàng đã lưu khớp `SEPAY_ACCOUNT_NUMBER`; thiếu hoặc lệch cấu hình trả 503 cho giao dịch vào có mã đơn. Không đưa webhook secret vào form quản trị.
 
 Trang bảng giá và so sánh tại bước mua chỉ hiển thị ServicePlan active. Gói được chọn từ bảng giá tiếp tục qua query `plan` trong redirect đăng nhập và bước tạo nháp; server vẫn tính giá theo catalog khi tạo đơn. Liên kết xem nhanh trên thẻ mẫu dùng `/preview/<slug>` hiện có, không công khai bản nháp của khách.
+
+Layout catalog được validation bằng enum `editorial | botanical | classic | minimal | cinematic`; seed bổ sung bốn mẫu, không ghi đè mẫu hiện có. Không đổi cấu trúc dữ liệu thiệp khi đổi layout.

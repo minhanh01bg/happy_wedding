@@ -19,6 +19,16 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
   await page.getByLabel("Chú rể", { exact: true }).fill("Anh Trai");
   await page.getByLabel("Cô dâu", { exact: true }).fill("Chị Dâu");
   await page
+    .getByRole("combobox", { name: "Mẫu thiệp", exact: true })
+    .selectOption("template-minimal-sand");
+  await expect(page.getByLabel("Chú rể", { exact: true })).toHaveValue(
+    "Anh Trai",
+  );
+  await expect(
+    page.getByRole("link", { name: "Xem thiệp minh họa của mẫu đang chọn ↗" }),
+  ).toHaveAttribute("href", "/preview/loi-hen");
+
+  await page
     .getByRole("combobox", { name: "Ngân hàng nhà trai", exact: true })
     .selectOption("970436");
   await page
@@ -398,7 +408,13 @@ for (const viewport of [
       await page.goto(path);
       await noOverflow();
     }
-    for (const slug of ["loi-yeu", "vuon-thuong", "song-hy"]) {
+    for (const slug of [
+      "loi-yeu",
+      "vuon-thuong",
+      "song-hy",
+      "loi-hen",
+      "khoanh-khac",
+    ]) {
       await page.goto(`/preview/${slug}`);
       const open = page.getByRole("button", { name: "Mở thiệp", exact: true });
       await expect(open).toBeVisible();

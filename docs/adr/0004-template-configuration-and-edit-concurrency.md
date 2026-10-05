@@ -27,3 +27,7 @@ Admin tạo biến thể trên layout có sẵn, không thể upload template t�
 ## Trình bày catalog — 05/10/2026
 
 Thẻ mẫu dẫn trực tiếp tới preview hiện có ngoài trang chi tiết. Trang chi tiết mô tả yêu cầu quyền mẫu cao cấp thay vì tên gói cố định, vì admin có thể đổi catalog. So sánh gói đọc ServicePlan active tại server và được dùng ở cả pricing lẫn checkout; không duy trì một bảng quyền lợi tĩnh khác với quyền bán thực tế. Bảng cuộn trong vùng riêng, có caption, header row/column và focus bàn phím.
+
+## Hai bố cục bổ sung — 05/10/2026
+
+Minimal và cinematic vẫn dùng cùng nội dung thiệp, thay cấu trúc trình bày hero qua CSS. Cinematic dùng bảng chữ nền đặc để tương phản không phụ thuộc ảnh khách tải lên. Seed chỉ upsert-create bốn mẫu mới và không sửa catalog đã chỉnh; không cần migration schema. Ảnh xem trước cinematic dùng ảnh minh họa sẵn có, không lấy ảnh khách hàng.

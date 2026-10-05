@@ -110,7 +110,13 @@ export function InvitationView({
               src={invitation.coverUrl}
               alt={`${invitation.groom} và ${invitation.bride} — ảnh thiệp cưới`}
               fill
-              sizes="(max-width:800px) 95vw, 550px"
+              sizes={
+                invitation.template.layout === "cinematic"
+                  ? "(max-width:1440px) 100vw, 1440px"
+                  : invitation.template.layout === "minimal"
+                    ? "(max-width:960px) 90vw, 880px"
+                    : "(max-width:800px) 95vw, 550px"
+              }
               priority
             />
           </div>

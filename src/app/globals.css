@@ -3263,3 +3263,97 @@ a.stat-card:focus-visible {
     font-size: 16px;
   }
 }
+
+/* Thư mời tối giản: chữ trước, ảnh ngang và các phần nội dung gọn. */
+.layout-minimal .botanical {
+  display: none;
+}
+.layout-minimal .art-border {
+  border: 0;
+}
+.layout-minimal .art-symbol {
+  font-size: 24px;
+}
+.layout-minimal .art-names {
+  font-family: var(--sans);
+  font-size: 28px;
+}
+.layout-minimal.wedding-page .wedding-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 960px;
+}
+.layout-minimal.wedding-page .wedding-hero-copy {
+  padding: 20px 0;
+  width: 100%;
+}
+.layout-minimal.wedding-page .wedding-hero-copy h1 {
+  font-size: clamp(32px, 5vw, 56px);
+}
+.layout-minimal.wedding-page .wedding-hero-image {
+  width: 100%;
+  height: clamp(230px, 45vw, 460px);
+  border-radius: 0;
+}
+.layout-minimal.wedding-page .wedding-section {
+  border-radius: 0;
+  border-top: 1px solid currentColor;
+}
+/* Ảnh khổ lớn: bảng lời mời độc lập giữ chữ dễ đọc trên mọi ảnh. */
+.layout-cinematic .botanical {
+  display: none;
+}
+.layout-cinematic .art-border {
+  border-width: 4px;
+  background: var(--tint);
+}
+.layout-cinematic .art-names {
+  font-size: 38px;
+}
+.layout-cinematic.wedding-page .wedding-hero {
+  max-width: 1440px;
+  min-height: 720px;
+  display: flex;
+  justify-content: flex-end;
+  padding: 60px;
+  isolation: isolate;
+}
+.layout-cinematic.wedding-page .wedding-hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  z-index: -1;
+}
+.layout-cinematic.wedding-page .wedding-hero-copy {
+  background: var(--card);
+  color: var(--tone);
+  width: min(100%, 510px);
+  padding: 40px 28px;
+  border: 1px solid currentColor;
+}
+@media (max-width: 800px) {
+  .layout-cinematic.wedding-page .wedding-hero {
+    min-height: 640px;
+    padding: 28px 20px;
+    align-items: flex-end;
+  }
+  .layout-cinematic.wedding-page .wedding-hero-copy {
+    padding: 24px 18px;
+  }
+  .layout-cinematic.wedding-page .wedding-hero-copy h1 {
+    font-size: clamp(30px, 7vw, 48px);
+  }
+}
+.layout-cinematic.template-art .art-photo {
+  object-fit: cover;
+}
+.layout-cinematic.template-art .art-border {
+  width: 85%;
+  height: 92%;
+  margin-left: auto;
+  background: var(--card);
+  border: 1px solid currentColor;
+}

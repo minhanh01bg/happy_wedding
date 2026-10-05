@@ -77,3 +77,9 @@ Chọn ngân hàng theo tên, xem trước tài khoản/QR, lưu liên hệ đi�
 Bảng giá và bước mua dùng cùng bảng so sánh từ ServicePlan active, thể hiện giá/thời hạn/ảnh/mẫu/branding. Nội dung tiện ích chung và FAQ giải thích tạo nháp, mừng cưới hai bên, RSVP, tự gửi lời mời, duyệt lời chúc, CSV, thanh toán và gia hạn. Chi tiết mẫu không phụ thuộc tên gói cố định. Mỗi thẻ mẫu có link xem thiệp đầy đủ; banner minh họa vẫn giữ.
 
 `pnpm check` đạt lint/typecheck/121 tests, `pnpm build` đạt. `pnpm test:e2e` đạt 11/11: mới kiểm bảng ở checkout và pricing 320px, focus vùng cuộn, giữ query gói qua login, FAQ gia hạn và preview trực tiếp. Sau thêm link xem nhanh, locator cũ trùng các link trên catalog khi chuyển trang; đã dùng exact name cho link trên trang chi tiết, kiểm album/focus đạt lại. Đã xem screenshot so sánh ở 390px và cấu hình admin 390px, không tràn ngang. Bảng có chỉ dẫn vuốt đặt trước bảng. Một lượt chạy lint đồng thời lúc Playwright xóa test-results gặp ENOENT; chạy gate tuần tự sau browser gate đạt. Chưa kiểm trên điện thoại thật hoặc xác nhận giá/chính sách thương mại chính thức.
+
+## Đa dạng bố cục và preview trong editor — 05/10/2026
+
+Bổ sung minimal (thư mời, ảnh ngang) và cinematic (ảnh khổ lớn, bảng lời mời nền đặc), bốn mẫu mới trên màu hiện có. Kho seed có mười mẫu/năm layout; đã seed vào DB wedding dev và kiểm đếm mỗi layout hai mẫu. Không migration hay ghi đè catalog cũ. Editor có link mở mẫu đang chọn trong tab mới và nói rõ minh họa.
+
+`pnpm check` đạt lint/typecheck/121 tests, `pnpm build` đạt; `pnpm test:e2e` đạt 11/11. Sáu viewport kiểm cả năm layout, tên dài, album, opening và không tràn ngang. Luồng mua chọn mẫu mới, giữ tên đã nhập và kiểm link preview, sau đó lưu/thanh toán/xuất bản/RSVP đạt. Đã xem ảnh minimal 390px, cinematic 390/1440px. Ảnh bìa khai báo sizes theo bố cục; cinematic dùng nền đặc cho bảng chữ nên không phụ thuộc độ sáng ảnh. Chưa thử trên điện thoại thật.

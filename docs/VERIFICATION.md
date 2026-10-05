@@ -71,3 +71,9 @@ Thêm báo cáo 7/30/90 ngày với tám chỉ số, tiền thực nhận toàn 
 Chọn ngân hàng theo tên, xem trước tài khoản/QR, lưu liên hệ điện thoại/email có link trực tiếp từ đơn. QR lỗi giữ hướng dẫn chuyển khoản và có thử lại. API và đọc cấu hình dùng chung schema; dữ liệu cũ không có hai trường liên hệ vẫn đọc được. SePay ngừng kích hoạt khi chưa lưu hoặc tài khoản đã đổi không khớp máy chủ.
 
 `pnpm check` đạt lint/typecheck và 121 tests; `pnpm build` đạt. `pnpm test:e2e` đạt 10/10, gồm lưu cấu hình qua phiên admin, khách tải lại đơn thấy liên hệ tel/mailto và vẫn chờ xác nhận, sau đó xác nhận/xuất bản/RSVP. Tests server kiểm tra đổi tài khoản không kích hoạt, thiếu merchant trả 503, tương thích cấu hình cũ, liên hệ không hợp lệ, secret ngắn và tài khoản lệch. Chưa thử giao dịch ngân hàng thật; trạng thái cấu hình khớp không khẳng định bank live đã hoạt động.
+
+## So sánh gói và xem mẫu trực tiếp — 05/10/2026
+
+Bảng giá và bước mua dùng cùng bảng so sánh từ ServicePlan active, thể hiện giá/thời hạn/ảnh/mẫu/branding. Nội dung tiện ích chung và FAQ giải thích tạo nháp, mừng cưới hai bên, RSVP, tự gửi lời mời, duyệt lời chúc, CSV, thanh toán và gia hạn. Chi tiết mẫu không phụ thuộc tên gói cố định. Mỗi thẻ mẫu có link xem thiệp đầy đủ; banner minh họa vẫn giữ.
+
+`pnpm check` đạt lint/typecheck/121 tests, `pnpm build` đạt. `pnpm test:e2e` đạt 11/11: mới kiểm bảng ở checkout và pricing 320px, focus vùng cuộn, giữ query gói qua login, FAQ gia hạn và preview trực tiếp. Sau thêm link xem nhanh, locator cũ trùng các link trên catalog khi chuyển trang; đã dùng exact name cho link trên trang chi tiết, kiểm album/focus đạt lại. Đã xem screenshot so sánh ở 390px và cấu hình admin 390px, không tràn ngang. Bảng có chỉ dẫn vuốt đặt trước bảng. Một lượt chạy lint đồng thời lúc Playwright xóa test-results gặp ENOENT; chạy gate tuần tự sau browser gate đạt. Chưa kiểm trên điện thoại thật hoặc xác nhận giá/chính sách thương mại chính thức.

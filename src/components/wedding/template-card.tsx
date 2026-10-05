@@ -37,7 +37,7 @@ export function TemplateArtwork({
       <Botanical className="branch-left" />
       <Botanical className="branch-right" />
       <div className="art-border">
-        <span className="art-kicker">WE’RE GETTING MARRIED</span>
+        <span className="art-kicker">CHÚNG MÌNH KẾT HÔN</span>
         <span className="art-symbol">
           {template.layout === "classic" ? "囍" : "♡"}
         </span>
@@ -80,6 +80,13 @@ export function TemplateCard({ template }: { template: WeddingTemplate }) {
           <ArrowUpRight size={20} />
         </Link>
       </div>
+      <Link
+        className="template-preview-link text-link"
+        href={`/preview/${template.slug}`}
+        aria-label={`Xem thiệp đầy đủ ${template.name}`}
+      >
+        Xem thiệp đầy đủ <ArrowUpRight size={16} aria-hidden="true" />
+      </Link>
     </article>
   );
 }

@@ -52,6 +52,11 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
     page.getByRole("alert").filter({ hasText: "Cần thanh toán" }),
   ).toContainText("Cần thanh toán");
   await page.getByRole("link", { name: "Mua gói dịch vụ" }).click();
+  await expect(
+    page.getByRole("table", {
+      name: "Quyền lợi của các gói đang được cung cấp",
+    }),
+  ).toBeVisible();
   await page.getByRole("checkbox").check();
   await page
     .getByRole("button", { name: "Tạo đơn & xem hướng dẫn thanh toán" })
@@ -255,7 +260,9 @@ test("catalog filters, full previews and home layout work on mobile", async ({
   await expect(page.getByRole("heading", { name: "Song hỷ" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Lời yêu" })).toHaveCount(0);
   await page.getByRole("link", { name: "Xem mẫu Song hỷ" }).click();
-  await page.getByRole("link", { name: "Xem thiệp đầy đủ" }).click();
+  await page
+    .getByRole("link", { name: "Xem thiệp đầy đủ", exact: true })
+    .click();
   await page.getByRole("button", { name: "Mở thiệp", exact: true }).click();
   await expect(page.locator(".invitation-opening")).not.toBeVisible();
   await expect(
@@ -278,7 +285,9 @@ test("invitation album restores focus and respects reduced motion on mobile", as
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/templates");
   await page.getByRole("link", { name: "Xem mẫu Song hỷ" }).click();
-  await page.getByRole("link", { name: "Xem thiệp đầy đủ" }).click();
+  await page
+    .getByRole("link", { name: "Xem thiệp đầy đủ", exact: true })
+    .click();
   await page.getByRole("button", { name: "Mở thiệp", exact: true }).click();
   await expect(page.locator(".invitation-opening")).not.toBeVisible();
   const firstPhoto = page.getByRole("button", { name: /Xem ảnh kỷ niệm 1 / });
@@ -423,3 +432,46 @@ for (const viewport of [
     }
   });
 }
+
+test("pricing compares live packages and keeps the selected package through login", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto("/pricing");
+  const table = page.getByRole("table", {
+    name: "Quyền lợi của các gói đang được cung cấp",
+  });
+  await expect(table).toContainText("12 ảnh");
+  await expect(table).toContainText("24 ảnh");
+  await expect(
+    page.getByRole("heading", { name: "Gói nào cũng có lời mời đủ đầy" }),
+  ).toBeVisible();
+  const region = page.getByRole("region", {
+    name: "Bảng so sánh gói, có thể cuộn ngang",
+  });
+  await region.focus();
+  await expect(region).toBeFocused();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await page
+    .getByText("Gia hạn có giữ nguyên link và nội dung không?", { exact: true })
+    .click();
+  await expect(page.getByText(/không cộng dồn số ảnh/)).toBeVisible();
+  await page
+    .getByRole("link", { name: "Chọn gói Khởi đầu", exact: true })
+    .click();
+  await expect(page).toHaveURL(/account\/login/);
+  expect(new URL(page.url()).searchParams.get("next")).toContain(
+    "plan=plan-essential",
+  );
+  await page.goto("/templates");
+  await page
+    .getByRole("link", { name: "Xem thiệp đầy đủ Lời yêu", exact: true })
+    .click();
+  await expect(page).toHaveURL(/preview\/loi-yeu/);
+  await page.getByRole("button", { name: "Mở thiệp", exact: true }).click();
+  await expect(page.locator(".invitation-opening")).not.toBeVisible();
+});

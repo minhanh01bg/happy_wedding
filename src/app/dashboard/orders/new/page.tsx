@@ -2,6 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/server/db/prisma";
 import { requireCustomerSession } from "@/server/customer-auth/session";
+import {
+  PlanComparison,
+  SharedPlanBenefits,
+} from "@/components/wedding/plan-comparison";
 import { Checkout } from "@/components/wedding/checkout";
 export default async function NewOrder({
   searchParams,
@@ -52,6 +56,8 @@ export default async function NewOrder({
           initialPlan={query.plan}
         />
       </div>
+      <SharedPlanBenefits />
+      <PlanComparison plans={plans} />
     </>
   );
 }

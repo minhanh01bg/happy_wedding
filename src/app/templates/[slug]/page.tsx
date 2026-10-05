@@ -57,7 +57,7 @@ export default async function TemplateDetail({
           <p className="fine">
             Tạo bản nháp miễn phí.{" "}
             {template.premium
-              ? "Xuất bản với gói Trọn vẹn hoặc Lưu giữ."
+              ? "Xuất bản với gói có quyền sử dụng mẫu cao cấp."
               : "Xuất bản với bất kỳ gói dịch vụ nào."}
           </p>
         </div>

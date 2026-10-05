@@ -3197,3 +3197,69 @@ a.stat-card:focus-visible {
   gap: 16px;
   font-size: 15px;
 }
+
+.plan-comparison,
+.shared-plan-benefits {
+  margin-top: 56px;
+}
+.plan-comparison h2,
+.shared-plan-benefits h2 {
+  font-family: var(--serif);
+  font-size: clamp(28px, 4vw, 40px);
+  margin-bottom: 16px;
+}
+.shared-plan-benefits .grid-two {
+  margin: 24px 0;
+}
+.shared-plan-benefits h3 {
+  font-size: 19px;
+  margin-bottom: 12px;
+}
+.shared-plan-benefits ul {
+  padding-left: 24px;
+  line-height: 1.8;
+}
+.plan-table-scroll {
+  overflow-x: auto;
+  margin: 24px 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.plan-table-scroll:focus-visible {
+  outline: 2px solid var(--rose);
+  outline-offset: 4px;
+}
+.plan-table-scroll table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 16px;
+}
+.plan-table-scroll caption {
+  text-align: left;
+  padding: 16px;
+}
+.plan-table-scroll th,
+.plan-table-scroll td {
+  min-width: 165px;
+  padding: 18px;
+  border-top: 1px solid var(--line);
+  vertical-align: top;
+}
+.plan-table-scroll thead,
+.plan-table-scroll tbody th {
+  background: var(--paper);
+}
+.template-preview-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 8px;
+}
+@media (max-width: 800px) {
+  .shared-plan-benefits,
+  .plan-comparison > p {
+    font-size: 16px;
+  }
+}

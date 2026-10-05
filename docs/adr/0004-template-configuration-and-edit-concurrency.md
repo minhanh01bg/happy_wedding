@@ -23,3 +23,7 @@ Admin tạo biến thể trên layout có sẵn, không thể upload template t�
 ## Evidence / revisit
 
 `src/lib/wedding.ts`, `saveInvitation`, `publishInvitation`; `src/components/wedding/invitation-editor.tsx`, `editor-fields.tsx`. Xem xét bảng WeddingEvent với stable ID nếu cần xóa/thêm/đổi thứ tự sau RSVP; migration phải ánh xạ phản hồi cũ, không chỉ đổi UI key.
+
+## Trình bày catalog — 05/10/2026
+
+Thẻ mẫu dẫn trực tiếp tới preview hiện có ngoài trang chi tiết. Trang chi tiết mô tả yêu cầu quyền mẫu cao cấp thay vì tên gói cố định, vì admin có thể đổi catalog. So sánh gói đọc ServicePlan active tại server và được dùng ở cả pricing lẫn checkout; không duy trì một bảng quyền lợi tĩnh khác với quyền bán thực tế. Bảng cuộn trong vùng riêng, có caption, header row/column và focus bàn phím.

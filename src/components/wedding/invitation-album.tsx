@@ -25,6 +25,21 @@ export function InvitationAlbum({
       {photos.length > 1 && (
         <div className="wedding-photo-story" aria-hidden="true">
           <div className="wedding-photo-stage">
+            <div className="wedding-photo-orbit">
+              {[photos[1], photos[2] ?? photos[0]].map((photo, index) => (
+                <div
+                  className={`wedding-photo-card photo-card-${index}`}
+                  key={index}
+                >
+                  <Image
+                    src={weddingImageSource(photo)}
+                    alt=""
+                    fill
+                    sizes="(max-width:800px) 30vw, 260px"
+                  />
+                </div>
+              ))}
+            </div>
             <div className="wedding-photo-frame">
               <Image
                 src={weddingImageSource(photos[0])}
@@ -44,6 +59,9 @@ export function InvitationAlbum({
             <div className="wedding-photo-scene-label">
               <span>01 / KỶ NIỆM</span>
               <span>02 / BÊN NHAU</span>
+            </div>
+            <div className="wedding-photo-progress">
+              <span />
             </div>
             <p className="wedding-photo-caption">
               Từng khoảnh khắc, một đời thương nhớ

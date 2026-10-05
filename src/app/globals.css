@@ -3690,3 +3690,92 @@ a.stat-card:focus-visible {
     margin: -40px 20px 24px;
   }
 }
+
+/* A photo chapter gathers from depth, fills the stage and hands off to the album. */
+.wedding-photo-card {
+  position: absolute;
+}
+.wedding-photo-orbit,
+.wedding-photo-progress {
+  display: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .invitation-motion-active .wedding-photo-stage {
+    isolation: isolate;
+    perspective: 1200px;
+    transform: translateY(var(--stage-lift, 0px));
+  }
+  .invitation-motion-active .wedding-photo-frame:not(.wedding-photo-second) {
+    transform: rotateY(var(--stage-turn, 0deg));
+  }
+  .invitation-motion-active .wedding-photo-orbit {
+    display: block;
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    overflow: clip;
+    opacity: var(--orbit-opacity, 1);
+  }
+  .wedding-photo-card {
+    position: absolute;
+    width: 25%;
+    height: 58%;
+    top: 16%;
+    overflow: hidden;
+    border: 6px solid var(--card);
+    border-radius: 4px;
+    box-shadow: 0 24px 48px rgb(0 0 0 / 0.22);
+  }
+  .wedding-photo-card img {
+    object-fit: cover;
+  }
+  .photo-card-0 {
+    left: 2%;
+    transform: translateX(calc(-1 * var(--orbit-travel, 0px)))
+      rotateY(var(--orbit-turn, 18deg)) rotate(-8deg)
+      scale(var(--orbit-scale, 0.8));
+  }
+  .photo-card-1 {
+    right: 2%;
+    top: 24%;
+    transform: translateX(var(--orbit-travel, 0px))
+      rotateY(calc(-1 * var(--orbit-turn, 18deg))) rotate(8deg)
+      scale(var(--orbit-scale, 0.8));
+  }
+  .invitation-motion-active .wedding-photo-caption {
+    translate: 0 var(--caption-lift, 0px);
+    z-index: 3;
+  }
+  .invitation-motion-active .wedding-photo-progress {
+    display: block;
+    position: absolute;
+    z-index: 3;
+    bottom: 8px;
+    left: 25%;
+    width: 50%;
+    height: 2px;
+    background: rgb(255 255 255 / 0.3);
+    overflow: hidden;
+  }
+  .wedding-photo-progress span {
+    display: block;
+    height: 100%;
+    background: white;
+    transform-origin: left;
+    transform: scaleX(var(--chapter-progress, 0));
+  }
+  .invitation-motion-active .wedding-photo-story {
+    height: 180vh;
+  }
+}
+@media (max-width: 800px) and (prefers-reduced-motion: no-preference) {
+  .invitation-motion-active .wedding-photo-story {
+    height: 150svh;
+  }
+  .wedding-photo-card {
+    width: 28%;
+    height: 44%;
+    border-width: 3px;
+  }
+}

@@ -201,3 +201,7 @@ Thiệp có hiệu ứng mở khung ảnh đầu, ảnh di chuyển nhẹ theo c
 ### Ảnh stock và cinematic mobile — 05/10/2026
 
 Ảnh stock mặc định chuyển sang ảnh cưới chụp thật, nguồn Martin Baron/Unsplash ghi ở public/images/CREDITS.md. Alias stock cũ chỉ đổi URL trình bày, không sửa dữ liệu hoặc ảnh tải lên của khách. Mẫu cinematic ở chiều rộng tối đa 800px đặt vùng ảnh 420px phía trên panel lời mời, panel chỉ chồng 40px cuối ảnh để giữ khuôn mặt nhìn được. Không đổi palette, thông tin cặp đôi, API hay quyền công khai.
+
+### Chiều sâu cho chương ảnh — 05/10/2026
+
+Chương ảnh bổ sung hai tấm ảnh trang trí từ album, nghiêng phối cảnh và rời khung khi ảnh chính mở rộng. Tiến trình cuộn điều khiển đồng bộ chuyển cảnh, caption và thanh tiến trình; cuộn ngược đảo lại trạng thái. Điện thoại dùng tấm ảnh nhỏ hơn; reduced motion/no-JS giữ ảnh tĩnh và ẩn lớp trang trí. Học cách tổ chức lớp và nhịp từ https://www.oneplus.com/vn/15, không sao chép tài sản. Không đổi API, dữ liệu hay quyền truy cập.

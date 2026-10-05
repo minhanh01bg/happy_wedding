@@ -129,3 +129,11 @@ Mỗi tiệc có link lịch với ngày giờ và địa điểm riêng. Link n
 - `pnpm check`: lint, TypeScript, **122/122 bài kiểm tra**, 15 file qua. `pnpm build`: qua. `pnpm test:e2e`: **15/15 ca Chromium qua**, gồm sáu viewport và năm bố cục.
 - Kiểm tra thực tế sau restart dev: 390×900 và 1440×900 dùng URL stock mới, ảnh decode thành công và không cuộn ngang. Cinematic mobile dùng ảnh relative 420px phía trên panel, thấy rõ hai khuôn mặt; desktop giữ ảnh nền toàn khung. Đã xem ảnh chụp cả hai.
 - Tên asset mới tránh cache stock cũ; không đổi DB, URL ảnh upload, API hoặc guards. Không xác minh thiết bị vật lý/Safari hay triển khai production trong lượt này.
+
+### Chương ảnh có phối cảnh — 05/10/2026
+
+- `pnpm check`: ESLint, TypeScript và 122/122 tests đạt; lint lại các file TS/TSX sau bổ sung regression đạt.
+- `pnpm build`: đạt trên CSS cuối, gồm khung absolute cho ảnh trang trí khi reduced motion.
+- `pnpm test:e2e`: 15/15 Chromium đạt (3.4 phút), sáu viewport 320–1440px và năm layouts; regression kiểm tra orbit hiện ở đầu, biến mất giữa cảnh, cuộn ngược khôi phục và reduced motion ẩn orbit.
+- Xem ảnh chụp runtime tại 390/1440px ở tiến trình 0, .45, .95: phối cảnh hai tấm ảnh, mở rộng và wipe; không tràn ngang. Các ảnh chụp kiểm tra nằm `/tmp/wedding-depth-final-*.png`, không phải tài sản sản phẩm.
+- Chưa xác minh Safari hoặc tốc độ trên điện thoại vật lý.

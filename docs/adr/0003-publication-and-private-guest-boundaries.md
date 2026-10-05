@@ -51,3 +51,7 @@ Hai cảnh nổi bật vẫn là trang trí aria-hidden dùng dữ liệu ảnh 
 ### Thay ảnh stock — 05/10/2026
 
 Dùng alias URL stock tại renderer thay vì sửa DB/ảnh người dùng. Ảnh stock chỉ minh họa, nguồn/giấy phép có trong repo; không đại diện cho cặp đôi có tên trong demo. Bố cục cinematic mobile giữ vùng ảnh riêng để panel không che khuôn mặt; publication/guest boundaries không đổi.
+
+### Chương ảnh có chiều sâu — 05/10/2026
+
+Các thẻ phối cảnh chỉ trang trí aria-hidden từ album hiện có, không thêm dữ liệu. Cuộn điều khiển đồng bộ trạng thái và có thể đảo chiều. Reduced motion/no-JS ẩn orbit và thanh tiến trình; album nút native vẫn truy cập mọi ảnh. Không thay publication hoặc guest boundaries.

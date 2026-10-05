@@ -123,3 +123,7 @@ Thiệp bổ sung hai cảnh ảnh trong khung nổi bật: mở khung rồi ả
 Đã tìm ảnh chụp thật và xem trực tiếp ba ứng viên Unsplash. Chọn ảnh [Martin Baron — A bride and groom standing in the middle of a forest](https://unsplash.com/photos/a-bride-and-groom-standing-in-the-middle-of-a-forest-hWiqlzjwCLI): cặp đôi ở giữa, ánh sáng mềm, tông xanh ngoài trời và khuôn mặt nằm trong vùng cắt ngang/dọc. Trang nguồn xác nhận Download free/Unsplash License; đối chiếu [giấy phép](https://unsplash.com/license). Nguồn và ngày kiểm tra nằm ở public/images/CREDITS.md.
 
 Ảnh mới wedding-couple-forest.jpg, JPEG tối ưu 1600×2400, khoảng 429 KiB. Renderer chuyển riêng đường dẫn stock cũ /images/couple.jpg sang ảnh mới, tránh cache Image Optimization cũ; không đổi URL ảnh người dùng tải lên, không sửa DB. Trang chủ sửa alt/caption khớp ảnh và dùng tiếng Việt. Trên cinematic mobile, ảnh có vùng riêng phía trên nội dung để không bị panel che mặt. Đây vẫn là ảnh minh họa, không phải cặp đôi có tên trên thiệp demo.
+
+### Chiều sâu cho chương ảnh — 05/10/2026
+
+Chương ảnh bổ sung hai tấm ảnh trang trí từ album, nghiêng phối cảnh và rời khung khi ảnh chính mở rộng. Tiến trình cuộn điều khiển đồng bộ chuyển cảnh, caption và thanh tiến trình; cuộn ngược đảo lại trạng thái. Điện thoại dùng tấm ảnh nhỏ hơn; reduced motion/no-JS giữ ảnh tĩnh và ẩn lớp trang trí. Học cách tổ chức lớp và nhịp từ https://www.oneplus.com/vn/15, không sao chép tài sản. Không đổi API, dữ liệu hay quyền truy cập.

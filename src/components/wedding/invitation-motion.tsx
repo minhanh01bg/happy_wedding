@@ -83,6 +83,20 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
         );
         const progress = Math.max(0, Math.min(1, -bounds.top / travel));
         const opening = Math.min(1, progress / 0.45);
+        // Smoothstep gives each chapter a gentle arrival and departure.
+        const ease = (value: number) => value * value * (3 - 2 * value);
+        const gathering = ease(Math.min(1, progress / 0.38));
+        const departing = ease(
+          Math.max(0, Math.min(1, (progress - 0.72) / 0.28)),
+        );
+        story.style.setProperty("--orbit-opacity", `${1 - gathering}`);
+        story.style.setProperty("--orbit-travel", `${gathering * 140}px`);
+        story.style.setProperty("--orbit-turn", `${(1 - gathering) * 18}deg`);
+        story.style.setProperty("--orbit-scale", `${0.8 + gathering * 0.2}`);
+        story.style.setProperty("--stage-turn", `${(1 - gathering) * 7}deg`);
+        story.style.setProperty("--stage-lift", `${departing * -32}px`);
+        story.style.setProperty("--caption-lift", `${(1 - gathering) * 24}px`);
+        story.style.setProperty("--chapter-progress", `${progress}`);
         const change = Math.max(0, Math.min(1, (progress - 0.4) / 0.5));
         story.style.setProperty("--scene-wipe", `${100 * (1 - change)}%`);
         story.style.setProperty("--scene-shift", `${8 * (1 - change)}%`);

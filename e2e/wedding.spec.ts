@@ -627,6 +627,25 @@ test("photo scenes reverse with scrolling and hover depth clears on reduced moti
       ),
     )
     .toBeGreaterThan(95);
+  await expect(page.locator(".wedding-photo-orbit")).toHaveCSS(
+    "display",
+    "block",
+  );
+  await expect
+    .poll(() =>
+      page
+        .locator(".wedding-photo-orbit")
+        .evaluate((el) => Number(getComputedStyle(el).opacity)),
+    )
+    .toBeGreaterThan(0.9);
+  await page.evaluate((y) => scrollTo(0, y), start + travel * 0.5);
+  await expect
+    .poll(() =>
+      page
+        .locator(".wedding-photo-orbit")
+        .evaluate((el) => Number(getComputedStyle(el).opacity)),
+    )
+    .toBeLessThan(0.01);
   const photo = page.locator(".wedding-album > button").first();
   await photo.hover({ position: { x: 30, y: 30 } });
   await expect(photo).toHaveClass(/photo-hovered/);
@@ -635,6 +654,10 @@ test("photo scenes reverse with scrolling and hover depth clears on reduced moti
     .not.toBe("");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(photo).not.toHaveClass(/photo-hovered/);
+  await expect(page.locator(".wedding-photo-orbit")).toHaveCSS(
+    "display",
+    "none",
+  );
   await expect(page.locator(".wedding-photo-second")).toHaveCSS(
     "display",
     "none",

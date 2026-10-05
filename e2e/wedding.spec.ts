@@ -103,6 +103,19 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
     .fill("support@example.com");
   await admin.getByRole("button", { name: "Lưu cấu hình" }).click();
   await expect(admin.getByRole("status")).toContainText("Đã lưu cấu hình");
+  const publicSupport = await browser.newPage();
+  await publicSupport.goto("http://127.0.0.1:3201/support");
+  await expect(
+    publicSupport.getByRole("link", { name: "Gọi hỗ trợ: 0901234567" }),
+  ).toHaveAttribute("href", "tel:0901234567");
+  await expect(
+    publicSupport.getByRole("link", { name: "Email: support@example.com" }),
+  ).toHaveAttribute("href", "mailto:support@example.com");
+  expect(await publicSupport.content()).not.toContain("970436");
+  expect(await publicSupport.content()).not.toContain("123456789");
+  expect(await publicSupport.content()).not.toContain("TEST MERCHANT");
+  await publicSupport.close();
+
   await page.reload();
   await expect(
     page.getByRole("link", { name: "Gọi hỗ trợ: 0901234567" }),
@@ -404,7 +417,7 @@ for (const viewport of [
     await navigation.getByRole("link", { name: "Bộ sưu tập" }).click();
     await expect(page).toHaveURL(/\/templates$/);
     await noOverflow();
-    for (const path of ["/pricing", "/account/login"]) {
+    for (const path of ["/pricing", "/account/login", "/support"]) {
       await page.goto(path);
       await noOverflow();
     }

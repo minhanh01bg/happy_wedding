@@ -31,3 +31,7 @@ Thông tin nhận mừng cưới nhà trai/nhà gái là nội dung chủ thiệ
 ## Đọc thiệp và bỏ qua chuyển động — 05/10/2026
 
 Cho phép mở tức thì qua nút rõ nhãn hoặc Escape, vẫn trả focus vào tiêu đề và phát cùng sự kiện mở nội dung. Các lối tắt là anchor tới phần sẵn có, không tải hay công khai danh sách khách. Nhãn tiếng Việt và chữ chính 16px được dùng cho mọi viewport; tương phản chữ không giảm bằng opacity. Không thay quyền truy cập thiệp.
+
+## Hỗ trợ trước khi mua — 05/10/2026
+
+Trang hướng dẫn công khai tái sử dụng liên hệ đã lưu trong merchant, chỉ truyền ba trường hỗ trợ để chủ dịch vụ không phải cập nhật một kênh liên hệ khác. Không biến trang công khai thành trang tra cứu đơn hoặc tài khoản: khách xem trạng thái đơn sau đăng nhập, khách mời hỏi cặp đôi về lịch/đường dẫn thiệp.

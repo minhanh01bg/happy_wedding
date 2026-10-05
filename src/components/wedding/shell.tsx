@@ -36,11 +36,12 @@ export function Footer() {
       <div>
         <Link href="/templates">Bộ sưu tập</Link>
         <Link href="/pricing">Gói dịch vụ</Link>
+        <Link href="/support">Hướng dẫn & hỗ trợ</Link>
         <Link href="/policies">Điều khoản & quyền riêng tư</Link>
         <Link href="/login">Quản trị</Link>
       </div>
       <p className="fine">
-        © {new Date().getFullYear()} Hỷ Studio · Made with love, in Vietnam.
+        © {new Date().getFullYear()} Hỷ Studio · Được chăm chút tại Việt Nam.
       </p>
     </footer>
   );

@@ -19,6 +19,7 @@ export default async function DashboardLayout({
           <Link href="/dashboard">Thiệp của tôi</Link>
           <Link href="/dashboard/orders">Đơn dịch vụ</Link>
           <Link href="/templates">Bộ sưu tập</Link>
+          <Link href="/support">Hướng dẫn & hỗ trợ</Link>
         </nav>
         <div>
           <span className="fine">{session.account.displayName}</span>

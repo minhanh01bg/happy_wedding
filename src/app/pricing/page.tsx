@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Header, Footer } from "@/components/wedding/shell";
 import {
   PlanComparison,
@@ -37,6 +38,11 @@ export default async function Pricing() {
         )}
         <SharedPlanBenefits />
         <PlanComparison plans={plans} />
+        <p className="pricing-help">
+          <Link className="text-link" href="/support">
+            Cần hỗ trợ chọn gói hoặc tạo thiệp? Xem hướng dẫn & liên hệ
+          </Link>
+        </p>
         <section className="faq">
           <h2>Những điều bạn muốn biết</h2>
           {[

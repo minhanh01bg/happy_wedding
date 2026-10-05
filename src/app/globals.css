@@ -3437,3 +3437,31 @@ a.stat-card:focus-visible {
   max-width: 65px;
   flex: 1;
 }
+.support-guide {
+  font-size: 16px;
+}
+.support-guide h2 {
+  font-family: var(--serif);
+  font-size: 28px;
+  margin-bottom: 16px;
+}
+.support-guide ol {
+  padding-left: 24px;
+  margin: 20px 0;
+}
+.support-guide li {
+  margin-bottom: 14px;
+}
+.support-guide .panel p {
+  margin-top: 16px;
+}
+.support-guide .faq details p {
+  font-size: 16px;
+}
+.support-guide .inline-actions {
+  margin-top: 24px;
+}
+.pricing-help {
+  margin-top: 36px;
+  font-size: 16px;
+}

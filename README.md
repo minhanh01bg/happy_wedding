@@ -14,7 +14,7 @@ Yêu cầu Node 22 và pnpm 10.28.2. Mở http://localhost:3200.
 
 `pnpm run setup` tạo DB riêng, nạp 6 mẫu/3 gói/1 thiệp minh họa, tạo mật khẩu quản trị ngẫu nhiên trong `.local-admin-password` (quyền đọc riêng). Dùng mật khẩu này tại `/login`. `.env` và mật khẩu không đưa vào Git. Chạy setup lại không ghi đè tài khoản/ngân hàng/bảng giá đã chỉnh.
 
-- `/`: Website giới thiệu; `/templates`, `/pricing`: mẫu và dịch vụ.
+- `/`: Website giới thiệu; `/templates`, `/pricing`: mẫu và dịch vụ; `/support`: hướng dẫn và liên hệ.
 - `/account/register`, `/account/login`: tài khoản khách hàng.
 - `/dashboard`: tạo/sửa thiệp, mua gói, quản lý khách mời.
 - `/w/thiep-mau`: thiệp mẫu đầy đủ, dữ liệu minh họa.

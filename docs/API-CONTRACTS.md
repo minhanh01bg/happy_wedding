@@ -108,3 +108,5 @@ Trang bảng giá và so sánh tại bước mua chỉ hiển thị ServicePlan 
 Layout catalog được validation bằng enum `editorial | botanical | classic | minimal | cinematic`; seed bổ sung bốn mẫu, không ghi đè mẫu hiện có. Không đổi cấu trúc dữ liệu thiệp khi đổi layout.
 
 Nút bỏ qua hiệu ứng và điều hướng nội dung chỉ đổi tương tác phía xem thiệp. Không đổi public guards, token, payload RSVP hay bật nhạc tự động.
+
+`GET /support` là trang hướng dẫn không yêu cầu đăng nhập. Chỉ xuất thông tin liên hệ chủ dịch vụ (support/supportPhone/supportEmail); không xuất merchant bank/account/name, đơn hoặc danh sách khách. Không có API mutation mới.

@@ -181,3 +181,7 @@ Những việc này chưa đánh dấu hoàn tất và không được quảng c
 ### Dashboard quản trị mở rộng (03/10/2026)
 
 Dashboard `/admin` dùng period 7/30/90 ngày gần nhất (mặc định 30), ngày theo Asia/Ho_Chi_Minh, kỳ này gồm hôm nay và so với kỳ liền trước đủ ngày. Tiền đã nhận lấy WeddingPayment.amount/receivedAt, không cộng đơn pending, ghi chú khách, tiền mừng hoặc thiệp demo. Có tổng toàn thời gian, biểu đồ đường tương tác/chọn ngày và bảng số liệu, doanh số theo tên gói snapshot, trạng thái khách/thiệp/catalog và tác vụ cần xử lý. Thiệp đang công khai phải có owner bật và paid entitlement còn hạn; số thiệp status published không đủ chứng minh còn công khai. Danh sách khách lọc theo tên/điện thoại/trạng thái, thống kê hoạt động/khóa, số đơn paid và tiền gói đã trả, giữ bộ lọc khi phân trang.
+
+## Hướng dẫn và liên hệ công khai — 05/10/2026
+
+`/support` phục vụ hai hành trình người mua và khách mời, liên hệ điện thoại/email lấy từ merchant đã cấu hình. Chỉ đưa support/supportPhone/supportEmail vào thành phần liên hệ; không hiển thị ngân hàng nhận tiền dịch vụ, tài khoản hoặc dữ liệu khách hàng. Liên kết từ footer, bảng giá và workspace khách. FAQ mô tả trạng thái thanh toán chờ, lưu trước preview, xuất bản và giới hạn khôi phục mật khẩu hiện có; không hứa tự động hoàn tiền hay đặt thêm chính sách.

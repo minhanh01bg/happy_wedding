@@ -56,15 +56,15 @@ Trả data `{id: responseId}`. Thiệp phải công khai hợp lệ. Personal cl
 
 Mọi operation dưới `admin/` cần phiên admin và role owner/manager.
 
-| POST operation            | Payload                                                          | Hành vi                                                                                          |
-| ------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `admin/templates`         | templateSchema, id optional                                      | Create/update; không đổi premium khi có published invitation                                     |
-| `admin/plans`             | planSchema, id optional                                          | Create/update catalog; không sửa snapshot order                                                  |
-| `admin/confirm-payment`   | `{id: orderId, transactionId: string, amount: integer}`          | transactionId 4–100, amount ≥0; prefix manual; trả data ServiceOrder                             |
-| `admin/cancel-order`      | `{id: orderId}`                                                  | Chỉ pending; ghi audit                                                                           |
-| `admin/invitation-status` | `{id: invitationId, suspended: boolean}`                         | suspended/draft, tăng version, ghi audit                                                         |
-| `admin/customer-status`   | `{id: accountId, disabled: boolean}`                             | Khóa/mở; khóa thu hồi phiên trong transaction có audit                                           |
-| `admin/settings`          | `{bank: string, account: string, name: string, support: string}` | Merchant bank BIN 6 số, account 5–30 chữ/số, name ≤100, support ≤150; bộ ngân hàng đủ hoặc trống |
+| POST operation            | Payload                                                                                                        | Hành vi                                                                                                                                                                               |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `admin/templates`         | templateSchema, id optional                                                                                    | Create/update; không đổi premium khi có published invitation                                                                                                                          |
+| `admin/plans`             | planSchema, id optional                                                                                        | Create/update catalog; không sửa snapshot order                                                                                                                                       |
+| `admin/confirm-payment`   | `{id: orderId, transactionId: string, amount: integer}`                                                        | transactionId 4–100, amount ≥0; prefix manual; trả data ServiceOrder                                                                                                                  |
+| `admin/cancel-order`      | `{id: orderId}`                                                                                                | Chỉ pending; ghi audit                                                                                                                                                                |
+| `admin/invitation-status` | `{id: invitationId, suspended: boolean}`                                                                       | suspended/draft, tăng version, ghi audit                                                                                                                                              |
+| `admin/customer-status`   | `{id: accountId, disabled: boolean}`                                                                           | Khóa/mở; khóa thu hồi phiên trong transaction có audit                                                                                                                                |
+| `admin/settings`          | `{bank: string, account: string, name: string, support: string, supportPhone?: string, supportEmail?: string}` | Merchant bank BIN 6 số, account 5–30 chữ/số, name ≤100, support ≤150, supportPhone 9–15 chữ số (có thể +), supportEmail hợp lệ; liên hệ mới mặc định rỗng; bộ ngân hàng đủ hoặc trống |
 
 templateSchema/planSchema tại `src/lib/wedding.ts` là nguồn kiểu chính thức. Layout/palette/category giới hạn danh sách; price integer 0–50.000.000, months 1–60, maxPhotos 1–40, sortOrder 0–100. Catalog mutation ngoài payment có thể audit sau ghi thay vì cùng transaction.
 
@@ -100,3 +100,5 @@ Customer `/api/customer-auth/register`, `/login`, `/logout`; admin `/api/auth/lo
 ## Trang thống kê quản trị
 
 GET `/admin?period=7|30|90` yêu cầu phiên owner/manager ở server; query không hợp lệ dùng 30. Khoảng ngày VN gồm hôm nay; tiền lấy giao dịch thực receivedAt/amount và loại thiệp demo. Biểu đồ có dữ liệu theo ngày và bảng đọc bằng bàn phím. GET `/admin/customers?q=...&status=all|active|disabled&page=...` giữ bộ lọc khi phân trang, không đưa số điện thoại hoặc tài khoản ngân hàng vào biểu đồ. Không có API báo cáo công khai.
+
+SePay chỉ kích hoạt khi tài khoản ngân hàng đã lưu khớp `SEPAY_ACCOUNT_NUMBER`; thiếu hoặc lệch cấu hình trả 503 cho giao dịch vào có mã đơn. Không đưa webhook secret vào form quản trị.

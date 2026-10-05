@@ -3172,3 +3172,28 @@ a.stat-card:focus-visible {
     gap: 12px;
   }
 }
+
+.support-contacts {
+  margin-block: 20px;
+}
+.support-contacts p {
+  font-size: 14px;
+}
+.support-contacts a {
+  overflow-wrap: anywhere;
+}
+.payment-qr {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+  margin-block: 16px;
+}
+.payment-qr .qr-box {
+  margin: 0;
+}
+.payment-steps {
+  padding-left: 24px;
+  display: grid;
+  gap: 16px;
+  font-size: 15px;
+}

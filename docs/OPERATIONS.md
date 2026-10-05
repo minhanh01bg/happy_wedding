@@ -32,6 +32,8 @@ SePay tùy chọn:
 - Tạo webhook `https://<domain>/api/payments/sepay`, sự kiện tiền vào, API Key auth.
 - Header do nhà cung cấp gửi: `Authorization: Apikey <secret>`.
 - Chọn tài khoản tương ứng ngân hàng trong admin settings. Kiểm tra Test Mode/sandbox trước.
+- Tài khoản trong admin settings phải khớp SEPAY_ACCOUNT_NUMBER. Khi đổi tài khoản nhận tiền, cập nhật cấu hình máy chủ và kiểm tra giao dịch thử; webhook trả 503 khi cấu hình không khớp hoặc chưa lưu ngân hàng.
+- Lưu số điện thoại/email hỗ trợ trong admin settings để khách bấm gọi hoặc gửi email từ trang thanh toán.
 - Chỉ giao dịch khớp tài khoản, mã đơn, số tiền mới kích hoạt. Transaction ID có prefix nhà cung cấp; retry không tăng thời hạn hai lần.
 - Chưa tích hợp hoàn tiền tự động. Đơn pending có thể hủy; đơn paid không hủy qua giao diện để tránh xóa lịch sử doanh thu.
 

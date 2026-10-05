@@ -38,6 +38,7 @@ async function clean() {
   await prisma.customerSession.deleteMany();
   await prisma.customerAccount.deleteMany();
   await prisma.adminAuditEvent.deleteMany();
+  await prisma.setting.deleteMany();
 }
 let accountId: string;
 let otherId: string;
@@ -343,9 +344,20 @@ describe("Guest responses", () => {
 
 describe("Authenticated SePay webhook", () => {
   const secret = "test-only-sepay-secret-with-over-32-chars";
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.stubEnv("SEPAY_WEBHOOK_API_KEY", secret);
     vi.stubEnv("SEPAY_ACCOUNT_NUMBER", "123456789");
+    await prisma.setting.create({
+      data: {
+        key: "wedding.merchant",
+        value: JSON.stringify({
+          bank: "970436",
+          account: "123456789",
+          name: "TEST MERCHANT",
+          support: "",
+        }),
+      },
+    });
   });
   afterEach(() => vi.unstubAllEnvs());
   const request = (data: unknown, auth = `Apikey ${secret}`) =>
@@ -393,6 +405,30 @@ describe("Authenticated SePay webhook", () => {
     expect((await sepayWebhook(request(payload(o.code)))).status).toBe(200);
     expect((await entitlement(i.id))?.expiresAt).toEqual(first?.expiresAt);
     expect(await prisma.weddingPayment.count()).toBe(1);
+  });
+  it("stops automatic activation when the receiving account changes", async () => {
+    const i = await draft();
+    const o = await createServiceOrder(accountId, i.id, planId, randomUUID());
+    await prisma.setting.update({
+      where: { key: "wedding.merchant" },
+      data: {
+        value: JSON.stringify({
+          bank: "970436",
+          account: "987654321",
+          name: "TEST MERCHANT",
+          support: "",
+        }),
+      },
+    });
+    expect((await sepayWebhook(request(payload(o.code)))).status).toBe(503);
+    expect(await entitlement(i.id)).toBeNull();
+    expect(await prisma.weddingPayment.count()).toBe(0);
+  });
+  it("fails closed when no merchant account is saved", async () => {
+    await prisma.setting.deleteMany();
+    expect(
+      (await sepayWebhook(request(payload("HY123456789012")))).status,
+    ).toBe(503);
   });
   it("mismatched amount cannot activate", async () => {
     const i = await draft();

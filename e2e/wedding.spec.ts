@@ -72,6 +72,30 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
     .fill("e2e-admin-password");
   await admin.getByRole("button", { name: "Đăng nhập", exact: true }).click();
   await expect(admin).toHaveURL(/\/admin$/);
+  await admin.goto("http://127.0.0.1:3201/admin/settings");
+  await admin
+    .getByRole("combobox", { name: "Ngân hàng nhận tiền dịch vụ" })
+    .selectOption("970436");
+  await admin.getByLabel("Số tài khoản", { exact: true }).fill("123456789");
+  await admin
+    .getByLabel("Tên chủ tài khoản", { exact: true })
+    .fill("TEST MERCHANT");
+  await admin
+    .getByLabel("Số điện thoại hỗ trợ", { exact: true })
+    .fill("0901234567");
+  await admin
+    .getByLabel("Email hỗ trợ", { exact: true })
+    .fill("support@example.com");
+  await admin.getByRole("button", { name: "Lưu cấu hình" }).click();
+  await expect(admin.getByRole("status")).toContainText("Đã lưu cấu hình");
+  await page.reload();
+  await expect(
+    page.getByRole("link", { name: "Gọi hỗ trợ: 0901234567" }),
+  ).toHaveAttribute("href", "tel:0901234567");
+  await expect(
+    page.getByRole("link", { name: "Email: support@example.com" }),
+  ).toHaveAttribute("href", "mailto:support@example.com");
+  await expect(page.getByText("Chờ xác nhận", { exact: true })).toBeVisible();
   await admin.goto(`http://127.0.0.1:3201/admin/orders/${orderId}`);
   await admin
     .getByLabel("Mã giao dịch ngân hàng")

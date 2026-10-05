@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { BankSelect } from "./bank-select";
 import { PALETTES, LAYOUTS } from "@/lib/wedding";
 import { post } from "./client";
 type Values = Record<string, string | number | boolean | undefined>;
@@ -78,6 +79,8 @@ export function AdminRecordForm({
               account: value("account"),
               name: value("name"),
               support: value("support"),
+              supportPhone: value("supportPhone"),
+              supportEmail: value("supportEmail"),
             };
           else if (kind === "templates")
             data = {
@@ -118,14 +121,41 @@ export function AdminRecordForm({
       {kind === "settings" ? (
         <>
           <div className="grid-two">
-            {input("bank", "BIN ngân hàng (6 chữ số)", false)}
+            <label>
+              Ngân hàng nhận tiền dịch vụ
+              <BankSelect name="bank" defaultValue={text("bank")} />
+            </label>
             {input("account", "Số tài khoản", false)}
           </div>
           {input("name", "Tên chủ tài khoản", false)}
           {input("support", "Kênh hỗ trợ (SĐT/email)", false)}
+          <div className="grid-two">
+            <label>
+              Số điện thoại hỗ trợ
+              <input
+                type="tel"
+                name="supportPhone"
+                defaultValue={text("supportPhone")}
+                maxLength={16}
+                placeholder="0901234567"
+              />
+            </label>
+            <label>
+              Email hỗ trợ
+              <input
+                type="email"
+                name="supportEmail"
+                defaultValue={text("supportEmail")}
+                maxLength={254}
+                placeholder="hotro@tenmien.vn"
+              />
+            </label>
+          </div>
           <p className="fine">
-            BIN: VCB 970436 · BIDV 970418 · MB 970422 · Techcombank 970407. Điền
-            đủ ba trường ngân hàng để hiển thị QR thanh toán.
+            Thông tin nhận tiền dịch vụ tách biệt với tài khoản mừng cưới của
+            các cặp đôi. Điền đủ ngân hàng, tài khoản và tên chủ tài khoản để
+            khách thấy QR thanh toán. Kênh hỗ trợ xuất hiện trên đơn để khách
+            liên hệ khi cần.
           </p>
         </>
       ) : (

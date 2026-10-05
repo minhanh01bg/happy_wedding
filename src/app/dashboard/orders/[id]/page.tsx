@@ -1,5 +1,7 @@
 import Link from "next/link";
-import Image from "next/image";
+import { PaymentQr } from "@/components/wedding/payment-qr";
+import { SupportContacts } from "@/components/wedding/support-contacts";
+import { bankName } from "@/lib/banks";
 import { notFound } from "next/navigation";
 import { prisma } from "@/server/db/prisma";
 import { requireCustomerSession } from "@/server/customer-auth/session";
@@ -66,19 +68,17 @@ export default async function Order({
               {merchant.bank && merchant.account && merchant.name ? (
                 <>
                   <p>Chuyển khoản đúng số tiền và nội dung bên dưới.</p>
-                  <div className="qr-box">
-                    <Image
-                      src={`https://img.vietqr.io/image/${merchant.bank}-${merchant.account}-compact2.png?amount=${order.total}&addInfo=${order.code}&accountName=${encodeURIComponent(merchant.name)}`}
-                      alt="QR thanh toán đơn dịch vụ"
-                      width={240}
-                      height={290}
-                      unoptimized
-                    />
-                  </div>
+                  <PaymentQr
+                    bank={merchant.bank}
+                    account={merchant.account}
+                    name={merchant.name}
+                    amount={order.total}
+                    code={order.code}
+                  />
                   <div className="bank-details">
                     <div>
-                      <span>BIN ngân hàng</span>
-                      <strong>{merchant.bank}</strong>
+                      <span>Ngân hàng</span>
+                      <strong>{bankName(merchant.bank)}</strong>
                     </div>
                     <div>
                       <span>Chủ tài khoản</span>
@@ -98,6 +98,10 @@ export default async function Order({
                     </div>
                   </div>
                   <CopyButton
+                    value={merchant.account}
+                    label="Sao chép số tài khoản thanh toán"
+                  />
+                  <CopyButton
                     value={order.code}
                     label="Sao chép nội dung chuyển khoản"
                   />
@@ -108,9 +112,11 @@ export default async function Order({
                   hệ hỗ trợ trước khi thanh toán. {merchant.support}
                 </div>
               )}
+              <SupportContacts settings={merchant} />
               <p className="fine" style={{ margin: "22px 0" }}>
-                {merchant.support} · Quản trị viên sẽ kiểm tra giao dịch trước
-                khi kích hoạt. Nếu chưa cập nhật, bấm “Kiểm tra trạng thái”.
+                Sau khi chuyển khoản, gửi ghi chú để được đối chiếu. Gói chỉ
+                được kích hoạt khi tiền đã nhận được xác nhận. Bấm “Kiểm tra
+                trạng thái” để cập nhật.
               </p>
               <PaymentNote id={order.id} />
               {order.paymentNote && (

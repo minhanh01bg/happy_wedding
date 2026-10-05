@@ -221,3 +221,38 @@ export const DEMO_CONTENT: Omit<InvitationInput, "templateId" | "slug"> = {
   brideGiftAccount: "",
   brideGiftName: "",
 };
+
+export const merchantSchema = z
+  .strictObject({
+    bank: z
+      .string()
+      .trim()
+      .regex(/^\d{6}$|^$/, "Hãy chọn ngân hàng nhận tiền"),
+    account: z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z0-9]{5,30}$|^$/, "Số tài khoản không hợp lệ"),
+    name: z.string().trim().max(100),
+    support: z.string().trim().max(150),
+    supportPhone: z
+      .string()
+      .trim()
+      .regex(/^\+?[0-9]{9,15}$|^$/, "Số điện thoại hỗ trợ không hợp lệ")
+      .default(""),
+    supportEmail: z
+      .union([z.email("Email hỗ trợ không hợp lệ"), z.literal("")])
+      .default(""),
+  })
+  .superRefine((input, context) => {
+    if (
+      (input.bank || input.account || input.name) &&
+      !(input.bank && input.account && input.name)
+    )
+      context.addIssue({
+        code: "custom",
+        message:
+          "Điền đủ ngân hàng, số tài khoản và chủ tài khoản nhận tiền dịch vụ",
+        path: ["bank"],
+      });
+  });
+export type MerchantSettings = z.infer<typeof merchantSchema>;

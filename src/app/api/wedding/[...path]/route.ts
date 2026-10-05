@@ -1,3 +1,4 @@
+import { merchantSchema } from "@/lib/wedding";
 import { randomBytes } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
@@ -184,19 +185,7 @@ export async function POST(
         return json({ ok: true });
       }
       if (path[1] === "settings") {
-        const input = z
-          .strictObject({
-            bank: z.string().regex(/^\d{6}$|^$/),
-            account: z.string().regex(/^[a-zA-Z0-9]{5,30}$|^$/),
-            name: z.string().trim().max(100),
-            support: z.string().trim().max(150),
-          })
-          .parse(body.data);
-        if (
-          (input.bank || input.account || input.name) &&
-          !(input.bank && input.account && input.name)
-        )
-          throw new WeddingError(400, "Điền đủ thông tin ngân hàng");
+        const input = merchantSchema.parse(body.data);
         await prisma.setting.upsert({
           where: { key: "wedding.merchant" },
           create: { key: "wedding.merchant", value: JSON.stringify(input) },

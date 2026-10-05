@@ -4,6 +4,7 @@ import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/server/db/prisma";
 import { readJsonBody } from "@/server/http/read-json-body";
+import { merchantSettings, paymentReadiness } from "@/server/wedding/settings";
 import { confirmPayment, WeddingError } from "@/server/wedding/service";
 
 export async function POST(request: Request) {
@@ -40,6 +41,15 @@ export async function POST(request: Request) {
     .toUpperCase();
   if (!code) return Response.json({ success: true });
   try {
+    const merchant = await merchantSettings();
+    if (!paymentReadiness(merchant).automaticReady)
+      return Response.json(
+        {
+          success: false,
+          message: "Cấu hình tài khoản nhận tiền chưa đồng bộ",
+        },
+        { status: 503 },
+      );
     const order = await prisma.serviceOrder.findUnique({ where: { code } });
     if (!order || order.status === "cancelled")
       return Response.json({ success: true });

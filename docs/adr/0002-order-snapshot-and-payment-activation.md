@@ -27,3 +27,7 @@ Retry cùng giao dịch không kéo dài hạn hai lần. Gia hạn cộng UTC m
 ### Báo cáo tiền dịch vụ (03/10/2026)
 
 Dashboard thống kê tiền thực ghi nhận từ WeddingPayment.amount/receivedAt, loại thiệp demo; biểu đồ chia ngày theo UTC+7 và có bảng số liệu. Không dùng ghi chú khách hoặc tổng đơn pending để tính tiền đã nhận. So sánh kỳ ghi rõ kỳ hiện tại có ngày đang diễn ra, không bịa phần trăm tăng trưởng khi kỳ trước bằng 0. Danh sách khách hiển thị số đơn paid và tổng giá snapshot các đơn paid của khách; chưa trừ chi phí và không phải lợi nhuận.
+
+## Cập nhật cấu hình nhận tiền — 05/10/2026
+
+Dùng chung merchantSchema cho form API và đọc cấu hình. Các trường liên hệ mới mặc định rỗng để đọc dữ liệu cũ. Webhook kiểm tra tài khoản merchant đã lưu khớp SEPAY_ACCOUNT_NUMBER trước khi kích hoạt, tránh xác nhận vào tài khoản cũ sau khi quản trị đổi hướng dẫn chuyển tiền. Không cung cấp secret qua giao diện. Trạng thái sẵn sàng cấu hình không chứng minh ngân hàng live đã kiểm tra.

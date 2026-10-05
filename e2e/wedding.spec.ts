@@ -432,7 +432,7 @@ for (const viewport of [
       await noOverflow();
       await expect(page.locator(".wedding-rsvp input[name=name]")).toHaveCSS(
         "font-size",
-        viewport.width <= 800 ? "16px" : "13px",
+        "16px",
       );
       await page.getByRole("button", { name: /Xem ảnh kỷ niệm 1 / }).click();
       await expect(
@@ -490,4 +490,34 @@ test("pricing compares live packages and keeps the selected package through logi
   await expect(page).toHaveURL(/preview\/loi-yeu/);
   await page.getByRole("button", { name: "Mở thiệp", exact: true }).click();
   await expect(page.locator(".invitation-opening")).not.toBeVisible();
+});
+
+test("guests can skip motion and reach Vietnamese event information", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto("/preview/ben-nhau");
+  await page
+    .getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng", exact: true })
+    .click();
+  await expect(page.locator(".invitation-opening")).not.toBeVisible();
+  await expect(page.locator(".wedding-hero h1")).toBeFocused();
+  const nav = page.getByRole("navigation", { name: "Các mục trong thiệp" });
+  await nav
+    .getByRole("link", { name: "Lịch tiệc & chỉ đường", exact: true })
+    .click();
+  await expect(page).toHaveURL(/#lich-tiec$/);
+  await expect(page.locator(".event-card strong").first()).toBeVisible();
+  await expect(page.locator(".event-card p").last()).toHaveCSS(
+    "font-size",
+    "16px",
+  );
+  await expect(
+    page.getByRole("heading", { name: "Trân trọng cảm ơn!" }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
 });

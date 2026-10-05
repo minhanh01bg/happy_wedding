@@ -106,3 +106,5 @@ SePay chỉ kích hoạt khi tài khoản ngân hàng đã lưu khớp `SEPAY_AC
 Trang bảng giá và so sánh tại bước mua chỉ hiển thị ServicePlan active. Gói được chọn từ bảng giá tiếp tục qua query `plan` trong redirect đăng nhập và bước tạo nháp; server vẫn tính giá theo catalog khi tạo đơn. Liên kết xem nhanh trên thẻ mẫu dùng `/preview/<slug>` hiện có, không công khai bản nháp của khách.
 
 Layout catalog được validation bằng enum `editorial | botanical | classic | minimal | cinematic`; seed bổ sung bốn mẫu, không ghi đè mẫu hiện có. Không đổi cấu trúc dữ liệu thiệp khi đổi layout.
+
+Nút bỏ qua hiệu ứng và điều hướng nội dung chỉ đổi tương tác phía xem thiệp. Không đổi public guards, token, payload RSVP hay bật nhạc tự động.

@@ -27,3 +27,7 @@ Hết hạn ẩn khi đọc, không cần cron; người giữ link riêng có t
 ### Hai tài khoản mừng cưới (03/10/2026)
 
 Thông tin nhận mừng cưới nhà trai/nhà gái là nội dung chủ thiệp chủ động công khai khi xuất bản; không thuộc thanh toán dịch vụ. Giữ giftBank/giftAccount/giftName cho dữ liệu cũ, bổ sung brideGiftBank/brideGiftAccount/brideGiftName mặc định rỗng. Mỗi bên độc lập, điền đủ hoặc để trống. Ảnh QR có referrer-policy no-referrer, thông tin tài khoản và thao tác sao chép vẫn dùng được khi nhà cung cấp QR lỗi; không ghi nhận/giả lập việc khách đã chuyển tiền.
+
+## Đọc thiệp và bỏ qua chuyển động — 05/10/2026
+
+Cho phép mở tức thì qua nút rõ nhãn hoặc Escape, vẫn trả focus vào tiêu đề và phát cùng sự kiện mở nội dung. Các lối tắt là anchor tới phần sẵn có, không tải hay công khai danh sách khách. Nhãn tiếng Việt và chữ chính 16px được dùng cho mọi viewport; tương phản chữ không giảm bằng opacity. Không thay quyền truy cập thiệp.

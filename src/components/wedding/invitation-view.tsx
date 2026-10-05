@@ -76,11 +76,19 @@ export function InvitationView({
         )}
         <div className="wedding-top">
           <span>
-            THE WEDDING OF {invitation.groom.toUpperCase()} &{" "}
+            LỄ CƯỚI CỦA {invitation.groom.toUpperCase()} &{" "}
             {invitation.bride.toUpperCase()}
           </span>
           <a href="#rsvp">Xác nhận tham dự ↓</a>
         </div>
+        <nav className="wedding-shortcuts" aria-label="Các mục trong thiệp">
+          <a href="#lich-tiec">Lịch tiệc & chỉ đường</a>
+          <a href="#rsvp">Xác nhận tham dự</a>
+          {!!photos.length && <a href="#album">Album ảnh</a>}
+          {(giftAccounts.length > 0 || (preview && invitation.isDemo)) && (
+            <a href="#gifts">Mừng cưới</a>
+          )}
+        </nav>
         <section className="wedding-hero">
           <div className="wedding-petals" aria-hidden="true">
             {Array.from({ length: 7 }, (_, i) => (
@@ -88,7 +96,7 @@ export function InvitationView({
             ))}
           </div>
           <div className="wedding-hero-copy">
-            <p className="eyebrow">WE’RE GETTING MARRIED</p>
+            <p className="eyebrow">CHÚNG MÌNH KẾT HÔN</p>
             <h1 tabIndex={-1}>
               {invitation.groom}
               <em>&</em>
@@ -123,7 +131,7 @@ export function InvitationView({
         </section>
         <section className="wedding-section">
           <p className="eyebrow">CHÚNG MÌNH SẮP CHUNG MỘT NHÀ</p>
-          <h2>Save the date</h2>
+          <h2>Cùng đếm ngược ngày vui</h2>
           <Countdown date={invitation.weddingDate.toISOString()} />
           <a
             className="text-link"
@@ -155,7 +163,7 @@ export function InvitationView({
             </div>
           </div>
         </section>
-        <section className="wedding-section">
+        <section className="wedding-section" id="lich-tiec">
           <p className="eyebrow">TRÂN TRỌNG KÍNH MỜI</p>
           <h2>Ngày vui, có bạn.</h2>
           <div className="event-grid">
@@ -164,7 +172,7 @@ export function InvitationView({
                 className="event-card"
                 key={`${event.title}-${event.date}-${event.venue}`}
               >
-                <p className="eyebrow">0{i + 1} / WEDDING CELEBRATION</p>
+                <p className="eyebrow">0{i + 1} / LỊCH TIỆC</p>
                 <h3 style={{ marginTop: 20 }}>{event.title}</h3>
                 <strong>{dateLabel(event.date, true)}</strong>
                 <p>{event.venue}</p>
@@ -182,9 +190,9 @@ export function InvitationView({
           </div>
         </section>
         {!!photos.length && (
-          <section className="wedding-section">
+          <section className="wedding-section" id="album">
             <p className="eyebrow">MỖI KHOẢNH KHẮC, MỘT KỶ NIỆM</p>
-            <h2>Our moments</h2>
+            <h2>Những khoảnh khắc của hai người</h2>
             <InvitationAlbum
               photos={photos}
               couple={`${invitation.groom} & ${invitation.bride}`}
@@ -246,7 +254,7 @@ export function InvitationView({
           </section>
         )}
         <footer className="wedding-thanks">
-          <h2>Thank you!</h2>
+          <h2>Trân trọng cảm ơn!</h2>
           <p>Cảm ơn bạn đã cùng chúng mình viết nên một ngày thật đẹp.</p>
           <p>
             {invitation.groom} & {invitation.bride}

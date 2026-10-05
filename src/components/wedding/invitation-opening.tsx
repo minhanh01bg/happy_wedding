@@ -22,7 +22,7 @@ export function InvitationOpening({
     return () => element?.close();
   }, []);
 
-  async function open() {
+  async function open(skipMotion = false) {
     const element = dialog.current;
     if (!element || opening.current) return;
     opening.current = true;
@@ -32,7 +32,11 @@ export function InvitationOpening({
       animations.forEach((animation) => animation.finish());
     reduce.addEventListener("change", finishImmediately);
     try {
-      if (!reduce.matches && typeof element.animate === "function") {
+      if (
+        !skipMotion &&
+        !reduce.matches &&
+        typeof element.animate === "function"
+      ) {
         element
           .querySelectorAll<HTMLElement>(".invitation-door")
           .forEach((door, i) => {
@@ -91,7 +95,7 @@ export function InvitationOpening({
       aria-labelledby="opening-title"
       onCancel={(event) => {
         event.preventDefault();
-        void open();
+        void open(true);
       }}
     >
       <div className="invitation-door door-left" aria-hidden="true">
@@ -116,6 +120,13 @@ export function InvitationOpening({
           onClick={() => void open()}
         >
           <Heart size={20} /> Mở thiệp
+        </button>
+        <button
+          type="button"
+          className="opening-skip"
+          onClick={() => void open(true)}
+        >
+          Xem ngay, bỏ qua hiệu ứng
         </button>
         <p className="opening-hint">Chạm để mở ngày vui của chúng mình</p>
       </div>

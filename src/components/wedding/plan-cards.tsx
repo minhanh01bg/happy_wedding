@@ -34,7 +34,7 @@ export function PlanCards({ plans }: { plans: ServicePlan[] }) {
               `Lưu thiệp ${p.months} tháng từ khi kích hoạt`,
               p.premiumTemplates
                 ? "Sử dụng tất cả mẫu cao cấp"
-                : "Các mẫu Essential",
+                : "Các mẫu cơ bản",
               "RSVP, lời chúc, tiệc hai nhà",
               "Tối đa 2.000 lời mời cá nhân",
               "Xuất danh sách khách CSV",

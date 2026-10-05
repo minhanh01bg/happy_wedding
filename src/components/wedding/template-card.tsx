@@ -70,7 +70,7 @@ export function TemplateCard({ template }: { template: WeddingTemplate }) {
         aria-label={`Xem mẫu ${template.name}`}
       >
         <TemplateArtwork template={template} />
-        {template.premium && <span className="premium-badge">Signature</span>}
+        {template.premium && <span className="premium-badge">Cao cấp</span>}
         <span className="template-hover">
           Khám phá mẫu <ArrowUpRight size={18} />
         </span>

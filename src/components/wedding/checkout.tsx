@@ -60,7 +60,7 @@ export function Checkout({
           </div>
           <p>
             {p.months} tháng · {p.maxPhotos} ảnh ·{" "}
-            {p.premiumTemplates ? "Tất cả mẫu cao cấp" : "Mẫu Essential"}
+            {p.premiumTemplates ? "Tất cả mẫu cao cấp" : "Mẫu cơ bản"}
             {p.removeBranding ? " · Ẩn thương hiệu" : ""}
           </p>
         </label>

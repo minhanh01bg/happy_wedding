@@ -26,7 +26,7 @@ export default async function TemplateDetail({
             ← Bộ sưu tập
           </Link>
           <p className="eyebrow">
-            {template.category} · {template.premium ? "SIGNATURE" : "ESSENTIAL"}
+            {template.category} · {template.premium ? "CAO CẤP" : "CƠ BẢN"}
           </p>
           <h1>{template.name}</h1>
           <p>{template.description}</p>

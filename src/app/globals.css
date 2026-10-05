@@ -1466,7 +1466,7 @@ button.small {
 .wish-card h3 {
   font: 600 13px var(--sans);
 }
-/* Public invitations share a complete domain model, with three distinct compositions. */
+/* Public invitations share one domain model across five compositions. */
 .wedding-page {
   --tone: #794858;
   --tint: #f0e1de;
@@ -3356,4 +3356,84 @@ a.stat-card:focus-visible {
   margin-left: auto;
   background: var(--card);
   border: 1px solid currentColor;
+}
+
+/* Chữ đọc và thao tác chính giữ rõ ở mọi tuổi, mọi viewport. */
+.wedding-page {
+  font-size: 16px;
+}
+.wedding-page p {
+  opacity: 1;
+}
+.wedding-page.palette-terracotta {
+  --tone: #834635;
+}
+.wedding-section > p:not(.eyebrow),
+.family-grid p,
+.wedding-page .event-card p,
+.event-card a,
+.wedding-wishes p,
+.wedding-thanks p,
+.wedding-rsvp label,
+.wedding-rsvp input,
+.wedding-rsvp select,
+.wedding-rsvp textarea,
+.wedding-page .button {
+  font-size: 16px;
+}
+.event-card strong {
+  font-size: 18px;
+}
+.wedding-page .eyebrow,
+.wedding-hero-copy .eyebrow,
+.invitation-seal .eyebrow,
+.countdown span,
+.wedding-wishes h3 {
+  font-size: 12px;
+}
+.wedding-date,
+.opening-date {
+  font-size: 17px;
+  letter-spacing: 2px;
+}
+.wedding-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 20px;
+  padding: 16px 20px;
+  border-bottom: 1px solid currentColor;
+}
+.wedding-shortcuts a,
+.event-card a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: underline;
+}
+.opening-skip {
+  display: block;
+  min-height: 44px;
+  margin: 10px auto 0;
+  padding: 8px;
+  background: transparent;
+  color: var(--tone);
+  border: 0;
+  text-decoration: underline;
+  font-size: 14px;
+}
+.opening-hint {
+  font-size: 13px;
+}
+.wedding-rsvp input::placeholder,
+.wedding-rsvp textarea::placeholder {
+  opacity: 1;
+}
+.wedding-section[id] {
+  scroll-margin-top: 70px;
+}
+.countdown > div {
+  min-width: 0;
+  max-width: 65px;
+  flex: 1;
 }

@@ -113,3 +113,12 @@ Mỗi tiệc có link lịch với ngày giờ và địa điểm riêng. Link n
 - Ca mới kiểm tra khung ảnh mở rộng theo vị trí cuộn và đổi ngay về ảnh tĩnh khi bật reduced motion trong phiên.
 - Đã xem ảnh chụp thiệp Khoảnh khắc 1440×900 và 390×900: không cuộn ngang, ảnh nổi bật có tiến trình khung/zoom thực tế. Các viewport 320–1440 và năm layout được kiểm tra trong bộ E2E.
 - Không xác minh hiệu năng trên điện thoại thật, Safari hay tích hợp production trong lượt này; không thêm thư viện hoặc sao chép ảnh/mã OnePlus.
+
+## Chuyển cảnh hai ảnh và tương tác album — 05/10/2026
+
+- `pnpm check`: lint, TypeScript, **122/122 bài kiểm tra** trong 15 file qua; `pnpm build` qua. Sau sửa selector của test cũ để kiểm tra cả hai ảnh, ESLint/TypeScript chạy lại qua.
+- `pnpm test:e2e`: **15/15 ca Chromium qua** trên mã cuối. Lượt đầu 14 ca qua, một ca cũ lỗi strict locator vì nay có hai ảnh; đã sửa thành kiểm tra cả hai ảnh, không bỏ kiểm tra reduced motion.
+- Hai ca mới kiểm tra chuyển cảnh đảo chiều khi cuộn ngược, cleanup nghiêng ảnh khi đổi reduced motion, vuốt bằng CDP touch thật, thao tác trước/sau nhanh, Escape và focus phục hồi. Các ca responsive 320–1440 và cả năm layout tiếp tục qua.
+- Xem trực tiếp ảnh chụp chuyển cảnh desktop 1440×900/mobile 390×900: khung ở top 72px tránh thanh preview, không cuộn ngang. Trên mobile đoạn cuộn rút xuống 125svh; JavaScript tắt vẫn là ảnh tĩnh, cảnh phụ không hiện và không cuộn ngang.
+- Kiểm tra lightbox thực tế: ArrowRight chạy wedding-photo-next, ArrowLeft chạy wedding-photo-previous. Reduced motion không chạy animation ảnh.
+- Nguồn nghiên cứu thêm OxygenOS/Design: trang thật OnePlus bằng Chromium, ảnh chụp và transform/opacity trong DOM. Không xác minh Safari hoặc điện thoại vật lý; không tuyên bố hiệu năng production.

@@ -111,3 +111,9 @@ Mỗi phần phải có bằng chứng server và trình duyệt phù hợp, c�
 Nguồn: [OnePlus 15, Tri-Chips](https://www.oneplus.com/vn/15#anchor-tri-chips). Đã mở trang thật bằng Chromium 1440×900, cuộn qua Tri-Chips và Photography, kiểm tra DOM/CSS và ảnh chụp trước/sau cuộn. Tri-Chips dùng khung sticky theo chiều cao màn hình, canvas và lớp chữ xuất hiện theo tiến trình cuộn; Photography cũng có khung sticky và lớp tiêu đề biến đổi scale. Đây là quan sát giao diện, không phải đo hiệu năng trên điện thoại thật.
 
 Áp dụng vào thiệp bằng triển khai riêng: ảnh đầu thiệp mở khung; ảnh có độ sâu theo cuộn; ảnh nổi bật trước album giữ vị trí, mở khung từ bo tròn về toàn cảnh và giảm zoom theo tiến trình cuộn; ảnh album mở theo nhịp so le. Dùng ảnh có sẵn của thiệp, không lấy tài nguyên hay mã nguồn OnePlus. Không mang canvas/video giải mã hoặc quãng cuộn dài của trang sản phẩm vào thiệp. Chỉ bật đoạn sticky khi JavaScript hoạt động và người xem không yêu cầu giảm chuyển động; mặc định HTML là ảnh tĩnh, không chặn cuộn hay thay đổi điều hướng.
+
+### Khai thác thêm chuyển lớp — 05/10/2026
+
+Đã xem thêm OxygenOS và Design trên cùng trang bằng Chromium 1440×900. OxygenOS có các khung màn hình xếp thành nhiều lớp; Design có lớp tiêu đề biến đổi 3D và các slide ngang, kiểm tra được transform/opacity trong DOM. Các cơ chế này gợi ý chuyển cảnh, chiều sâu và hướng chuyển động; nghiêng theo con trỏ và vuốt album là điều chỉnh riêng cho thiệp, không khẳng định OnePlus có cùng tương tác.
+
+Thiệp bổ sung hai cảnh ảnh trong khung nổi bật: mở khung rồi ảnh thứ hai đi vào bằng lớp che theo cuộn, cuộn ngược phục hồi cảnh trước. Tiêu đề mục mở từ lớp che; album desktop có nghiêng/ánh sáng theo con trỏ; lightbox chuyển ảnh có hướng và hỗ trợ vuốt ngang trên điện thoại. Nội dung/ảnh đang chọn cập nhật ngay, không phụ thuộc animation kết thúc, nên thao tác nhanh hoặc bật giảm chuyển động không khóa điều khiển. Không tự chạy slideshow hoặc tự phát nhạc.

@@ -193,3 +193,7 @@ Mỗi thẻ tiệc có link Google Calendar riêng dùng đúng event.date/title
 ## Chuyển động ảnh theo cuộn — 05/10/2026
 
 Thiệp có hiệu ứng mở khung ảnh đầu, ảnh di chuyển nhẹ theo cuộn, album mở so le. Album có từ hai ảnh trở lên thêm một ảnh nổi bật trang trí trước lưới ảnh: giữ vị trí trong một đoạn cuộn ngắn, mở rộng khung và giảm zoom. Không thay đổi ảnh lưu, thứ tự hay điều khiển album. HTML không JavaScript và prefers-reduced-motion dùng ảnh tĩnh; đổi thiết lập giảm chuyển động ngay trong phiên hủy hiệu ứng và bỏ sticky. Nội dung luôn đọc được, không khóa hoặc điều khiển tốc độ cuộn. Hiệu ứng mở cửa vẫn có nút bỏ qua.
+
+### Chuyển cảnh và tương tác ảnh — 05/10/2026
+
+Đoạn ảnh nổi bật dùng hai ảnh đầu album làm hai cảnh trang trí. Tiến trình cuộn mở khung rồi đưa cảnh thứ hai vào bằng lớp che, cuộn ngược đảo lại. Tiêu đề mục có hiệu ứng mở lớp che khi vào vùng nhìn. Album chỉ nghiêng theo con trỏ chuột trên thiết bị hover/pointer fine; không áp dụng lên biểu mẫu/liên kết. Lightbox chuyển ảnh theo hướng trước/sau; vuốt ngang tối thiểu 50px và lớn hơn 1,5 lần chuyển động dọc đổi ảnh, còn cuộn dọc/zoom vẫn dành cho trình duyệt. Ảnh đang chọn đổi ngay; thao tác nhanh thay hiệu ứng cũ. Chế độ giảm chuyển động không chạy các hiệu ứng mới, bỏ cảnh trang trí thứ hai và xóa nghiêng ảnh ngay.

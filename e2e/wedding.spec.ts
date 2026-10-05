@@ -588,13 +588,109 @@ test("photo storytelling follows scroll and becomes static when motion is reduce
     "position",
     "relative",
   );
-  await expect(page.locator(".wedding-photo-frame img")).toHaveCSS(
-    "transform",
-    "none",
-  );
+  for (const image of await page.locator(".wedding-photo-frame img").all()) {
+    await expect(image).toHaveCSS("transform", "none");
+  }
   await expect
     .poll(() =>
       story.evaluate((el) => el.style.getPropertyValue("--story-inset")),
     )
     .toBe("");
+});
+
+test("photo scenes reverse with scrolling and hover depth clears on reduced motion", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/preview/khoanh-khac");
+  await page.getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" }).click();
+  const story = page.locator(".wedding-photo-story");
+  const { start, travel } = await story.evaluate((el) => ({
+    start: el.getBoundingClientRect().top + scrollY,
+    travel:
+      (el as HTMLElement).offsetHeight -
+      (el.firstElementChild as HTMLElement).offsetHeight,
+  }));
+  await page.evaluate((y) => scrollTo(0, y), start + travel * 0.95);
+  await expect
+    .poll(() =>
+      story.evaluate((el) =>
+        parseFloat(el.style.getPropertyValue("--scene-wipe")),
+      ),
+    )
+    .toBeLessThan(5);
+  await page.evaluate((y) => scrollTo(0, y), start + 10);
+  await expect
+    .poll(() =>
+      story.evaluate((el) =>
+        parseFloat(el.style.getPropertyValue("--scene-wipe")),
+      ),
+    )
+    .toBeGreaterThan(95);
+  const photo = page.locator(".wedding-album > button").first();
+  await photo.hover({ position: { x: 30, y: 30 } });
+  await expect(photo).toHaveClass(/photo-hovered/);
+  await expect
+    .poll(() => photo.evaluate((el) => el.style.getPropertyValue("--tilt-x")))
+    .not.toBe("");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(photo).not.toHaveClass(/photo-hovered/);
+  await expect(page.locator(".wedding-photo-second")).toHaveCSS(
+    "display",
+    "none",
+  );
+});
+
+test("mobile album accepts horizontal swipes and keeps rapid navigation usable", async ({
+  browser,
+}) => {
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+    reducedMotion: "no-preference",
+  });
+  const page = await context.newPage();
+  try {
+    await page.goto("http://localhost:3201/preview/khoanh-khac");
+    await page
+      .getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" })
+      .click();
+    await page.getByRole("button", { name: /Xem ảnh kỷ niệm 1 / }).click();
+    const album = page.getByRole("dialog", { name: "Album ảnh cưới" });
+    const bounds = await album.locator(".lightbox-image").boundingBox();
+    if (!bounds) throw new Error("Album image is missing");
+    const cdp = await context.newCDPSession(page);
+    const y = bounds.y + bounds.height / 2;
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x: 280, y }],
+    });
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x: 170, y }],
+    });
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    await expect(album.getByText(/^Ảnh 2 \/ /)).toBeVisible();
+    await page.getByRole("button", { name: "Ảnh trước", exact: true }).click();
+    await expect(album.getByText(/^Ảnh 1 \/ /)).toBeVisible();
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press("ArrowLeft");
+    await expect(album.getByText(/^Ảnh 1 \/ /)).toBeVisible();
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await expect(album.locator(".lightbox-image img")).toHaveCSS(
+      "animation-name",
+      "none",
+    );
+    await page.keyboard.press("Escape");
+    await expect(album).not.toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /Xem ảnh kỷ niệm 1 / }),
+    ).toBeFocused();
+  } finally {
+    await context.close();
+  }
 });

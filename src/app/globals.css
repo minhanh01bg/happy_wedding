@@ -3526,7 +3526,7 @@ a.stat-card:focus-visible {
   }
   .invitation-motion-active .wedding-photo-stage {
     position: sticky;
-    top: 24px;
+    top: 72px;
   }
 }
 @media (max-width: 800px) {
@@ -3546,5 +3546,123 @@ a.stat-card:focus-visible {
   }
   .wedding-photo-frame img {
     transform: none;
+  }
+}
+
+/* Two photo scenes share a stage; the second wipes in with ordinary scrolling. */
+.wedding-photo-second {
+  display: none;
+}
+.wedding-photo-scene-label {
+  position: absolute;
+  top: 22px;
+  left: 24px;
+  right: 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+.wedding-photo-scene-label span {
+  background: var(--card);
+  color: var(--tone);
+  padding: 8px 12px;
+  border-radius: 3px;
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+.wedding-photo-scene-label span:first-child {
+  opacity: var(--scene-first-label, 1);
+}
+.wedding-photo-scene-label span:last-child {
+  opacity: var(--scene-second-label, 0);
+}
+.lightbox-image {
+  overflow: hidden;
+  touch-action: pan-y pinch-zoom;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .invitation-motion-active .wedding-photo-second {
+    display: block;
+    clip-path: inset(
+      0 var(--scene-wipe, 100%) 0 0 round var(--story-radius, 12px)
+    );
+  }
+  .wedding-photo-second img {
+    transform: translateX(var(--scene-shift, 0%)) scale(var(--scene-scale, 1));
+  }
+  .lightbox-image.photo-next,
+  .lightbox-image.photo-previous {
+    animation: none;
+  }
+  .lightbox-image.photo-next img {
+    animation: wedding-photo-next 600ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .lightbox-image.photo-previous img {
+    animation: wedding-photo-previous 600ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+@keyframes wedding-photo-next {
+  from {
+    opacity: 0.3;
+    transform: translateX(8%) scale(1.045);
+    clip-path: inset(0 0 0 18%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    clip-path: inset(0);
+  }
+}
+@keyframes wedding-photo-previous {
+  from {
+    opacity: 0.3;
+    transform: translateX(-8%) scale(1.045);
+    clip-path: inset(0 18% 0 0);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    clip-path: inset(0);
+  }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .wedding-album > button.photo-hovered {
+    transform: perspective(900px) rotateX(var(--tilt-x, 0deg))
+      rotateY(var(--tilt-y, 0deg));
+  }
+  .wedding-album > button::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      circle at var(--shine-x, 50%) var(--shine-y, 50%),
+      rgb(255 255 255 / 0.22),
+      transparent 65%
+    );
+    opacity: 0;
+    transition: opacity 300ms ease;
+  }
+  .wedding-album > button.photo-hovered::after {
+    opacity: 1;
+  }
+}
+@media (max-width: 800px) {
+  .wedding-photo-scene-label {
+    top: 16px;
+    left: 12px;
+    right: 12px;
+  }
+  .wedding-photo-scene-label span {
+    padding: 7px 9px;
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+}
+
+@media (max-width: 800px) and (prefers-reduced-motion: no-preference) {
+  .invitation-motion-active .wedding-photo-story {
+    height: 125svh;
   }
 }

@@ -13,8 +13,12 @@ export function InvitationAlbum({
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [selected, setSelected] = useState(0);
-  const move = (step: number) =>
+  const [direction, setDirection] = useState("next");
+  const swipe = useRef<{ x: number; y: number; id: number } | null>(null);
+  const move = (step: number) => {
+    setDirection(step < 0 ? "previous" : "next");
     setSelected((current) => (current + step + photos.length) % photos.length);
+  };
   return (
     <>
       {photos.length > 1 && (
@@ -27,6 +31,18 @@ export function InvitationAlbum({
                 fill
                 sizes="(max-width:800px) 90vw, 1000px"
               />
+            </div>
+            <div className="wedding-photo-frame wedding-photo-second">
+              <Image
+                src={photos[1]}
+                alt=""
+                fill
+                sizes="(max-width:800px) 90vw, 1000px"
+              />
+            </div>
+            <div className="wedding-photo-scene-label">
+              <span>01 / KỶ NIỆM</span>
+              <span>02 / BÊN NHAU</span>
             </div>
             <p className="wedding-photo-caption">
               Từng khoảnh khắc, một đời thương nhớ
@@ -41,6 +57,7 @@ export function InvitationAlbum({
             key={`${photo}-${i}`}
             aria-label={`Xem ảnh kỷ niệm ${i + 1} của ${couple}`}
             onClick={() => {
+              setDirection("next");
               setSelected(i);
               dialog.current?.showModal();
             }}
@@ -86,7 +103,35 @@ export function InvitationAlbum({
             <X />
           </button>
         </div>
-        <div className="lightbox-image" key={selected}>
+        <div
+          className={`lightbox-image photo-${direction}`}
+          key={selected}
+          onPointerDown={(event) => {
+            if (event.pointerType !== "touch" || !event.isPrimary) return;
+            swipe.current = {
+              x: event.clientX,
+              y: event.clientY,
+              id: event.pointerId,
+            };
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerCancel={() => {
+            swipe.current = null;
+          }}
+          onPointerUp={(event) => {
+            const start = swipe.current;
+            swipe.current = null;
+            if (!start || start.id !== event.pointerId) return;
+            const dx = event.clientX - start.x;
+            const dy = event.clientY - start.y;
+            if (
+              photos.length > 1 &&
+              Math.abs(dx) >= 50 &&
+              Math.abs(dx) > Math.abs(dy) * 1.5
+            )
+              move(dx < 0 ? 1 : -1);
+          }}
+        >
           <Image
             src={photos[selected]}
             alt={`Kỷ niệm của ${couple}, ảnh ${selected + 1}`}

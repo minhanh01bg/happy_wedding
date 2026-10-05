@@ -9,6 +9,59 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
     const container = root.current;
     if (!container || !window.IntersectionObserver) return;
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+    let pointerFrame = 0;
+    let hovered: HTMLElement | null = null;
+    const resetTilt = () => {
+      window.cancelAnimationFrame(pointerFrame);
+      pointerFrame = 0;
+      hovered?.style.removeProperty("--tilt-x");
+      hovered?.style.removeProperty("--tilt-y");
+      hovered?.style.removeProperty("--shine-x");
+      hovered?.style.removeProperty("--shine-y");
+      hovered?.classList.remove("photo-hovered");
+      hovered = null;
+    };
+    const tilt = (event: PointerEvent) => {
+      if (
+        preference.matches ||
+        !finePointer.matches ||
+        event.pointerType !== "mouse"
+      )
+        return;
+      const photo = (event.target as Element).closest<HTMLElement>(
+        ".wedding-album > button",
+      );
+      if (!photo) {
+        resetTilt();
+        return;
+      }
+      if (hovered !== photo) {
+        resetTilt();
+        hovered = photo;
+      }
+      window.cancelAnimationFrame(pointerFrame);
+      pointerFrame = window.requestAnimationFrame(() => {
+        pointerFrame = 0;
+        const bounds = photo.getBoundingClientRect();
+        const x = Math.max(
+          0,
+          Math.min(1, (event.clientX - bounds.left) / bounds.width),
+        );
+        const y = Math.max(
+          0,
+          Math.min(1, (event.clientY - bounds.top) / bounds.height),
+        );
+        photo.style.setProperty("--tilt-x", `${(0.5 - y) * 6}deg`);
+        photo.style.setProperty("--tilt-y", `${(x - 0.5) * 6}deg`);
+        photo.style.setProperty("--shine-x", `${x * 100}%`);
+        photo.style.setProperty("--shine-y", `${y * 100}%`);
+        photo.classList.add("photo-hovered");
+      });
+    };
+    container.addEventListener("pointermove", tilt);
+    container.addEventListener("pointerleave", resetTilt);
+    finePointer.addEventListener("change", resetTilt);
     const animations = new Set<Animation>();
     const photos = Array.from(
       container.querySelectorAll<HTMLElement>(
@@ -29,9 +82,16 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
           bounds.height - (story.firstElementChild as HTMLElement).offsetHeight,
         );
         const progress = Math.max(0, Math.min(1, -bounds.top / travel));
-        story.style.setProperty("--story-inset", `${12 * (1 - progress)}%`);
+        const opening = Math.min(1, progress / 0.45);
+        const change = Math.max(0, Math.min(1, (progress - 0.4) / 0.5));
+        story.style.setProperty("--scene-wipe", `${100 * (1 - change)}%`);
+        story.style.setProperty("--scene-shift", `${8 * (1 - change)}%`);
+        story.style.setProperty("--scene-scale", `${1.1 - change * 0.1}`);
+        story.style.setProperty("--scene-first-label", `${1 - change}`);
+        story.style.setProperty("--scene-second-label", `${change}`);
+        story.style.setProperty("--story-inset", `${12 * (1 - opening)}%`);
         story.style.setProperty("--story-scale", `${1.16 - progress * 0.16}`);
-        story.style.setProperty("--story-radius", `${120 * (1 - progress)}px`);
+        story.style.setProperty("--story-radius", `${120 * (1 - opening)}px`);
       }
       photos.forEach((photo) => {
         const bounds = photo.getBoundingClientRect();
@@ -101,6 +161,26 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
               animations.add(animation);
               animation.onfinish = () => animations.delete(animation);
             }
+          } else if (
+            element.matches(".wedding-section > h2, .wedding-thanks > h2")
+          ) {
+            if (!preference.matches) {
+              const animation = element.animate(
+                [
+                  {
+                    clipPath: "inset(0 0 100% 0)",
+                    transform: "translateY(28px) scale(1.04)",
+                  },
+                  {
+                    clipPath: "inset(0 0 0% 0)",
+                    transform: "translateY(0) scale(1)",
+                  },
+                ],
+                { duration: 1000, easing: "cubic-bezier(.22,1,.36,1)" },
+              );
+              animations.add(animation);
+              animation.onfinish = () => animations.delete(animation);
+            }
           } else if (element.matches(".wedding-album > button")) {
             const index = Array.from(element.parentElement!.children).indexOf(
               element,
@@ -128,7 +208,7 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
       schedule();
       container
         .querySelectorAll(
-          ".wedding-hero-copy, .wedding-hero-image, .wedding-section, .wedding-thanks, .wedding-album > button",
+          ".wedding-hero-copy, .wedding-hero-image, .wedding-section, .wedding-thanks, .wedding-album > button, .wedding-section > h2, .wedding-thanks > h2",
         )
         .forEach((element) => observer.observe(element));
     };
@@ -140,6 +220,7 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
         opened && !preference.matches,
       );
       if (preference.matches) {
+        resetTilt();
         animations.forEach((animation) => animation.cancel());
         story?.removeAttribute("style");
         photos.forEach((photo) => {
@@ -150,6 +231,10 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
     };
     preference.addEventListener("change", stop);
     return () => {
+      resetTilt();
+      container.removeEventListener("pointermove", tilt);
+      container.removeEventListener("pointerleave", resetTilt);
+      finePointer.removeEventListener("change", resetTilt);
       container.removeEventListener("invitation-opened", observe);
       window.removeEventListener("scroll", schedule);
       window.removeEventListener("resize", schedule);

@@ -43,3 +43,7 @@ Tạo link từ đúng thông tin tiệc công khai thay vì dùng ngày cưới
 ### Chuyển động ảnh — 05/10/2026
 
 Hiệu ứng theo cuộn là progressive enhancement sau khi mở thiệp. Nội dung SSR vẫn hiện, ảnh nổi bật thêm vào album là trang trí aria-hidden, không thêm liên kết hay dữ liệu khách. Tắt sticky/parallax khi giảm chuyển động, kể cả khi đổi thiết lập trong phiên; không thay đổi guards và các tương tác RSVP/album.
+
+### Các lớp ảnh và vuốt album — 05/10/2026
+
+Hai cảnh nổi bật vẫn là trang trí aria-hidden dùng dữ liệu ảnh sẵn có. Giữ toàn bộ ảnh và nút native trong album. Chỉ nhận vuốt từ pointer touch chính, hỗ trợ pointercancel và không xử lý chuyển động dọc; cập nhật lựa chọn đồng bộ, không lấy animationend làm điều kiện. Reset pointer animation/inline styles khi reduced motion hoặc loại con trỏ thay đổi, cleanup khi unmount. Guards và dữ liệu khách không đổi.

@@ -110,3 +110,5 @@ Layout catalog được validation bằng enum `editorial | botanical | classic 
 Nút bỏ qua hiệu ứng và điều hướng nội dung chỉ đổi tương tác phía xem thiệp. Không đổi public guards, token, payload RSVP hay bật nhạc tự động.
 
 `GET /support` là trang hướng dẫn không yêu cầu đăng nhập. Chỉ xuất thông tin liên hệ chủ dịch vụ (support/supportPhone/supportEmail); không xuất merchant bank/account/name, đơn hoặc danh sách khách. Không có API mutation mới.
+
+Liên kết lịch công khai dùng ngày giờ của từng phần tử eventsJson, chuyển thành timestamp UTC cho Google Calendar; không thêm guest token vào URL. Không có mutation hoặc schema mới. Thời điểm kết thúc trên lịch bên ngoài là giá trị tạm tính ba giờ, không phải thời điểm kết thúc được cặp đôi xác nhận.

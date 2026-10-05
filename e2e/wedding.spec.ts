@@ -521,6 +521,24 @@ test("guests can skip motion and reach Vietnamese event information", async ({
     .click();
   await expect(page).toHaveURL(/#lich-tiec$/);
   await expect(page.locator(".event-card strong").first()).toBeVisible();
+  const eventCalendars = page
+    .locator(".event-card")
+    .getByRole("link", { name: "Thêm tiệc này vào lịch", exact: true });
+  const firstCalendar = new URL(
+    (await eventCalendars.nth(0).getAttribute("href"))!,
+  );
+  const secondCalendar = new URL(
+    (await eventCalendars.nth(1).getAttribute("href"))!,
+  );
+  expect(firstCalendar.searchParams.get("dates")).toBe(
+    "20270214T040000Z/20270214T070000Z",
+  );
+  expect(secondCalendar.searchParams.get("dates")).toBe(
+    "20270213T040000Z/20270213T070000Z",
+  );
+  expect(firstCalendar.searchParams.get("location")).toContain("Hà Nội");
+  expect(secondCalendar.searchParams.get("location")).toContain("Bắc Ninh");
+
   await expect(page.locator(".event-card p").last()).toHaveCSS(
     "font-size",
     "16px",

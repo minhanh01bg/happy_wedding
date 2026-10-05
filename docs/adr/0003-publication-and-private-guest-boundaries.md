@@ -35,3 +35,7 @@ Cho phép mở tức thì qua nút rõ nhãn hoặc Escape, vẫn trả focus v�
 ## Hỗ trợ trước khi mua — 05/10/2026
 
 Trang hướng dẫn công khai tái sử dụng liên hệ đã lưu trong merchant, chỉ truyền ba trường hỗ trợ để chủ dịch vụ không phải cập nhật một kênh liên hệ khác. Không biến trang công khai thành trang tra cứu đơn hoặc tài khoản: khách xem trạng thái đơn sau đăng nhập, khách mời hỏi cặp đôi về lịch/đường dẫn thiệp.
+
+## Liên kết lịch của từng tiệc — 05/10/2026
+
+Tạo link từ đúng thông tin tiệc công khai thay vì dùng ngày cưới chung cho mọi tiệc. Helper chỉ nhận date/title/location, không nhận đối tượng Invitation hay WeddingGuest để tránh vô tình đưa capability vào URL bên ngoài. Giữ rel noopener/noreferrer và referrer policy hiện có.

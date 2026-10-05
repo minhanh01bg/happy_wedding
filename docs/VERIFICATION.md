@@ -97,3 +97,9 @@ Thêm `/support` cho người mua và khách mời, hướng dẫn tạo/xem nh�
 `pnpm check` đạt lint/typecheck/121 tests, `pnpm build` đạt; `pnpm test:e2e` đạt 12/12. Luồng chính lưu liên hệ qua admin rồi mở trang hỗ trợ bằng trang không đăng nhập, kiểm tel/mailto và HTML không chứa ngân hàng/account name/number dịch vụ. Sáu viewport kiểm `/support` không tràn ngang, workspace vẫn thao tác được sau thêm liên kết. Sau bổ sung kiểm BIN không xuất trong HTML, chạy lại `customer buys` đạt 1/1. Không thay API mutation, payment hoặc public invitation guard.
 
 Sau khi xem screenshot mobile trang hỗ trợ, tăng riêng đoạn văn liên hệ, giới thiệu, link và nút lên 16px để không kế thừa chữ nhỏ từ CSS chung. Browser local 390px xác minh computed font 16px, không tràn ngang; đã xem screenshot sau sửa. Chạy lại `pnpm test:e2e --grep 'responsive pages'` đạt 6/6 trên cả sáu viewport. `pnpm check && pnpm build` vẫn đạt 121 tests/lint/typecheck/build.
+
+## Lịch riêng cho tiệc hai nhà — 05/10/2026
+
+Mỗi tiệc có link lịch với ngày giờ và địa điểm riêng. Link ngày cưới chung chỉ dùng địa điểm của tiệc trùng đúng thời điểm; không gán địa điểm tiệc đầu tiên vào ngày khác. Timestamp UTC giữ đúng thời điểm từ giờ Việt Nam. Giờ kết thúc sau ba giờ được ghi rõ tạm tính trong mô tả lịch, không khẳng định thời lượng tiệc thật. Không truyền guest token.
+
+`pnpm check` đạt lint/typecheck/122 tests, `pnpm build` đạt; `pnpm test:e2e` đạt 12/12. Test unit dùng 11:00 +07:00 và xác minh 04:00Z, title/location tiếng Việt, mô tả tạm tính. Browser xác minh hai link riêng ngày 14/02 và 13/02, tương ứng Hà Nội/Bắc Ninh, đồng thời năm layout ở sáu viewport không tràn ngang. Kiểm URL được tạo, chưa tạo sự kiện trong tài khoản Google Calendar thật.

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { weddingCalendarUrl } from "@/lib/wedding-calendar";
 import Link from "next/link";
 import type {
   Invitation,
@@ -48,16 +49,15 @@ export function InvitationView({
   ].filter(
     (account) => account.bank && account.account && account.name,
   ) as GiftAccount[];
-  const calendarDates = `${invitation.weddingDate
-    .toISOString()
-    .replace(/[-:]/g, "")
-    .replace(/\.\d{3}/, "")}/${new Date(
-    invitation.weddingDate.getTime() + 3 * 3600_000,
-  )
-    .toISOString()
-    .replace(/[-:]/g, "")
-    .replace(/\.\d{3}/, "")}`;
-  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Lễ cưới ${invitation.groom} & ${invitation.bride}`)}&dates=${calendarDates}&location=${encodeURIComponent(events[0]?.address || "")}`;
+  const mainEvent = events.find(
+    (event) =>
+      new Date(event.date).getTime() === invitation.weddingDate.getTime(),
+  );
+  const calendarUrl = weddingCalendarUrl(
+    invitation.weddingDate,
+    `Lễ cưới ${invitation.groom} & ${invitation.bride}`,
+    mainEvent ? `${mainEvent.venue}, ${mainEvent.address}` : "",
+  );
   return (
     <InvitationMotion>
       <article
@@ -141,7 +141,7 @@ export function InvitationView({
             style={{ marginTop: 25 }}
           >
             <CalendarPlus size={16} />
-            Thêm vào lịch của bạn
+            Thêm ngày cưới vào lịch
           </a>
         </section>
         <section className="wedding-section">
@@ -184,6 +184,18 @@ export function InvitationView({
                 >
                   <MapPin size={16} />
                   Chỉ đường đến tiệc
+                </a>
+                <a
+                  href={weddingCalendarUrl(
+                    event.date,
+                    `${event.title} — ${invitation.groom} & ${invitation.bride}`,
+                    `${event.venue}, ${event.address}`,
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <CalendarPlus size={16} aria-hidden="true" />
+                  Thêm tiệc này vào lịch
                 </a>
               </article>
             ))}

@@ -185,3 +185,7 @@ Dashboard `/admin` dùng period 7/30/90 ngày gần nhất (mặc định 30), n
 ## Hướng dẫn và liên hệ công khai — 05/10/2026
 
 `/support` phục vụ hai hành trình người mua và khách mời, liên hệ điện thoại/email lấy từ merchant đã cấu hình. Chỉ đưa support/supportPhone/supportEmail vào thành phần liên hệ; không hiển thị ngân hàng nhận tiền dịch vụ, tài khoản hoặc dữ liệu khách hàng. Liên kết từ footer, bảng giá và workspace khách. FAQ mô tả trạng thái thanh toán chờ, lưu trước preview, xuất bản và giới hạn khôi phục mật khẩu hiện có; không hứa tự động hoàn tiền hay đặt thêm chính sách.
+
+## Lịch riêng từng tiệc — 05/10/2026
+
+Mỗi thẻ tiệc có link Google Calendar riêng dùng đúng event.date/title/venue/address; giờ được truyền bằng timestamp UTC. Ngày cưới chung chỉ thêm địa điểm nếu có tiệc trùng đúng thời điểm, không mặc định mượn địa điểm của tiệc đầu tiên. Lịch tạo sẵn kết thúc sau ba giờ, ghi rõ tạm tính và cho khách điều chỉnh trong lịch; không đổi lịch tiệc lưu trên thiệp. Liên kết không chứa tên khách hay guest token.

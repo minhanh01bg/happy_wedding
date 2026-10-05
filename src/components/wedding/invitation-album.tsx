@@ -17,6 +17,23 @@ export function InvitationAlbum({
     setSelected((current) => (current + step + photos.length) % photos.length);
   return (
     <>
+      {photos.length > 1 && (
+        <div className="wedding-photo-story" aria-hidden="true">
+          <div className="wedding-photo-stage">
+            <div className="wedding-photo-frame">
+              <Image
+                src={photos[0]}
+                alt=""
+                fill
+                sizes="(max-width:800px) 90vw, 1000px"
+              />
+            </div>
+            <p className="wedding-photo-caption">
+              Từng khoảnh khắc, một đời thương nhớ
+            </p>
+          </div>
+        </div>
+      )}
       <div className="wedding-album">
         {photos.map((photo, i) => (
           <button

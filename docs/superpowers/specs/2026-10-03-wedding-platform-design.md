@@ -189,3 +189,7 @@ Dashboard `/admin` dùng period 7/30/90 ngày gần nhất (mặc định 30), n
 ## Lịch riêng từng tiệc — 05/10/2026
 
 Mỗi thẻ tiệc có link Google Calendar riêng dùng đúng event.date/title/venue/address; giờ được truyền bằng timestamp UTC. Ngày cưới chung chỉ thêm địa điểm nếu có tiệc trùng đúng thời điểm, không mặc định mượn địa điểm của tiệc đầu tiên. Lịch tạo sẵn kết thúc sau ba giờ, ghi rõ tạm tính và cho khách điều chỉnh trong lịch; không đổi lịch tiệc lưu trên thiệp. Liên kết không chứa tên khách hay guest token.
+
+## Chuyển động ảnh theo cuộn — 05/10/2026
+
+Thiệp có hiệu ứng mở khung ảnh đầu, ảnh di chuyển nhẹ theo cuộn, album mở so le. Album có từ hai ảnh trở lên thêm một ảnh nổi bật trang trí trước lưới ảnh: giữ vị trí trong một đoạn cuộn ngắn, mở rộng khung và giảm zoom. Không thay đổi ảnh lưu, thứ tự hay điều khiển album. HTML không JavaScript và prefers-reduced-motion dùng ảnh tĩnh; đổi thiết lập giảm chuyển động ngay trong phiên hủy hiệu ứng và bỏ sticky. Nội dung luôn đọc được, không khóa hoặc điều khiển tốc độ cuộn. Hiệu ứng mở cửa vẫn có nút bỏ qua.

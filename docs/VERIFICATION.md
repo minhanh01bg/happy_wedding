@@ -103,3 +103,13 @@ Sau khi xem screenshot mobile trang hỗ trợ, tăng riêng đoạn văn liên 
 Mỗi tiệc có link lịch với ngày giờ và địa điểm riêng. Link ngày cưới chung chỉ dùng địa điểm của tiệc trùng đúng thời điểm; không gán địa điểm tiệc đầu tiên vào ngày khác. Timestamp UTC giữ đúng thời điểm từ giờ Việt Nam. Giờ kết thúc sau ba giờ được ghi rõ tạm tính trong mô tả lịch, không khẳng định thời lượng tiệc thật. Không truyền guest token.
 
 `pnpm check` đạt lint/typecheck/122 tests, `pnpm build` đạt; `pnpm test:e2e` đạt 12/12. Test unit dùng 11:00 +07:00 và xác minh 04:00Z, title/location tiếng Việt, mô tả tạm tính. Browser xác minh hai link riêng ngày 14/02 và 13/02, tương ứng Hà Nội/Bắc Ninh, đồng thời năm layout ở sáu viewport không tràn ngang. Kiểm URL được tạo, chưa tạo sự kiện trong tài khoản Google Calendar thật.
+
+## Chuyển động ảnh tham khảo OnePlus — 05/10/2026
+
+- Đã quan sát Tri-Chips và Photography trên trang OnePlus thật bằng Chromium 1440×900, đối chiếu ảnh chụp trước/sau cuộn và sticky/transform trong DOM.
+- `pnpm check`: lint, TypeScript, **122/122 bài kiểm tra**, 15 file, qua trên mã cuối.
+- `pnpm build`: qua trên mã cuối.
+- `pnpm test:e2e`: **13/13 ca Chromium** qua; sau điều chỉnh quan sát từng ảnh album độc lập, chạy lại hai ca album/bàn phím và ảnh theo cuộn: **2/2 qua**.
+- Ca mới kiểm tra khung ảnh mở rộng theo vị trí cuộn và đổi ngay về ảnh tĩnh khi bật reduced motion trong phiên.
+- Đã xem ảnh chụp thiệp Khoảnh khắc 1440×900 và 390×900: không cuộn ngang, ảnh nổi bật có tiến trình khung/zoom thực tế. Các viewport 320–1440 và năm layout được kiểm tra trong bộ E2E.
+- Không xác minh hiệu năng trên điện thoại thật, Safari hay tích hợp production trong lượt này; không thêm thư viện hoặc sao chép ảnh/mã OnePlus.

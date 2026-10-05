@@ -112,3 +112,5 @@ Nút bỏ qua hiệu ứng và điều hướng nội dung chỉ đổi tương 
 `GET /support` là trang hướng dẫn không yêu cầu đăng nhập. Chỉ xuất thông tin liên hệ chủ dịch vụ (support/supportPhone/supportEmail); không xuất merchant bank/account/name, đơn hoặc danh sách khách. Không có API mutation mới.
 
 Liên kết lịch công khai dùng ngày giờ của từng phần tử eventsJson, chuyển thành timestamp UTC cho Google Calendar; không thêm guest token vào URL. Không có mutation hoặc schema mới. Thời điểm kết thúc trên lịch bên ngoài là giá trị tạm tính ba giờ, không phải thời điểm kết thúc được cặp đôi xác nhận.
+
+Chuyển động ảnh theo cuộn (05/10/2026) chỉ là nâng cấp trình bày phía xem thiệp; không thêm API, không đổi payload ảnh, quyền công khai hay guest token. Ảnh nổi bật trang trí dùng ảnh đầu album, không có điều khiển hoặc dữ liệu khách mới.

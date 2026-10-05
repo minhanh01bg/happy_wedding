@@ -39,3 +39,7 @@ Trang hướng dẫn công khai tái sử dụng liên hệ đã lưu trong merc
 ## Liên kết lịch của từng tiệc — 05/10/2026
 
 Tạo link từ đúng thông tin tiệc công khai thay vì dùng ngày cưới chung cho mọi tiệc. Helper chỉ nhận date/title/location, không nhận đối tượng Invitation hay WeddingGuest để tránh vô tình đưa capability vào URL bên ngoài. Giữ rel noopener/noreferrer và referrer policy hiện có.
+
+### Chuyển động ảnh — 05/10/2026
+
+Hiệu ứng theo cuộn là progressive enhancement sau khi mở thiệp. Nội dung SSR vẫn hiện, ảnh nổi bật thêm vào album là trang trí aria-hidden, không thêm liên kết hay dữ liệu khách. Tắt sticky/parallax khi giảm chuyển động, kể cả khi đổi thiết lập trong phiên; không thay đổi guards và các tương tác RSVP/album.

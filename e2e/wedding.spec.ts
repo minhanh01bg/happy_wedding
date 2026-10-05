@@ -552,3 +552,49 @@ test("guests can skip motion and reach Vietnamese event information", async ({
     ),
   ).toBe(true);
 });
+
+test("photo storytelling follows scroll and becomes static when motion is reduced", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/preview/khoanh-khac");
+  await page.getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" }).click();
+  const story = page.locator(".wedding-photo-story");
+  await expect(story).toBeAttached();
+  const start = await story.evaluate(
+    (el) => el.getBoundingClientRect().top + window.scrollY,
+  );
+  await page.evaluate((y) => window.scrollTo(0, y + 30), start);
+  await expect
+    .poll(() =>
+      story.evaluate((el) =>
+        parseFloat(el.style.getPropertyValue("--story-inset")),
+      ),
+    )
+    .toBeLessThan(12);
+  const before = await story.evaluate((el) =>
+    parseFloat(el.style.getPropertyValue("--story-inset")),
+  );
+  await page.evaluate((y) => window.scrollTo(0, y + 300), start);
+  await expect
+    .poll(() =>
+      story.evaluate((el) =>
+        parseFloat(el.style.getPropertyValue("--story-inset")),
+      ),
+    )
+    .toBeLessThan(before);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator(".wedding-photo-stage")).toHaveCSS(
+    "position",
+    "relative",
+  );
+  await expect(page.locator(".wedding-photo-frame img")).toHaveCSS(
+    "transform",
+    "none",
+  );
+  await expect
+    .poll(() =>
+      story.evaluate((el) => el.style.getPropertyValue("--story-inset")),
+    )
+    .toBe("");
+});

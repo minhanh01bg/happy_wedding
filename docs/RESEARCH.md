@@ -105,3 +105,9 @@ MeHappy phân biệt gói theo ảnh, thời hạn, quyền thiết kế và ti�
 | Mọi lứa tuổi       | Form/mobile đã cải thiện, còn chữ tiếng Anh và chữ nhỏ   | Tiếng Việt nhất quán trên thiệp, giờ tiệc rõ, lối tắt nội dung, cỡ chữ/contrast/zoom/bàn phím; kiểm tra mobile/tablet/desktop                       |
 
 Mỗi phần phải có bằng chứng server và trình duyệt phù hợp, cập nhật contract/migration/đặc tả khi thay dữ liệu, commit riêng. Những dữ liệu thương mại cần chủ dịch vụ nhập (ngân hàng, hỗ trợ, bảng giá/chính sách chính thức) không được bịa để làm dashboard có vẻ sẵn sàng. Chưa có khảo sát trực tiếp người lớn tuổi; cần ghi rõ giới hạn này và kiểm tra trên thiết bị thật trước mở bán.
+
+## Chuyển động ảnh tham khảo OnePlus — 05/10/2026
+
+Nguồn: [OnePlus 15, Tri-Chips](https://www.oneplus.com/vn/15#anchor-tri-chips). Đã mở trang thật bằng Chromium 1440×900, cuộn qua Tri-Chips và Photography, kiểm tra DOM/CSS và ảnh chụp trước/sau cuộn. Tri-Chips dùng khung sticky theo chiều cao màn hình, canvas và lớp chữ xuất hiện theo tiến trình cuộn; Photography cũng có khung sticky và lớp tiêu đề biến đổi scale. Đây là quan sát giao diện, không phải đo hiệu năng trên điện thoại thật.
+
+Áp dụng vào thiệp bằng triển khai riêng: ảnh đầu thiệp mở khung; ảnh có độ sâu theo cuộn; ảnh nổi bật trước album giữ vị trí, mở khung từ bo tròn về toàn cảnh và giảm zoom theo tiến trình cuộn; ảnh album mở theo nhịp so le. Dùng ảnh có sẵn của thiệp, không lấy tài nguyên hay mã nguồn OnePlus. Không mang canvas/video giải mã hoặc quãng cuộn dài của trang sản phẩm vào thiệp. Chỉ bật đoạn sticky khi JavaScript hoạt động và người xem không yêu cầu giảm chuyển động; mặc định HTML là ảnh tĩnh, không chặn cuộn hay thay đổi điều hướng.

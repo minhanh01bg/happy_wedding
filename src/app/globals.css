@@ -3454,6 +3454,7 @@ a.stat-card:focus-visible {
 }
 .support-guide .panel p {
   margin-top: 16px;
+  font-size: 16px;
 }
 .support-guide .faq details p {
   font-size: 16px;
@@ -3463,5 +3464,12 @@ a.stat-card:focus-visible {
 }
 .pricing-help {
   margin-top: 36px;
+  font-size: 16px;
+}
+
+.support-guide .page-intro > p:not(.eyebrow),
+.support-guide .text-link,
+.support-guide .button,
+.pricing-help .text-link {
   font-size: 16px;
 }

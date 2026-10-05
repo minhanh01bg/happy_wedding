@@ -197,3 +197,7 @@ Thiệp có hiệu ứng mở khung ảnh đầu, ảnh di chuyển nhẹ theo c
 ### Chuyển cảnh và tương tác ảnh — 05/10/2026
 
 Đoạn ảnh nổi bật dùng hai ảnh đầu album làm hai cảnh trang trí. Tiến trình cuộn mở khung rồi đưa cảnh thứ hai vào bằng lớp che, cuộn ngược đảo lại. Tiêu đề mục có hiệu ứng mở lớp che khi vào vùng nhìn. Album chỉ nghiêng theo con trỏ chuột trên thiết bị hover/pointer fine; không áp dụng lên biểu mẫu/liên kết. Lightbox chuyển ảnh theo hướng trước/sau; vuốt ngang tối thiểu 50px và lớn hơn 1,5 lần chuyển động dọc đổi ảnh, còn cuộn dọc/zoom vẫn dành cho trình duyệt. Ảnh đang chọn đổi ngay; thao tác nhanh thay hiệu ứng cũ. Chế độ giảm chuyển động không chạy các hiệu ứng mới, bỏ cảnh trang trí thứ hai và xóa nghiêng ảnh ngay.
+
+### Ảnh stock và cinematic mobile — 05/10/2026
+
+Ảnh stock mặc định chuyển sang ảnh cưới chụp thật, nguồn Martin Baron/Unsplash ghi ở public/images/CREDITS.md. Alias stock cũ chỉ đổi URL trình bày, không sửa dữ liệu hoặc ảnh tải lên của khách. Mẫu cinematic ở chiều rộng tối đa 800px đặt vùng ảnh 420px phía trên panel lời mời, panel chỉ chồng 40px cuối ảnh để giữ khuôn mặt nhìn được. Không đổi palette, thông tin cặp đôi, API hay quyền công khai.

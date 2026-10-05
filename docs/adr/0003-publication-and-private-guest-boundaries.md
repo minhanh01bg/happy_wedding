@@ -47,3 +47,7 @@ Hiệu ứng theo cuộn là progressive enhancement sau khi mở thiệp. Nội
 ### Các lớp ảnh và vuốt album — 05/10/2026
 
 Hai cảnh nổi bật vẫn là trang trí aria-hidden dùng dữ liệu ảnh sẵn có. Giữ toàn bộ ảnh và nút native trong album. Chỉ nhận vuốt từ pointer touch chính, hỗ trợ pointercancel và không xử lý chuyển động dọc; cập nhật lựa chọn đồng bộ, không lấy animationend làm điều kiện. Reset pointer animation/inline styles khi reduced motion hoặc loại con trỏ thay đổi, cleanup khi unmount. Guards và dữ liệu khách không đổi.
+
+### Thay ảnh stock — 05/10/2026
+
+Dùng alias URL stock tại renderer thay vì sửa DB/ảnh người dùng. Ảnh stock chỉ minh họa, nguồn/giấy phép có trong repo; không đại diện cho cặp đôi có tên trong demo. Bố cục cinematic mobile giữ vùng ảnh riêng để panel không che khuôn mặt; publication/guest boundaries không đổi.

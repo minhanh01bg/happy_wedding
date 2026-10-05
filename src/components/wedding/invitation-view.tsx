@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { weddingImageSource } from "@/lib/wedding-images";
 import { weddingCalendarUrl } from "@/lib/wedding-calendar";
 import Link from "next/link";
 import type {
@@ -115,7 +116,7 @@ export function InvitationView({
           </div>
           <div className="wedding-hero-image">
             <Image
-              src={invitation.coverUrl}
+              src={weddingImageSource(invitation.coverUrl)}
               alt={`${invitation.groom} và ${invitation.bride} — ảnh thiệp cưới`}
               fill
               sizes={

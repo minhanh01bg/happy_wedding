@@ -117,3 +117,9 @@ Nguồn: [OnePlus 15, Tri-Chips](https://www.oneplus.com/vn/15#anchor-tri-chips)
 Đã xem thêm OxygenOS và Design trên cùng trang bằng Chromium 1440×900. OxygenOS có các khung màn hình xếp thành nhiều lớp; Design có lớp tiêu đề biến đổi 3D và các slide ngang, kiểm tra được transform/opacity trong DOM. Các cơ chế này gợi ý chuyển cảnh, chiều sâu và hướng chuyển động; nghiêng theo con trỏ và vuốt album là điều chỉnh riêng cho thiệp, không khẳng định OnePlus có cùng tương tác.
 
 Thiệp bổ sung hai cảnh ảnh trong khung nổi bật: mở khung rồi ảnh thứ hai đi vào bằng lớp che theo cuộn, cuộn ngược phục hồi cảnh trước. Tiêu đề mục mở từ lớp che; album desktop có nghiêng/ánh sáng theo con trỏ; lightbox chuyển ảnh có hướng và hỗ trợ vuốt ngang trên điện thoại. Nội dung/ảnh đang chọn cập nhật ngay, không phụ thuộc animation kết thúc, nên thao tác nhanh hoặc bật giảm chuyển động không khóa điều khiển. Không tự chạy slideshow hoặc tự phát nhạc.
+
+## Thay ảnh cưới minh họa — 05/10/2026
+
+Đã tìm ảnh chụp thật và xem trực tiếp ba ứng viên Unsplash. Chọn ảnh [Martin Baron — A bride and groom standing in the middle of a forest](https://unsplash.com/photos/a-bride-and-groom-standing-in-the-middle-of-a-forest-hWiqlzjwCLI): cặp đôi ở giữa, ánh sáng mềm, tông xanh ngoài trời và khuôn mặt nằm trong vùng cắt ngang/dọc. Trang nguồn xác nhận Download free/Unsplash License; đối chiếu [giấy phép](https://unsplash.com/license). Nguồn và ngày kiểm tra nằm ở public/images/CREDITS.md.
+
+Ảnh mới wedding-couple-forest.jpg, JPEG tối ưu 1600×2400, khoảng 429 KiB. Renderer chuyển riêng đường dẫn stock cũ /images/couple.jpg sang ảnh mới, tránh cache Image Optimization cũ; không đổi URL ảnh người dùng tải lên, không sửa DB. Trang chủ sửa alt/caption khớp ảnh và dùng tiếng Việt. Trên cinematic mobile, ảnh có vùng riêng phía trên nội dung để không bị panel che mặt. Đây vẫn là ảnh minh họa, không phải cặp đôi có tên trên thiệp demo.

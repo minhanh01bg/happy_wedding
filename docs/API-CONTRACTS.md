@@ -116,3 +116,5 @@ Liên kết lịch công khai dùng ngày giờ của từng phần tử eventsJ
 Chuyển động ảnh theo cuộn (05/10/2026) chỉ là nâng cấp trình bày phía xem thiệp; không thêm API, không đổi payload ảnh, quyền công khai hay guest token. Ảnh nổi bật trang trí dùng ảnh đầu album, không có điều khiển hoặc dữ liệu khách mới.
 
 Chuyển cảnh hai ảnh, mở tiêu đề, nghiêng ảnh và vuốt lightbox chỉ dùng trạng thái trình bày local (05/10/2026). Không thêm API, không ghi thay đổi thứ tự/ảnh lên server. Tất cả ảnh vẫn truy cập qua lưới album và nút trước/sau; cảnh phụ trang trí không đưa thêm nội dung vào cây accessibility.
+
+Ảnh stock mặc định (05/10/2026): renderer có alias riêng /images/couple.jpg → /images/wedding-couple-forest.jpg để dùng ảnh mới và tránh cache cũ. URL lưu trong DB/payload không thay đổi; URL upload tùy chỉnh được giữ nguyên. Không thêm endpoint hoặc thay guards.

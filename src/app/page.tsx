@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { weddingImageSource } from "@/lib/wedding-images";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -60,14 +61,14 @@ export default async function Home() {
           <div className="hero-visual">
             <div className="hero-photo">
               <Image
-                src="/images/couple.jpg"
-                alt="Không gian lễ cưới ngập hoa"
+                src={weddingImageSource("/images/couple.jpg")}
+                alt="Cô dâu và chú rể trong lễ cưới ngoài trời"
                 fill
                 sizes="(max-width: 800px) 90vw, 42vw"
                 priority
               />
               <span className="photo-caption">
-                a little invitation, a lifetime of love
+                Một lời mời nhỏ, một đời bên nhau
               </span>
             </div>
             <div className="hero-invitation">

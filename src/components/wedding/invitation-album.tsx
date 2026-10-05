@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { weddingImageSource } from "@/lib/wedding-images";
 import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
@@ -26,7 +27,7 @@ export function InvitationAlbum({
           <div className="wedding-photo-stage">
             <div className="wedding-photo-frame">
               <Image
-                src={photos[0]}
+                src={weddingImageSource(photos[0])}
                 alt=""
                 fill
                 sizes="(max-width:800px) 90vw, 1000px"
@@ -34,7 +35,7 @@ export function InvitationAlbum({
             </div>
             <div className="wedding-photo-frame wedding-photo-second">
               <Image
-                src={photos[1]}
+                src={weddingImageSource(photos[1])}
                 alt=""
                 fill
                 sizes="(max-width:800px) 90vw, 1000px"
@@ -63,7 +64,7 @@ export function InvitationAlbum({
             }}
           >
             <Image
-              src={photo}
+              src={weddingImageSource(photo)}
               alt={`Kỷ niệm của ${couple}, ảnh ${i + 1}`}
               fill
               sizes="(max-width:800px) 45vw, 300px"
@@ -133,7 +134,7 @@ export function InvitationAlbum({
           }}
         >
           <Image
-            src={photos[selected]}
+            src={weddingImageSource(photos[selected])}
             alt={`Kỷ niệm của ${couple}, ảnh ${selected + 1}`}
             fill
             sizes="95vw"

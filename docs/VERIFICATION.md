@@ -122,3 +122,10 @@ Mỗi tiệc có link lịch với ngày giờ và địa điểm riêng. Link n
 - Xem trực tiếp ảnh chụp chuyển cảnh desktop 1440×900/mobile 390×900: khung ở top 72px tránh thanh preview, không cuộn ngang. Trên mobile đoạn cuộn rút xuống 125svh; JavaScript tắt vẫn là ảnh tĩnh, cảnh phụ không hiện và không cuộn ngang.
 - Kiểm tra lightbox thực tế: ArrowRight chạy wedding-photo-next, ArrowLeft chạy wedding-photo-previous. Reduced motion không chạy animation ảnh.
 - Nguồn nghiên cứu thêm OxygenOS/Design: trang thật OnePlus bằng Chromium, ảnh chụp và transform/opacity trong DOM. Không xác minh Safari hoặc điện thoại vật lý; không tuyên bố hiệu năng production.
+
+## Ảnh cưới stock mới — 05/10/2026
+
+- Đã xem ba ứng viên ảnh thật, chọn Martin Baron/Unsplash; đối chiếu trang nguồn và giấy phép, ghi credit trong public/images/CREDITS.md. File mới 1600×2400 JPEG, khoảng 429 KiB.
+- `pnpm check`: lint, TypeScript, **122/122 bài kiểm tra**, 15 file qua. `pnpm build`: qua. `pnpm test:e2e`: **15/15 ca Chromium qua**, gồm sáu viewport và năm bố cục.
+- Kiểm tra thực tế sau restart dev: 390×900 và 1440×900 dùng URL stock mới, ảnh decode thành công và không cuộn ngang. Cinematic mobile dùng ảnh relative 420px phía trên panel, thấy rõ hai khuôn mặt; desktop giữ ảnh nền toàn khung. Đã xem ảnh chụp cả hai.
+- Tên asset mới tránh cache stock cũ; không đổi DB, URL ảnh upload, API hoặc guards. Không xác minh thiết bị vật lý/Safari hay triển khai production trong lượt này.

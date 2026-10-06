@@ -2451,30 +2451,6 @@ body:has(.invitation-opening[open]) {
   opacity: 0;
   animation: wedding-petal 13s linear infinite;
 }
-.wedding-petals i:nth-child(2) {
-  left: 25%;
-  animation-delay: 2s;
-}
-.wedding-petals i:nth-child(3) {
-  left: 42%;
-  animation-delay: 5s;
-}
-.wedding-petals i:nth-child(4) {
-  left: 57%;
-  animation-delay: 1s;
-}
-.wedding-petals i:nth-child(5) {
-  left: 70%;
-  animation-delay: 8s;
-}
-.wedding-petals i:nth-child(6) {
-  left: 84%;
-  animation-delay: 4s;
-}
-.wedding-petals i:nth-child(7) {
-  left: 92%;
-  animation-delay: 10s;
-}
 .layout-classic .wedding-petals i {
   width: 5px;
   height: 5px;
@@ -4135,5 +4111,176 @@ a.stat-card:focus-visible {
   }
   .layout-cinematic.wedding-page .wedding-hero {
     padding: 40px;
+  }
+}
+
+.wedding-gift-box {
+  margin: 36px auto 0;
+  max-width: 850px;
+}
+.wedding-gift-box summary {
+  cursor: pointer;
+  list-style: none;
+  width: fit-content;
+  max-width: 100%;
+  margin: auto;
+  display: grid;
+  justify-items: center;
+  padding: 16px;
+  border-radius: 18px;
+}
+.wedding-gift-box summary::-webkit-details-marker {
+  display: none;
+}
+.wedding-gift-box summary:focus-visible {
+  outline: 2px solid var(--tone);
+  outline-offset: 6px;
+}
+.gift-box-art {
+  position: relative;
+  display: block;
+  width: 180px;
+  height: 190px;
+  margin-top: 30px;
+  perspective: 700px;
+}
+.gift-box-body {
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  height: 135px;
+  border-radius: 3px 3px 12px 12px;
+  background: linear-gradient(
+    110deg,
+    var(--tone),
+    color-mix(in srgb, var(--tone) 72%, var(--card))
+  );
+  box-shadow: 0 16px 30px color-mix(in srgb, var(--tone) 18%, transparent);
+}
+.gift-box-body::before,
+.gift-box-lid::before {
+  content: "";
+  position: absolute;
+  inset: 0 41%;
+  background: var(--card);
+  opacity: 0.8;
+}
+.gift-box-lid {
+  position: absolute;
+  top: 30px;
+  left: 0;
+  width: 100%;
+  height: 35px;
+  background: var(--tone);
+  border-radius: 4px;
+  z-index: 2;
+  box-shadow: 0 5px 7px #0002;
+  transform-origin: 15% center;
+  transition:
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.5s;
+}
+.gift-box-bow::before,
+.gift-box-bow::after {
+  content: "";
+  position: absolute;
+  width: 58px;
+  height: 35px;
+  border: 8px solid var(--tone);
+  bottom: 31px;
+}
+.gift-box-bow::before {
+  left: 32px;
+  border-radius: 65% 65% 0 65%;
+  transform: rotate(20deg);
+}
+.gift-box-bow::after {
+  right: 32px;
+  border-radius: 65% 65% 65% 0;
+  transform: rotate(-20deg);
+}
+.gift-box-heart {
+  position: absolute;
+  top: 38px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  font-size: 38px;
+  color: var(--tone);
+  background: var(--card);
+  border-radius: 50%;
+}
+.gift-box-label {
+  display: block;
+  font-family: var(--serif);
+  font-size: 24px;
+  margin-top: 24px;
+}
+.gift-box-hint {
+  display: block;
+  margin-top: 10px;
+  font-size: 14px;
+}
+.gift-label-open {
+  display: none;
+}
+.wedding-gift-box[open] .gift-label-closed {
+  display: none;
+}
+.wedding-gift-box[open] .gift-label-open {
+  display: block;
+}
+.wedding-gift-box[open] .gift-box-lid {
+  transform: translate(-24px, -65px) rotate(-22deg);
+  opacity: 0.35;
+}
+.wedding-gift-box[open] .gift-box-content {
+  animation: wedding-gift-reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.gift-demo-note {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px dashed var(--tone);
+  border-radius: 8px;
+  font-size: 14px !important;
+}
+.gift-demo-card .qr-box {
+  background: white;
+  border-radius: 8px;
+  margin: 20px auto;
+  width: fit-content;
+  max-width: 100%;
+}
+.gift-demo-card .qr-box img {
+  display: block;
+  height: auto;
+}
+@keyframes wedding-gift-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.wedding-petals i {
+  left: var(--leaf-left, 8%);
+  width: var(--leaf-size, 10px);
+  height: calc(var(--leaf-size, 10px) * 1.7);
+  animation-duration: var(--leaf-duration, 13s);
+  animation-delay: var(--leaf-delay, 0s);
+}
+@media (prefers-reduced-motion: reduce) {
+  .wedding-gift-box[open] .gift-box-content {
+    animation: none;
+  }
+  .gift-box-lid {
+    transition: none;
   }
 }

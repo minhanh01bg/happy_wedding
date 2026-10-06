@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { CSSProperties } from "react";
 import { weddingImageSource } from "@/lib/wedding-images";
 import { weddingCalendarUrl } from "@/lib/wedding-calendar";
 import Link from "next/link";
@@ -93,8 +94,18 @@ export function InvitationView({
         </nav>
         <section className="wedding-hero">
           <div className="wedding-petals" aria-hidden="true">
-            {Array.from({ length: 7 }, (_, i) => (
-              <i key={i} />
+            {Array.from({ length: 24 }, (_, i) => (
+              <i
+                key={i}
+                style={
+                  {
+                    "--leaf-left": `${((i * 37) % 96) + 2}%`,
+                    "--leaf-size": `${6 + (i % 5) * 2}px`,
+                    "--leaf-duration": `${11 + (i % 7)}s`,
+                    "--leaf-delay": `${-i * 0.73}s`,
+                  } as CSSProperties
+                }
+              />
             ))}
           </div>
           <div className="wedding-hero-copy">
@@ -286,13 +297,7 @@ export function InvitationView({
                 </p>
               </>
             ) : (
-              <div className="gift-preview">
-                <p>Chỗ dành cho mã QR nhà trai và nhà gái</p>
-                <p>
-                  Mẫu minh họa không có tài khoản nhận tiền. Khi tạo thiệp, bạn
-                  có thể thêm một hoặc cả hai tài khoản.
-                </p>
-              </div>
+              <GiftAccounts accounts={[]} preview />
             )}
           </section>
         )}

@@ -1,6 +1,8 @@
-/** Version the bundled stock photo without changing customers' uploaded URLs. */
+/** Resolve bundled demonstration photos without changing uploaded images. */
 export function weddingImageSource(source: string): string {
-  return source === "/images/couple.jpg"
-    ? "/images/wedding-couple-forest.jpg"
-    : source;
+  if (source === "/images/couple.jpg")
+    return "/images/wedding-couple-studio.jpg";
+  if (source === "/images/celebration.jpg")
+    return "/images/wedding-couple-moment.jpg";
+  return source;
 }

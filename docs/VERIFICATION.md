@@ -154,3 +154,9 @@ Mỗi tiệc có link lịch với ngày giờ và địa điểm riêng. Link n
 - Lượt E2E đầu bị lỗi nội bộ Turbopack HMR sau chỉnh CSS, đã dừng; giữ cache cũ trong /tmp và chạy toàn bộ lại bằng .next-e2e sạch. Chỉ kết quả lượt sạch được dùng để báo đạt.
 - Manual runtime 390/1440px: audio paused=false, thời gian tăng, duration 43.04975s, volume 0.35; xem screenshot chương câu chuyện/lịch tiệc; không tràn ngang, không có cảnh báo hydration trong hai trang kiểm tra. Thanh nhạc mobile rộng 92px, settings/slider nằm trong viewport; mô phỏng visibilitychange hidden dừng audio. Ảnh kiểm tra `/tmp/wedding-zen-*.png`.
 - Đúng thiệp ZenLove trả HTML công khai 200 nhưng trình duyệt tự động bị redirect, chưa xác minh toàn bộ animation live của thiệp tham khảo. Safari/autoplay trên iPhone vật lý và chất lượng âm thanh loa thực chưa kiểm chứng.
+
+### 06/10/2026 — ảnh studio và cửa mở mềm hơn
+
+Thay alias ảnh stock mặc định bằng hai ảnh chụp thật cùng cặp đôi của Nam Nguyen (nguồn/Unsplash License ở public/images/CREDITS.md), giữ URL ảnh upload. Cinematic desktop tách bảng chữ khỏi vùng ảnh; opening dùng phối cảnh chung, dấu sáp và hoa SVG, chuyển động 1870ms tổng cộng. `pnpm check` exit 0: 124/124 tests, 16 files; `pnpm build` exit 0. Log: /tmp/wedding-refined-check.log và /tmp/wedding-refined-build.log. Playwright thủ công trên dev tại 320×740, 390×844, 844×390 và 1440×1000: không lỗi page/hydration, không tràn ngang, hero/album tải đầy đủ, nhạc phát sau bấm mở, reduced motion + Escape chuyển focus về H1. Đã xem screenshot opening mobile/landscape và hero desktop; ảnh /tmp/wedding-final-opening-_.png, /tmp/wedding-final-photo-_.png. Chưa kiểm tra thiết bị iPhone/Safari thật.
+
+Browser gate `pnpm test:e2e` exit 0: 17/17 Chromium tests (3.6 phút), gồm sáu viewport/all five layouts, opening/focus/no-JS, scroll ảnh, album swipe, nhạc/volume/skip và retry khi MP3 lỗi. Log /tmp/wedding-refined-e2e.log. Local dev được chạy lại ở port 3200; không triển khai production.

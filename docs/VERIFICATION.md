@@ -137,3 +137,11 @@ Mỗi tiệc có link lịch với ngày giờ và địa điểm riêng. Link n
 - `pnpm test:e2e`: 15/15 Chromium đạt (3.4 phút), sáu viewport 320–1440px và năm layouts; regression kiểm tra orbit hiện ở đầu, biến mất giữa cảnh, cuộn ngược khôi phục và reduced motion ẩn orbit.
 - Xem ảnh chụp runtime tại 390/1440px ở tiến trình 0, .45, .95: phối cảnh hai tấm ảnh, mở rộng và wipe; không tràn ngang. Các ảnh chụp kiểm tra nằm `/tmp/wedding-depth-final-*.png`, không phải tài sản sản phẩm.
 - Chưa xác minh Safari hoặc tốc độ trên điện thoại vật lý.
+
+### Font và dấu tiếng Việt — 06/10/2026
+
+- `pnpm check`: ESLint, TypeScript và 122/122 tests đạt. `pnpm build`: đạt với font local, không phụ thuộc tải Google lúc build.
+- `pnpm test:e2e`: 15/15 Chromium đạt (2.9 phút), gồm sáu viewport 320–1440px, năm layouts, mở thiệp/album/reduced motion và các luồng khách/admin.
+- fontTools kiểm tra cmap của cả sáu WOFF2 có các ký tự tiếng Việt nhiều dấu và combining tone marks, giữ toàn bộ glyph khi chuyển từ TTF.
+- Runtime 390/1440px: document.fonts ghi nhận bodyFont normal 400/600/700 và headingFont variable normal/italic loaded; computed font-family đúng, không tràn ngang. Xem ảnh tên dài “Nguyễn Hoàng Bảo Anh / Trần Thị Ngọc Ánh”, màn mở và các tiêu đề sau animation: dấu hiển thị rõ. Ảnh kiểm tra tạm `/tmp/wedding-font-*.png`.
+- Không kết luận toàn bộ máy/OS đã được thử; Safari và thiết bị vật lý chưa xác minh.

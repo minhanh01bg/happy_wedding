@@ -31,3 +31,7 @@ Thẻ mẫu dẫn trực tiếp tới preview hiện có ngoài trang chi tiết
 ## Hai bố cục bổ sung — 05/10/2026
 
 Minimal và cinematic vẫn dùng cùng nội dung thiệp, thay cấu trúc trình bày hero qua CSS. Cinematic dùng bảng chữ nền đặc để tương phản không phụ thuộc ảnh khách tải lên. Seed chỉ upsert-create bốn mẫu mới và không sửa catalog đã chỉnh; không cần migration schema. Ảnh xem trước cinematic dùng ảnh minh họa sẵn có, không lấy ảnh khách hàng.
+
+### Font tiếng Việt — 06/10/2026
+
+Nội dung dùng Be Vietnam Pro, tiêu đề/tên dùng Lora, tải local qua next/font/local với WOFF2 đầy đủ ký tự và font italic thực. Nới line-height tên/tiêu đề và mask animation để giữ dấu; font swap có fallback. Nguồn/giấy phép nằm src/app/fonts/. Không thay trường dữ liệu, API hay quyền truy cập.

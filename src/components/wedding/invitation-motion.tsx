@@ -182,11 +182,11 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
               const animation = element.animate(
                 [
                   {
-                    clipPath: "inset(0 0 100% 0)",
+                    clipPath: "inset(-15% -5% 100% -5%)",
                     transform: "translateY(28px) scale(1.04)",
                   },
                   {
-                    clipPath: "inset(0 0 0% 0)",
+                    clipPath: "inset(-15% -5% -15% -5%)",
                     transform: "translateY(0) scale(1)",
                   },
                 ],

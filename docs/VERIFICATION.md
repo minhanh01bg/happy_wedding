@@ -145,3 +145,12 @@ Mỗi tiệc có link lịch với ngày giờ và địa điểm riêng. Link n
 - fontTools kiểm tra cmap của cả sáu WOFF2 có các ký tự tiếng Việt nhiều dấu và combining tone marks, giữ toàn bộ glyph khi chuyển từ TTF.
 - Runtime 390/1440px: document.fonts ghi nhận bodyFont normal 400/600/700 và headingFont variable normal/italic loaded; computed font-family đúng, không tràn ngang. Xem ảnh tên dài “Nguyễn Hoàng Bảo Anh / Trần Thị Ngọc Ánh”, màn mở và các tiêu đề sau animation: dấu hiển thị rõ. Ảnh kiểm tra tạm `/tmp/wedding-font-*.png`.
 - Không kết luận toàn bộ máy/OS đã được thử; Safari và thiết bị vật lý chưa xác minh.
+
+### Nhạc nền và chương câu chuyện — 06/10/2026
+
+- `pnpm check`: exit 0, ESLint/TypeScript và 124/124 tests (16 files) đạt; thêm kiểm tra chỉ chấp nhận đúng bản nhạc local, từ chối local path khác/traversal/HTTP/javascript.
+- `pnpm build`: exit 0 trên CSS cuối cùng, gồm thanh nhạc mobile thu gọn.
+- `pnpm test:e2e`: 17/17 Chromium đạt (2.7 phút), sáu viewport 320–1440px/năm layouts. Hai bài mới phát file MP3 thật: mở kèm nhạc, currentTime tăng, volume 0.15, pause, reload/skip im lặng rồi bật thủ công; 404 nhạc có thông báo/thử lại, thiệp vẫn mở và trả focus đúng.
+- Lượt E2E đầu bị lỗi nội bộ Turbopack HMR sau chỉnh CSS, đã dừng; giữ cache cũ trong /tmp và chạy toàn bộ lại bằng .next-e2e sạch. Chỉ kết quả lượt sạch được dùng để báo đạt.
+- Manual runtime 390/1440px: audio paused=false, thời gian tăng, duration 43.04975s, volume 0.35; xem screenshot chương câu chuyện/lịch tiệc; không tràn ngang, không có cảnh báo hydration trong hai trang kiểm tra. Thanh nhạc mobile rộng 92px, settings/slider nằm trong viewport; mô phỏng visibilitychange hidden dừng audio. Ảnh kiểm tra `/tmp/wedding-zen-*.png`.
+- Đúng thiệp ZenLove trả HTML công khai 200 nhưng trình duyệt tự động bị redirect, chưa xác minh toàn bộ animation live của thiệp tham khảo. Safari/autoplay trên iPhone vật lý và chất lượng âm thanh loa thực chưa kiểm chứng.

@@ -153,7 +153,7 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
     (route) => route.abort(),
   );
   await guest.goto(`http://127.0.0.1:3201${guestHref}`);
-  await guest.getByRole("button", { name: "Mở thiệp", exact: true }).click();
+  await guest.getByRole("button", { name: /^Mở thiệp/ }).click();
   await expect(guest.locator(".invitation-opening")).not.toBeVisible();
   await expect(guest.getByText("Trân trọng kính mời Chị Lan")).toBeVisible();
   await expect(
@@ -194,7 +194,7 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
   await page.getByRole("button", { name: "Duyệt lời chúc" }).click();
   await expect(page.getByText("Đã duyệt", { exact: true })).toBeVisible();
   await guest.reload();
-  await guest.getByRole("button", { name: "Mở thiệp", exact: true }).click();
+  await guest.getByRole("button", { name: /^Mở thiệp/ }).click();
   await expect(guest.locator(".invitation-opening")).not.toBeVisible();
   await expect(
     guest.getByText("Chúc anh chị trăm năm hạnh phúc!", { exact: true }),
@@ -286,7 +286,7 @@ test("catalog filters, full previews and home layout work on mobile", async ({
   await page
     .getByRole("link", { name: "Xem thiệp đầy đủ", exact: true })
     .click();
-  await page.getByRole("button", { name: "Mở thiệp", exact: true }).click();
+  await page.getByRole("button", { name: /^Mở thiệp/ }).click();
   await expect(page.locator(".invitation-opening")).not.toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Bạn sẽ đến chứ?" }),
@@ -311,7 +311,7 @@ test("invitation album restores focus and respects reduced motion on mobile", as
   await page
     .getByRole("link", { name: "Xem thiệp đầy đủ", exact: true })
     .click();
-  await page.getByRole("button", { name: "Mở thiệp", exact: true }).click();
+  await page.getByRole("button", { name: /^Mở thiệp/ }).click();
   await expect(page.locator(".invitation-opening")).not.toBeVisible();
   const firstPhoto = page.getByRole("button", { name: /Xem ảnh kỷ niệm 1 / });
   await firstPhoto.click();
@@ -359,9 +359,7 @@ test("opening doors introduce the invitation and release keyboard focus", async 
   await page.goto("/preview/song-hy");
   const opening = page.getByRole("dialog", { name: /Minh Anh.*Ngọc Hà/ });
   await expect(opening).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Mở thiệp", exact: true }),
-  ).toBeFocused();
+  await expect(page.getByRole("button", { name: /^Mở thiệp/ })).toBeFocused();
   await expect(page.locator("body")).toHaveCSS("overflow", "hidden");
   await page.keyboard.press("Enter");
   await expect(opening).not.toBeVisible();
@@ -429,7 +427,7 @@ for (const viewport of [
       "khoanh-khac",
     ]) {
       await page.goto(`/preview/${slug}`);
-      const open = page.getByRole("button", { name: "Mở thiệp", exact: true });
+      const open = page.getByRole("button", { name: /^Mở thiệp/ });
       await expect(open).toBeVisible();
       const box = await open.boundingBox();
       expect(box).not.toBeNull();
@@ -501,7 +499,7 @@ test("pricing compares live packages and keeps the selected package through logi
     .getByRole("link", { name: "Xem thiệp đầy đủ Lời yêu", exact: true })
     .click();
   await expect(page).toHaveURL(/preview\/loi-yeu/);
-  await page.getByRole("button", { name: "Mở thiệp", exact: true }).click();
+  await page.getByRole("button", { name: /^Mở thiệp/ }).click();
   await expect(page.locator(".invitation-opening")).not.toBeVisible();
 });
 
@@ -716,4 +714,66 @@ test("mobile album accepts horizontal swipes and keeps rapid navigation usable",
   } finally {
     await context.close();
   }
+});
+
+test("music starts with the opening gesture and supports pause, volume and quiet skip", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/preview/khoanh-khac");
+  await expect(
+    page.getByRole("button", { name: "Mở thiệp kèm nhạc", exact: true }),
+  ).toBeVisible();
+  const audio = page.locator("audio");
+  expect(await audio.evaluate((el) => (el as HTMLAudioElement).paused)).toBe(
+    true,
+  );
+  await page
+    .getByRole("button", { name: "Mở thiệp kèm nhạc", exact: true })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Tắt nhạc nền" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect
+    .poll(() => audio.evaluate((el) => (el as HTMLAudioElement).currentTime))
+    .toBeGreaterThan(0);
+  await page.getByLabel("Điều chỉnh nhạc nền").click();
+  await page.getByLabel("Âm lượng nhạc nền").fill("0.15");
+  expect(
+    await audio.evaluate((el) => (el as HTMLAudioElement).volume),
+  ).toBeCloseTo(0.15);
+  await page.getByRole("button", { name: "Tắt nhạc nền" }).click();
+  await expect(
+    page.getByRole("button", { name: "Bật nhạc nền" }),
+  ).toHaveAttribute("aria-pressed", "false");
+  expect(await audio.evaluate((el) => (el as HTMLAudioElement).paused)).toBe(
+    true,
+  );
+  await page.reload();
+  await page.getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" }).click();
+  expect(await audio.evaluate((el) => (el as HTMLAudioElement).paused)).toBe(
+    true,
+  );
+  await page.getByRole("button", { name: "Bật nhạc nền" }).click();
+  await expect(
+    page.getByRole("button", { name: "Tắt nhạc nền" }),
+  ).toHaveAttribute("aria-pressed", "true");
+});
+
+test("a failed soundtrack keeps the invitation usable and exposes a retry", async ({
+  page,
+}) => {
+  await page.route("**/audio/loi-hen.mp3", (route) =>
+    route.fulfill({ status: 404, body: "" }),
+  );
+  await page.goto("/preview/song-hy");
+  await page
+    .getByRole("button", { name: "Mở thiệp kèm nhạc", exact: true })
+    .click();
+  await expect(page.locator(".invitation-opening")).not.toBeVisible();
+  await expect(page.locator(".music-error")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Bật nhạc nền" }),
+  ).toBeEnabled();
+  await expect(page.locator(".wedding-hero h1")).toBeFocused();
 });

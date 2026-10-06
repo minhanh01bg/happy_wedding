@@ -69,6 +69,7 @@ export function InvitationView({
           bride={invitation.bride}
           date={dateLabel(invitation.weddingDate)}
           guestName={guestName}
+          hasMusic={!!invitation.musicUrl}
         />
         {invitation.isDemo && (
           <div className="demo-banner">
@@ -145,14 +146,40 @@ export function InvitationView({
             Thêm ngày cưới vào lịch
           </a>
         </section>
-        <section className="wedding-section">
+        <section className="wedding-section wedding-story">
+          <svg
+            className="wedding-story-ornament"
+            viewBox="0 0 200 70"
+            aria-hidden="true"
+          >
+            <path d="M10 58 Q65 50 100 10 Q135 50 190 58 M100 10 Q80 42 40 32 Q52 12 82 28 M100 10 Q120 42 160 32 Q148 12 118 28 M65 42 Q50 65 20 54 M135 42 Q150 65 180 54" />
+          </svg>
           <p className="eyebrow">CÂU CHUYỆN CỦA CHÚNG MÌNH</p>
           <h2>
             Một đời thương,
             <br />
             <em>một đời bên nhau.</em>
           </h2>
-          <p>{invitation.story}</p>
+          <div className="wedding-story-layout">
+            <div className="wedding-story-photo">
+              <Image
+                src={weddingImageSource(invitation.coverUrl)}
+                alt={`${invitation.groom} và ${invitation.bride} — câu chuyện của hai người`}
+                fill
+                sizes="(max-width:800px) 80vw, 420px"
+              />
+              <span aria-hidden="true">
+                {invitation.groom} &amp; {invitation.bride}
+              </span>
+            </div>
+            <div className="wedding-story-copy">
+              <blockquote>{invitation.headline}</blockquote>
+              <p>{invitation.story}</p>
+              <span className="wedding-story-signature">
+                {invitation.groom} &amp; {invitation.bride}
+              </span>
+            </div>
+          </div>
           <div className="family-grid">
             <div>
               <h3>Gia đình nhà trai</h3>
@@ -173,6 +200,9 @@ export function InvitationView({
                 className="event-card"
                 key={`${event.title}-${event.date}-${event.venue}`}
               >
+                <span className="event-day-art" aria-hidden="true">
+                  {dateLabel(event.date).split("/")[0]}
+                </span>
                 <p className="eyebrow">0{i + 1} / LỊCH TIỆC</p>
                 <h3 style={{ marginTop: 20 }}>{event.title}</h3>
                 <strong>{dateLabel(event.date, true)}</strong>

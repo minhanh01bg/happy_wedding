@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { WEDDING_MUSIC } from "./wedding-music";
 
 export const PALETTES = [
   "rose",
@@ -71,10 +72,11 @@ export const invitationSchema = z
       .refine(
         (v) =>
           !v ||
+          v === WEDDING_MUSIC.url ||
           /^https:\/\/[a-zA-Z0-9.-]+\/[\w./%?=&+-]+\.(?:mp3|ogg)(?:\?[\w=&%-]+)?$/.test(
             v,
           ),
-        "Nhạc phải là đường dẫn HTTPS đến tệp MP3/OGG",
+        "Hãy chọn nhạc có sẵn hoặc dùng đường dẫn HTTPS đến tệp MP3/OGG",
       ),
     giftBank: z
       .string()
@@ -219,7 +221,7 @@ export const DEMO_CONTENT: Omit<InvitationInput, "templateId" | "slug"> = {
     "/images/celebration.jpg",
   ],
   coverUrl: "/images/couple.jpg",
-  musicUrl: "",
+  musicUrl: WEDDING_MUSIC.url,
   giftBank: "",
   giftAccount: "",
   giftName: "",

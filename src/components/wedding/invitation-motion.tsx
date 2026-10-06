@@ -65,7 +65,7 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
     const animations = new Set<Animation>();
     const photos = Array.from(
       container.querySelectorAll<HTMLElement>(
-        ".wedding-hero-image, .wedding-album > button",
+        ".wedding-hero-image, .wedding-story-photo, .wedding-album > button",
       ),
     );
     const story = container.querySelector<HTMLElement>(".wedding-photo-story");
@@ -131,7 +131,9 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
         [
           {
             opacity: 0,
-            transform: `translateY(${index ? 18 : 28}px)`,
+            transform: element.matches(".event-card")
+              ? `translateY(32px) rotate(${index % 2 ? -2 : 2}deg)`
+              : `translateY(${index ? 18 : 28}px)`,
             ...(element.matches(".wedding-album > button")
               ? { clipPath: "inset(18% 0 18% 0)" }
               : {}),
@@ -195,12 +197,31 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
               animations.add(animation);
               animation.onfinish = () => animations.delete(animation);
             }
+          } else if (element.matches(".wedding-story-photo")) {
+            if (!preference.matches) {
+              const animation = element.animate(
+                [
+                  {
+                    clipPath: "inset(12% 8% 12% 8% round 45%)",
+                    transform: "translateY(36px) scale(.94)",
+                  },
+                  {
+                    clipPath: "inset(0% 0% 0% 0% round 0%)",
+                    transform: "translateY(0) scale(1)",
+                  },
+                ],
+                { duration: 1300, easing: "cubic-bezier(.22,1,.36,1)" },
+              );
+              animations.add(animation);
+              animation.onfinish = () => animations.delete(animation);
+            }
           } else if (element.matches(".wedding-album > button")) {
             const index = Array.from(element.parentElement!.children).indexOf(
               element,
             );
             reveal(element, index % 3);
           } else {
+            element.classList.add("is-revealed");
             reveal(element);
             element
               .querySelectorAll<HTMLElement>(
@@ -222,7 +243,7 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
       schedule();
       container
         .querySelectorAll(
-          ".wedding-hero-copy, .wedding-hero-image, .wedding-section, .wedding-thanks, .wedding-album > button, .wedding-section > h2, .wedding-thanks > h2",
+          ".wedding-story-photo, .wedding-story-copy, .wedding-hero-copy, .wedding-hero-image, .wedding-section, .wedding-thanks, .wedding-album > button, .wedding-section > h2, .wedding-thanks > h2",
         )
         .forEach((element) => observer.observe(element));
     };

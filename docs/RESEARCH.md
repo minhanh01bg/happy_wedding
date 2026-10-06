@@ -127,3 +127,9 @@ Thiệp bổ sung hai cảnh ảnh trong khung nổi bật: mở khung rồi ả
 ### Chiều sâu cho chương ảnh — 05/10/2026
 
 Chương ảnh bổ sung hai tấm ảnh trang trí từ album, nghiêng phối cảnh và rời khung khi ảnh chính mở rộng. Tiến trình cuộn điều khiển đồng bộ chuyển cảnh, caption và thanh tiến trình; cuộn ngược đảo lại trạng thái. Điện thoại dùng tấm ảnh nhỏ hơn; reduced motion/no-JS giữ ảnh tĩnh và ẩn lớp trang trí. Học cách tổ chức lớp và nhịp từ https://www.oneplus.com/vn/15, không sao chép tài sản. Không đổi API, dữ liệu hay quyền truy cập.
+
+### ZenLove Quốc Huy – Thanh Huyền — 06/10/2026
+
+Tham khảo URL người dùng gửi: https://zenlove.me/s/wedding-quochuy-thanhhuyen. HTTP trả HTML 200, metadata đúng tên thiệp; dữ liệu công khai ghi nhạc “50 Năm về sau”, volume 80 và nút music-4. Trình duyệt tự động bị chuyển sang Google nên chưa quan sát được toàn bộ chuyển cảnh của đúng thiệp này; không coi dữ liệu cấu hình là bằng chứng đã nghe nhạc hay thấy animation chạy.
+
+Đối chiếu hướng dẫn chính thức https://zenlove.me/guide/thiet-ke/nhac-nen-cho-thiep (chọn nhạc sẵn, âm lượng, phát sau thao tác mở) và https://zenlove.me/guide/thiet-ke/hieu-ung-mo-man-phong-bi-dong (mở màn, rơi, phần tử xuất hiện khi cuộn). Hỷ Studio bổ sung bản piano gốc, chọn nhạc trong editor, mở kèm nhạc/skip im lặng, điều chỉnh âm lượng; thêm chương câu chuyện có portrait, lời hẹn, nét hoa SVG gốc và reveal lịch tiệc. Không tải lại bài hát, ảnh cặp đôi hoặc sao chép mã từ thiệp tham khảo.

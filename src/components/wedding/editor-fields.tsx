@@ -1,4 +1,5 @@
 "use client";
+import { WEDDING_MUSIC } from "@/lib/wedding-music";
 import { BankSelect } from "./bank-select";
 import {
   useState,
@@ -367,15 +368,43 @@ export function ExtraFields({
       <div className="form-stack">
         <label>
           Nhạc nền (không bắt buộc)
-          <input
-            type="url"
-            placeholder="https://…/bai-hat.mp3"
-            value={data.musicUrl}
-            onChange={(e) => field("musicUrl", e.target.value)}
-          />
+          <select
+            aria-label="Chọn nhạc nền"
+            value={
+              !data.musicUrl
+                ? "none"
+                : data.musicUrl === WEDDING_MUSIC.url
+                  ? "builtin"
+                  : "custom"
+            }
+            onChange={(e) =>
+              field(
+                "musicUrl",
+                e.target.value === "builtin"
+                  ? WEDDING_MUSIC.url
+                  : e.target.value === "none"
+                    ? ""
+                    : "https://",
+              )
+            }
+          >
+            <option value="none">Không dùng nhạc</option>
+            <option value="builtin">{WEDDING_MUSIC.title}</option>
+            <option value="custom">Dùng bài hát riêng</option>
+          </select>
+          {data.musicUrl && data.musicUrl !== WEDDING_MUSIC.url && (
+            <input
+              type="url"
+              aria-label="Đường dẫn bài hát riêng"
+              placeholder="https://…/bai-hat.mp3"
+              value={data.musicUrl}
+              onChange={(e) => field("musicUrl", e.target.value)}
+            />
+          )}
           <small>
-            Link HTTPS đến MP3/OGG bạn có quyền sử dụng. Khách chủ động bật
-            nhạc.
+            Nhạc phát khi khách chọn mở thiệp kèm nhạc. Khách có thể tắt hoặc
+            chỉnh âm lượng bất cứ lúc nào. Với bài riêng, dùng link HTTPS đến
+            MP3/OGG bạn có quyền sử dụng.
           </small>
         </label>
         <p className="fine">

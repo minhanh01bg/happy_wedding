@@ -8,11 +8,13 @@ export function InvitationOpening({
   bride,
   date,
   guestName,
+  hasMusic = false,
 }: {
   groom: string;
   bride: string;
   date: string;
   guestName?: string;
+  hasMusic?: boolean;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const opening = useRef(false);
@@ -26,6 +28,11 @@ export function InvitationOpening({
     const element = dialog.current;
     if (!element || opening.current) return;
     opening.current = true;
+    // Request playback inside the click, before animation awaits lose user activation.
+    if (!skipMotion && hasMusic)
+      element.dispatchEvent(
+        new Event("invitation-music-request", { bubbles: true }),
+      );
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
     const animations: Animation[] = [];
     const finishImmediately = () =>
@@ -119,7 +126,7 @@ export function InvitationOpening({
           autoFocus
           onClick={() => void open()}
         >
-          <Heart size={20} /> Mở thiệp
+          <Heart size={20} /> {hasMusic ? "Mở thiệp kèm nhạc" : "Mở thiệp"}
         </button>
         <button
           type="button"

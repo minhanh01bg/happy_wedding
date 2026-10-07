@@ -970,3 +970,34 @@ test("admin sidebar, mobile drawer and order filters stay usable when resized", 
   await expect(drawer).not.toBeVisible();
   await expect(desktopNav).toBeVisible();
 });
+
+test("home spotlight responds to pointer and respects reduced motion", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const hero = page.locator(".home-hero");
+  await expect(page.locator(".home-motion-active")).toBeVisible();
+  const bounds = await hero.boundingBox();
+  if (!bounds) throw new Error("Không tìm thấy phần đầu trang");
+  await page.mouse.move(
+    bounds.x + bounds.width * 0.7,
+    bounds.y + bounds.height * 0.4,
+  );
+  await expect(hero).toHaveClass(/layer-hovered/);
+  await expect
+    .poll(() => hero.evaluate((el) => el.style.getPropertyValue("--light-x")))
+    .not.toBe("");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator(".home-motion-active")).toHaveCount(0);
+  await expect(hero).not.toHaveClass(/layer-hovered/);
+  expect(
+    await hero.evaluate((el) => el.style.getPropertyValue("--light-x")),
+  ).toBe("");
+  await page.setViewportSize({ width: 375, height: 812 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await expect(page.locator("h1")).toBeVisible();
+});

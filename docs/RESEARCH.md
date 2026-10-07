@@ -133,3 +133,7 @@ Chương ảnh bổ sung hai tấm ảnh trang trí từ album, nghiêng phối 
 Tham khảo URL người dùng gửi: https://zenlove.me/s/wedding-quochuy-thanhhuyen. HTTP trả HTML 200, metadata đúng tên thiệp; dữ liệu công khai ghi nhạc “50 Năm về sau”, volume 80 và nút music-4. Trình duyệt tự động bị chuyển sang Google nên chưa quan sát được toàn bộ chuyển cảnh của đúng thiệp này; không coi dữ liệu cấu hình là bằng chứng đã nghe nhạc hay thấy animation chạy.
 
 Đối chiếu hướng dẫn chính thức https://zenlove.me/guide/thiet-ke/nhac-nen-cho-thiep (chọn nhạc sẵn, âm lượng, phát sau thao tác mở) và https://zenlove.me/guide/thiet-ke/hieu-ung-mo-man-phong-bi-dong (mở màn, rơi, phần tử xuất hiện khi cuộn). Hỷ Studio bổ sung bản piano gốc, chọn nhạc trong editor, mở kèm nhạc/skip im lặng, điều chỉnh âm lượng; thêm chương câu chuyện có portrait, lời hẹn, nét hoa SVG gốc và reveal lịch tiệc. Không tải lại bài hát, ảnh cặp đôi hoặc sao chép mã từ thiệp tham khảo.
+
+### 07/10/2026 — Get Layers
+
+Tham khảo public preview [Cards Cascade](https://www.getlayers.ai/layer/cards-cascade) và [Carousel Spotlight](https://www.getlayers.ai/layer/carousel-spotlight): chiều sâu thẻ ảnh, chuyển động theo cuộn và cách nhấn ánh sáng quanh ảnh. Viết implementation riêng bằng CSS/WAAPI; không lấy source, prompt hoặc asset premium. Trang chủ có spotlight theo chuột, parallax ảnh và thẻ mẫu xuất hiện từ chiều sâu; photo chapter mở rộng thành bốn ảnh phụ gom vào khung. Giữ palette cưới, native scroll và reduced motion.

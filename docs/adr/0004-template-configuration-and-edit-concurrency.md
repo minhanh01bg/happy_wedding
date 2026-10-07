@@ -65,3 +65,5 @@ Mẫu mới dùng sáu ảnh thật cùng cặp đôi, album hai cột so le và
 Phần Câu chuyện dùng bố cục ảnh in giấy chữ nhật nghiêng nhẹ, kèm ảnh nhỏ so le khi album có ảnh khác. Ưu tiên ảnh album khác ảnh bìa; album rỗng dùng ảnh bìa. Khung vòm phần đầu giữ nguyên, ảnh câu chuyện tiếp tục hỗ trợ motion/reduced motion và responsive.
 
 Toàn bộ select ứng dụng chuyển sang DropdownField/Select của template: admin catalog/category/palette/layout, ngân hàng dịch vụ, khoảng báo cáo/ngày biểu đồ; editor mẫu/nhạc/ngân hàng; RSVP attendance/eventIndex/partySize. Hidden input giữ tên và giá trị form; controlled state nhận onValueChange; ngân hàng BIN cũ ngoài danh mục vẫn hiển thị. Popup cuộn với danh sách dài và nhãn dài xuống dòng; không đổi hợp đồng payload/authorization/validation.
+
+07/10/2026: hiệu ứng lấy cảm hứng từ public preview Layers được viết bằng CSS/WAAPI và RAF theo sự kiện, không thêm thư viện animation. Nội dung SSR không bị ẩn chờ JavaScript; reduced motion hủy reveal và reset pointer/parallax; touch dùng native scroll. Không đổi cấu hình template hoặc concurrency.

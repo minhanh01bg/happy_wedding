@@ -26,7 +26,7 @@ export function InvitationAlbum({
         <div className="wedding-photo-story" aria-hidden="true">
           <div className="wedding-photo-stage">
             <div className="wedding-photo-orbit">
-              {[photos[1], photos[2] ?? photos[0]].map((photo, index) => (
+              {photos.slice(1, 5).map((photo, index) => (
                 <div
                   className={`wedding-photo-card photo-card-${index}`}
                   key={index}

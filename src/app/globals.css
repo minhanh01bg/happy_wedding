@@ -4918,3 +4918,103 @@ body:has(.admin-drawer[open]) {
   white-space: nowrap;
   text-overflow: ellipsis;
 }
+
+/* Original spotlight and cascading photo motion, inspired by Layers previews. */
+.layer-home {
+  overflow: clip;
+}
+.home-hero {
+  position: relative;
+  isolation: isolate;
+}
+.home-hero::before {
+  content: "";
+  position: absolute;
+  inset: -60px -8%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at var(--light-x, 72%) var(--light-y, 40%),
+    #eacdb36b,
+    transparent 55%
+  );
+  opacity: 0.65;
+  transition: opacity 0.4s;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .home-motion-active .hero-photo {
+    translate: 0 var(--hero-travel, 0px);
+    transition: rotate 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .home-motion-active .hero-invitation {
+    translate: 0 calc(var(--hero-travel, 0px) * -0.45);
+  }
+  .photo-card-2 {
+    left: 23%;
+    top: 7%;
+    width: 22%;
+    height: 48%;
+    z-index: -1;
+    transform: translateY(calc(-1 * var(--orbit-travel, 0px)))
+      rotateX(var(--orbit-turn, 18deg)) rotate(-15deg)
+      scale(var(--orbit-scale, 0.8));
+  }
+  .photo-card-3 {
+    right: 23%;
+    top: 38%;
+    width: 22%;
+    height: 48%;
+    z-index: -1;
+    transform: translateY(var(--orbit-travel, 0px))
+      rotateX(calc(-1 * var(--orbit-turn, 18deg))) rotate(15deg)
+      scale(var(--orbit-scale, 0.8));
+  }
+}
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .home-motion-active .hero-visual {
+    rotate: y var(--depth-y, 0deg);
+    transition: rotate 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .home-motion-active .template-card {
+    position: relative;
+    isolation: isolate;
+    rotate: y var(--depth-y, 0deg);
+    translate: 0 0;
+    transition:
+      rotate 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+      translate 0.5s;
+  }
+  .home-motion-active .template-card.layer-hovered {
+    translate: 0 -8px;
+  }
+  .home-motion-active .template-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 0.4s;
+    background: radial-gradient(
+      circle at var(--light-x, 50%) var(--light-y, 50%),
+      #fff7e95c,
+      transparent 55%
+    );
+  }
+  .home-motion-active .template-card.layer-hovered::after {
+    opacity: 1;
+  }
+  .home-hero.layer-hovered::before {
+    opacity: 1;
+  }
+}
+@media (max-width: 800px) {
+  .photo-card-2 {
+    left: 20%;
+    top: 8%;
+  }
+  .photo-card-3 {
+    right: 20%;
+    top: 45%;
+  }
+}

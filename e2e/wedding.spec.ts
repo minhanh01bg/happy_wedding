@@ -1,4 +1,15 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+
+async function chooseDropdown(
+  page: Page,
+  label: string,
+  option: string | RegExp,
+) {
+  await page.getByRole("combobox", { name: label, exact: true }).click();
+  await page
+    .getByRole("option", { name: option, exact: typeof option === "string" })
+    .click();
+}
 
 test("customer buys, admin activates, couple publishes, personal guest responds and owner moderates", async ({
   page,
@@ -18,9 +29,7 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
   await page.getByLabel("Đường dẫn thiệp").fill(slug);
   await page.getByLabel("Chú rể", { exact: true }).fill("Anh Trai");
   await page.getByLabel("Cô dâu", { exact: true }).fill("Chị Dâu");
-  await page
-    .getByRole("combobox", { name: "Mẫu thiệp", exact: true })
-    .selectOption("template-minimal-sand");
+  await chooseDropdown(page, "Mẫu thiệp", /^Lời hẹn ·/);
   await expect(page.getByLabel("Chú rể", { exact: true })).toHaveValue(
     "Anh Trai",
   );
@@ -28,18 +37,19 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
     page.getByRole("link", { name: "Xem thiệp minh họa của mẫu đang chọn ↗" }),
   ).toHaveAttribute("href", "/preview/loi-hen");
 
-  await page
-    .getByRole("combobox", { name: "Ngân hàng nhà trai", exact: true })
-    .selectOption("970436");
+  await chooseDropdown(page, "Chọn nhạc nền", "Dùng bài hát riêng");
+  await expect(page.getByLabel("Đường dẫn bài hát riêng")).toBeVisible();
+  await chooseDropdown(page, "Chọn nhạc nền", "Không dùng nhạc");
+  await expect(page.getByLabel("Đường dẫn bài hát riêng")).not.toBeVisible();
+  await chooseDropdown(page, "Chọn nhạc nền", "Lời hẹn — piano không lời");
+  await chooseDropdown(page, "Ngân hàng nhà trai", "Vietcombank");
   await page
     .getByLabel("Số tài khoản nhà trai", { exact: true })
     .fill("1111122222");
   await page
     .getByLabel("Chủ tài khoản nhà trai", { exact: true })
     .fill("NGUYEN VAN A");
-  await page
-    .getByRole("combobox", { name: "Ngân hàng nhà gái", exact: true })
-    .selectOption("970422");
+  await chooseDropdown(page, "Ngân hàng nhà gái", "MBBank");
   await page
     .getByLabel("Số tài khoản nhà gái", { exact: true })
     .fill("3333344444");
@@ -88,9 +98,7 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
   await admin.getByRole("button", { name: "Đăng nhập", exact: true }).click();
   await expect(admin).toHaveURL(/\/admin$/);
   await admin.goto("http://127.0.0.1:3201/admin/settings");
-  await admin
-    .getByRole("combobox", { name: "Ngân hàng nhận tiền dịch vụ" })
-    .selectOption("970436");
+  await chooseDropdown(admin, "Ngân hàng nhận tiền dịch vụ", "Vietcombank");
   await admin.getByLabel("Số tài khoản", { exact: true }).fill("123456789");
   await admin
     .getByLabel("Tên chủ tài khoản", { exact: true })
@@ -180,7 +188,23 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
     "Chưa tải được mã QR",
   );
   await expect(guest.locator(".gift-card").first()).toContainText("1111122222");
-  await guest.getByLabel("Số người tham dự").selectOption("2");
+  await chooseDropdown(
+    guest,
+    "Bạn có thể đến chung vui không?",
+    "Mình sẽ xác nhận sau",
+  );
+  await expect(
+    guest.getByRole("combobox", { name: "Số người tham dự", exact: true }),
+  ).not.toBeVisible();
+  await chooseDropdown(
+    guest,
+    "Bạn có thể đến chung vui không?",
+    "Có, mình sẽ tham dự",
+  );
+  await chooseDropdown(guest, "Bạn đến tiệc nào?", "Tiệc cưới nhà gái");
+  await expect(guest.locator('input[name="eventIndex"]')).toHaveValue("1");
+  await chooseDropdown(guest, "Bạn đến tiệc nào?", "Tiệc cưới nhà trai");
+  await chooseDropdown(guest, "Số người tham dự", "2 người");
   await guest
     .getByLabel("Gửi đôi lời chúc")
     .fill("Chúc anh chị trăm năm hạnh phúc!");
@@ -227,14 +251,14 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
   await expect(admin.locator(".stats-grid")).toContainText("199.000");
   await admin.getByText("Xem bảng số liệu theo ngày", { exact: true }).click();
   await expect(admin.getByRole("table").first()).toBeVisible();
-  await admin
-    .getByRole("combobox", { name: "Khoảng thời gian", exact: true })
-    .selectOption("90");
+  await chooseDropdown(admin, "Khoảng thời gian", "90 ngày gần nhất");
   await admin
     .getByRole("button", { name: "Xem thống kê", exact: true })
     .click();
   await expect(admin).toHaveURL(/period=90/);
-  await expect(admin.locator(".revenue-chart svg")).toBeVisible();
+  await expect(
+    admin.getByRole("img", { name: /Biểu đồ tiền dịch vụ/ }),
+  ).toBeVisible();
   await admin.goto("http://127.0.0.1:3201/admin/customers");
   await expect(admin.locator(".stats-grid")).toContainText("Đang hoạt động");
   await expect(
@@ -907,6 +931,17 @@ test("admin sidebar, mobile drawer and order filters stay usable when resized", 
   await drawer.getByRole("link", { name: "Mẫu thiệp", exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/templates$/);
   await expect(drawer).not.toBeVisible();
+  await page.getByText("+ Thêm mẫu mới", { exact: true }).click();
+  await chooseDropdown(page, "Phong cách", "Hiện đại");
+  await chooseDropdown(page, "Phối màu", "midnight");
+  await chooseDropdown(page, "Bố cục", "cinematic");
+  const templateForm = page.locator(".panel details form").first();
+  expect(
+    await templateForm.evaluate((form) => {
+      const data = new FormData(form as HTMLFormElement);
+      return [data.get("category"), data.get("palette"), data.get("layout")];
+    }),
+  ).toEqual(["Hiện đại", "midnight", "cinematic"]);
   for (const width of [320, 375, 844, 1024]) {
     await page.setViewportSize({ width, height: width === 844 ? 390 : 844 });
     for (const route of [

@@ -1,19 +1,22 @@
-import type { SelectHTMLAttributes } from "react";
+"use client";
+import type { ComponentProps } from "react";
 import { BANKS } from "@/lib/banks";
+import { DropdownField } from "@/components/kit/dropdown-field";
 
-export function BankSelect(props: SelectHTMLAttributes<HTMLSelectElement>) {
-  const selected = String(props.value ?? props.defaultValue ?? "");
+type BankSelectProps = Omit<ComponentProps<typeof DropdownField>, "options">;
+export function BankSelect(props: BankSelectProps) {
+  const selected = props.value ?? props.defaultValue ?? "";
   return (
-    <select {...props}>
-      <option value="">Không hiển thị tài khoản</option>
-      {selected && !BANKS.some((bank) => bank.bin === selected) && (
-        <option value={selected}>Ngân hàng đã lưu ({selected})</option>
-      )}
-      {BANKS.map((bank) => (
-        <option key={bank.bin} value={bank.bin}>
-          {bank.name}
-        </option>
-      ))}
-    </select>
+    <DropdownField
+      placeholder="Không hiển thị tài khoản"
+      {...props}
+      options={[
+        { value: "", label: "Không hiển thị tài khoản" },
+        ...(selected && !BANKS.some((bank) => bank.bin === selected)
+          ? [{ value: selected, label: `Ngân hàng đã lưu (${selected})` }]
+          : []),
+        ...BANKS.map((bank) => ({ value: bank.bin, label: bank.name })),
+      ]}
+    />
   );
 }

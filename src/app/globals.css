@@ -4906,3 +4906,15 @@ body:has(.admin-drawer[open]) {
     height: 360px;
   }
 }
+
+[data-slot="select-item-text"] {
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+[data-slot="select-trigger"] [data-slot="select-value"] {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

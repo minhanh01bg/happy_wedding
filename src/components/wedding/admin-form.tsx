@@ -1,4 +1,5 @@
 "use client";
+import { DropdownField } from "@/components/kit/dropdown-field";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BankSelect } from "./bank-select";
@@ -123,7 +124,11 @@ export function AdminRecordForm({
           <div className="grid-two">
             <label>
               Ngân hàng nhận tiền dịch vụ
-              <BankSelect name="bank" defaultValue={text("bank")} />
+              <BankSelect
+                aria-label="Ngân hàng nhận tiền dịch vụ"
+                name="bank"
+                defaultValue={text("bank")}
+              />
             </label>
             {input("account", "Số tài khoản", false)}
           </div>
@@ -171,40 +176,37 @@ export function AdminRecordForm({
                 {input("slug", "Đường dẫn mẫu (chữ thường, số, gạch ngang)")}
                 <label>
                   Phong cách
-                  <select
+                  <DropdownField
+                    aria-label="Phong cách"
                     name="category"
                     defaultValue={text("category") || "Tối giản"}
-                  >
-                    {["Tối giản", "Hoa lá", "Truyền thống", "Hiện đại"].map(
-                      (v) => (
-                        <option key={v}>{v}</option>
-                      ),
-                    )}
-                  </select>
+                    options={[
+                      "Tối giản",
+                      "Hoa lá",
+                      "Truyền thống",
+                      "Hiện đại",
+                    ].map((value) => ({ value, label: value }))}
+                  />
                 </label>
               </div>
               <div className="grid-two">
                 <label>
                   Phối màu
-                  <select
+                  <DropdownField
+                    aria-label="Phối màu"
                     name="palette"
                     defaultValue={text("palette") || "rose"}
-                  >
-                    {PALETTES.map((v) => (
-                      <option key={v}>{v}</option>
-                    ))}
-                  </select>
+                    options={PALETTES.map((value) => ({ value, label: value }))}
+                  />
                 </label>
                 <label>
                   Bố cục
-                  <select
+                  <DropdownField
+                    aria-label="Bố cục"
                     name="layout"
                     defaultValue={text("layout") || "editorial"}
-                  >
-                    {LAYOUTS.map((v) => (
-                      <option key={v}>{v}</option>
-                    ))}
-                  </select>
+                    options={LAYOUTS.map((value) => ({ value, label: value }))}
+                  />
                 </label>
               </div>
               {check("premium", "Mẫu cao cấp (cần gói hỗ trợ)")}

@@ -1,4 +1,5 @@
 "use client";
+import { DropdownField } from "@/components/kit/dropdown-field";
 import { WEDDING_MUSIC } from "@/lib/wedding-music";
 import { BankSelect } from "./bank-select";
 import {
@@ -48,18 +49,17 @@ export function IdentityFields({
       <div className="form-stack">
         <label>
           Mẫu thiệp
-          <select
+          <DropdownField
+            aria-label="Mẫu thiệp"
             value={data.templateId}
-            onChange={(e) => field("templateId", e.target.value)}
-          >
-            {templates.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name} · {t.category}
-                {t.premium ? " · Cao cấp" : ""}
-                {!t.active ? " · Ngừng cung cấp" : ""}
-              </option>
-            ))}
-          </select>
+            onValueChange={(value) => {
+              if (value !== null) field("templateId", value);
+            }}
+            options={templates.map((t) => ({
+              value: t.id,
+              label: `${t.name} · ${t.category}${t.premium ? " · Cao cấp" : ""}${!t.active ? " · Ngừng cung cấp" : ""}`,
+            }))}
+          />
         </label>
         {templates.find((t) => t.id === data.templateId)?.active && (
           <Link
@@ -368,7 +368,7 @@ export function ExtraFields({
       <div className="form-stack">
         <label>
           Nhạc nền (không bắt buộc)
-          <select
+          <DropdownField
             aria-label="Chọn nhạc nền"
             value={
               !data.musicUrl
@@ -377,21 +377,23 @@ export function ExtraFields({
                   ? "builtin"
                   : "custom"
             }
-            onChange={(e) =>
-              field(
-                "musicUrl",
-                e.target.value === "builtin"
-                  ? WEDDING_MUSIC.url
-                  : e.target.value === "none"
-                    ? ""
-                    : "https://",
-              )
-            }
-          >
-            <option value="none">Không dùng nhạc</option>
-            <option value="builtin">{WEDDING_MUSIC.title}</option>
-            <option value="custom">Dùng bài hát riêng</option>
-          </select>
+            onValueChange={(value) => {
+              if (value !== null)
+                field(
+                  "musicUrl",
+                  value === "builtin"
+                    ? WEDDING_MUSIC.url
+                    : value === "none"
+                      ? ""
+                      : "https://",
+                );
+            }}
+            options={[
+              { value: "none", label: "Không dùng nhạc" },
+              { value: "builtin", label: WEDDING_MUSIC.title },
+              { value: "custom", label: "Dùng bài hát riêng" },
+            ]}
+          />
           {data.musicUrl && data.musicUrl !== WEDDING_MUSIC.url && (
             <input
               type="url"
@@ -433,7 +435,8 @@ export function ExtraFields({
               Ngân hàng {side.toLowerCase()}
               <BankSelect
                 value={data[bank]}
-                onChange={(e) => field(bank, e.target.value)}
+                aria-label={`Ngân hàng ${side.toLowerCase()}`}
+                onValueChange={(value) => field(bank, value || "")}
               />
             </label>
             <div className="grid-two">

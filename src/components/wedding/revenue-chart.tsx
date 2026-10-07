@@ -1,4 +1,5 @@
 "use client";
+import { DropdownField } from "@/components/kit/dropdown-field";
 
 import { useState } from "react";
 import { money, dateLabel } from "@/lib/wedding";
@@ -86,16 +87,17 @@ export function RevenueChart({ points }: { points: RevenuePoint[] }) {
       <div className="chart-selection">
         <label>
           Chọn ngày xem số liệu
-          <select
-            value={selected}
-            onChange={(event) => setSelected(Number(event.target.value))}
-          >
-            {points.map((point, index) => (
-              <option value={index} key={point.date}>
-                {dateLabel(`${point.date}T00:00:00+07:00`)}
-              </option>
-            ))}
-          </select>
+          <DropdownField
+            aria-label="Chọn ngày xem số liệu"
+            value={String(selected)}
+            onValueChange={(value) => {
+              if (value !== null) setSelected(Number(value));
+            }}
+            options={points.map((point, index) => ({
+              value: String(index),
+              label: dateLabel(`${point.date}T00:00:00+07:00`),
+            }))}
+          />
         </label>
         <p role="status">
           {dateLabel(`${current.date}T00:00:00+07:00`)}:{" "}

@@ -1,3 +1,4 @@
+import { DropdownField } from "@/components/kit/dropdown-field";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireAdminSession } from "@/server/auth/require-admin-session";
@@ -41,13 +42,16 @@ export default async function AdminDashboard({
       <form className="panel report-filter">
         <label>
           Khoảng thời gian
-          <select name="period" defaultValue={period}>
-            {REPORT_PERIODS.map((days) => (
-              <option key={days} value={days}>
-                {days} ngày gần nhất
-              </option>
-            ))}
-          </select>
+          <DropdownField
+            key={period}
+            aria-label="Khoảng thời gian"
+            name="period"
+            defaultValue={String(period)}
+            options={REPORT_PERIODS.map((days) => ({
+              value: String(days),
+              label: `${days} ngày gần nhất`,
+            }))}
+          />
         </label>
         <button type="submit">Xem thống kê</button>
         <p className="fine">

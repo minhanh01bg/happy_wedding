@@ -1,4 +1,5 @@
 "use client";
+import { DropdownField } from "@/components/kit/dropdown-field";
 import { useState, useRef } from "react";
 import { post } from "./client";
 import type { WeddingEvent } from "@/lib/wedding";
@@ -76,40 +77,45 @@ export function RsvpForm({
       </label>
       <label>
         Bạn có thể đến chung vui không?
-        <select
+        <DropdownField
+          aria-label="Bạn có thể đến chung vui không?"
           name="attendance"
           value={attendance}
-          onChange={(e) => setAttendance(e.target.value)}
-        >
-          <option value="attending">Có, mình sẽ tham dự</option>
-          <option value="declined">Mình rất tiếc, không thể đến</option>
-          <option value="undecided">Mình sẽ xác nhận sau</option>
-        </select>
+          onValueChange={(value) => {
+            if (value !== null) setAttendance(value);
+          }}
+          options={[
+            { value: "attending", label: "Có, mình sẽ tham dự" },
+            { value: "declined", label: "Mình rất tiếc, không thể đến" },
+            { value: "undecided", label: "Mình sẽ xác nhận sau" },
+          ]}
+        />
       </label>
       <div className="grid-two">
         <label>
           Bạn đến tiệc nào?
-          <select name="eventIndex">
-            {events.map((event, i) => (
-              <option
-                key={`${event.title}-${event.date}-${event.venue}`}
-                value={i}
-              >
-                {event.title}
-              </option>
-            ))}
-          </select>
+          <DropdownField
+            aria-label="Bạn đến tiệc nào?"
+            name="eventIndex"
+            defaultValue="0"
+            options={events.map((event, index) => ({
+              value: String(index),
+              label: event.title,
+            }))}
+          />
         </label>
         {attendance === "attending" && (
           <label>
             Số người tham dự
-            <select name="partySize">
-              {PARTY_SIZES.map((size) => (
-                <option value={size} key={size}>
-                  {size} người
-                </option>
-              ))}
-            </select>
+            <DropdownField
+              aria-label="Số người tham dự"
+              name="partySize"
+              defaultValue="1"
+              options={PARTY_SIZES.map((size) => ({
+                value: String(size),
+                label: `${size} người`,
+              }))}
+            />
           </label>
         )}
       </div>

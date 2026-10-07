@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { weddingImageSource } from "@/lib/wedding-images";
 import { useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, X } from "lucide-react";
 
 export function InvitationAlbum({
   photos,
@@ -69,6 +69,14 @@ export function InvitationAlbum({
           </div>
         </div>
       )}
+      <div className="wedding-album-intro" aria-hidden="true">
+        <span>
+          <Heart />
+          <Heart />
+          <Heart />
+        </span>
+        <p>Mỗi tấm ảnh, một lời thương.</p>
+      </div>
       <div className="wedding-album">
         {photos.map((photo, i) => (
           <button
@@ -85,7 +93,11 @@ export function InvitationAlbum({
               src={weddingImageSource(photo)}
               alt={`Kỷ niệm của ${couple}, ảnh ${i + 1}`}
               fill
-              sizes="(max-width:800px) 45vw, 300px"
+              sizes={
+                i % 3 === 2
+                  ? "(max-width:800px) 90vw, 960px"
+                  : "(max-width:800px) 45vw, 480px"
+              }
             />
             <span aria-hidden="true">Xem ảnh ↗</span>
           </button>

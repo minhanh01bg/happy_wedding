@@ -732,49 +732,53 @@ test("mobile album accepts horizontal swipes and keeps rapid navigation usable",
   }
 });
 
-test("music starts with the opening gesture and supports pause, volume and quiet skip", async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/preview/khoanh-khac");
-  await expect(
-    page.getByRole("button", { name: "Mở thiệp kèm nhạc", exact: true }),
-  ).toBeVisible();
-  const audio = page.locator("audio");
-  expect(await audio.evaluate((el) => (el as HTMLAudioElement).paused)).toBe(
-    true,
-  );
-  await page
-    .getByRole("button", { name: "Mở thiệp kèm nhạc", exact: true })
-    .click();
-  await expect(
-    page.getByRole("button", { name: "Tắt nhạc nền" }),
-  ).toHaveAttribute("aria-pressed", "true");
-  await expect
-    .poll(() => audio.evaluate((el) => (el as HTMLAudioElement).currentTime))
-    .toBeGreaterThan(0);
-  await page.getByLabel("Điều chỉnh nhạc nền").click();
-  await page.getByLabel("Âm lượng nhạc nền").fill("0.15");
-  expect(
-    await audio.evaluate((el) => (el as HTMLAudioElement).volume),
-  ).toBeCloseTo(0.15);
-  await page.getByRole("button", { name: "Tắt nhạc nền" }).click();
-  await expect(
-    page.getByRole("button", { name: "Bật nhạc nền" }),
-  ).toHaveAttribute("aria-pressed", "false");
-  expect(await audio.evaluate((el) => (el as HTMLAudioElement).paused)).toBe(
-    true,
-  );
-  await page.reload();
-  await page.getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" }).click();
-  expect(await audio.evaluate((el) => (el as HTMLAudioElement).paused)).toBe(
-    true,
-  );
-  await page.getByRole("button", { name: "Bật nhạc nền" }).click();
-  await expect(
-    page.getByRole("button", { name: "Tắt nhạc nền" }),
-  ).toHaveAttribute("aria-pressed", "true");
-});
+for (const route of ["/preview/khoanh-khac", "/w/thiep-mau"]) {
+  test(`music starts with the opening gesture and supports pause, volume and quiet skip on ${route}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(route);
+    await expect(
+      page.getByRole("button", { name: "Mở thiệp kèm nhạc", exact: true }),
+    ).toBeVisible();
+    const audio = page.locator("audio");
+    expect(await audio.evaluate((el) => (el as HTMLAudioElement).paused)).toBe(
+      true,
+    );
+    await page
+      .getByRole("button", { name: "Mở thiệp kèm nhạc", exact: true })
+      .click();
+    await expect(
+      page.getByRole("button", { name: "Tắt nhạc nền" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect
+      .poll(() => audio.evaluate((el) => (el as HTMLAudioElement).currentTime))
+      .toBeGreaterThan(0);
+    await page.getByLabel("Điều chỉnh nhạc nền").click();
+    await page.getByLabel("Âm lượng nhạc nền").fill("0.15");
+    expect(
+      await audio.evaluate((el) => (el as HTMLAudioElement).volume),
+    ).toBeCloseTo(0.15);
+    await page.getByRole("button", { name: "Tắt nhạc nền" }).click();
+    await expect(
+      page.getByRole("button", { name: "Bật nhạc nền" }),
+    ).toHaveAttribute("aria-pressed", "false");
+    expect(await audio.evaluate((el) => (el as HTMLAudioElement).paused)).toBe(
+      true,
+    );
+    await page.reload();
+    await page
+      .getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" })
+      .click();
+    expect(await audio.evaluate((el) => (el as HTMLAudioElement).paused)).toBe(
+      true,
+    );
+    await page.getByRole("button", { name: "Bật nhạc nền" }).click();
+    await expect(
+      page.getByRole("button", { name: "Tắt nhạc nền" }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+}
 
 test("a failed soundtrack keeps the invitation usable and exposes a retry", async ({
   page,

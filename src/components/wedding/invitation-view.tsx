@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { CSSProperties } from "react";
-import { weddingImageSource } from "@/lib/wedding-images";
+import { demonstrationPhotos, weddingImageSource } from "@/lib/wedding-images";
 import { weddingCalendarUrl } from "@/lib/wedding-calendar";
 import Link from "next/link";
 import type {
@@ -10,6 +10,7 @@ import type {
 } from "@prisma/client";
 import { MapPin, CalendarPlus } from "lucide-react";
 import { readEvents, readPhotos, dateLabel } from "@/lib/wedding";
+import { WEDDING_MUSIC } from "@/lib/wedding-music";
 import { Countdown } from "./countdown";
 import { RsvpForm } from "./rsvp-form";
 import { Music } from "./music";
@@ -34,7 +35,12 @@ export function InvitationView({
   removeBranding?: boolean;
 }) {
   const events = readEvents(invitation.eventsJson);
-  const photos = readPhotos(invitation.photosJson);
+  const photos = demonstrationPhotos(
+    readPhotos(invitation.photosJson),
+    invitation.isDemo,
+  );
+  const musicUrl =
+    invitation.musicUrl || (invitation.isDemo ? WEDDING_MUSIC.url : "");
   const giftAccounts: GiftAccount[] = [
     {
       side: "Nhà trai",
@@ -70,7 +76,7 @@ export function InvitationView({
           bride={invitation.bride}
           date={dateLabel(invitation.weddingDate)}
           guestName={guestName}
-          hasMusic={!!invitation.musicUrl}
+          hasMusic={!!musicUrl}
         />
         {invitation.isDemo && (
           <div className="demo-banner">
@@ -311,7 +317,7 @@ export function InvitationView({
             <Link href="/">THIỆP CƯỚI ĐƯỢC CHĂM CHÚT BỞI HỶ STUDIO</Link>
           )}
         </footer>
-        {invitation.musicUrl && <Music url={invitation.musicUrl} />}
+        {musicUrl && <Music url={musicUrl} />}
       </article>
     </InvitationMotion>
   );

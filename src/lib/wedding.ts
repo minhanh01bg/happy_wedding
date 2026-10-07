@@ -1,3 +1,4 @@
+import { DEMO_PHOTOS } from "./wedding-images";
 import { z } from "zod";
 import { WEDDING_MUSIC } from "./wedding-music";
 
@@ -215,11 +216,7 @@ export const DEMO_CONTENT: Omit<InvitationInput, "templateId" | "slug"> = {
       address: "Bắc Ninh — địa điểm minh họa",
     },
   ],
-  photos: [
-    "/images/couple.jpg",
-    "/images/flowers.jpg",
-    "/images/celebration.jpg",
-  ],
+  photos: DEMO_PHOTOS,
   coverUrl: "/images/couple.jpg",
   musicUrl: WEDDING_MUSIC.url,
   giftBank: "",

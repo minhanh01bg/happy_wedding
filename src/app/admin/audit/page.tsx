@@ -18,24 +18,36 @@ export default async function Audit() {
         </div>
       </div>
       <section className="panel data-table-wrap">
-        <table className="data-table">
+        <table className="data-table admin-card-table">
           <thead>
             <tr>
-              <th>Thời gian</th>
-              <th>Người thực hiện</th>
-              <th>Thao tác</th>
-              <th>Đối tượng</th>
+              <th scope="col">Thời gian</th>
+              <th scope="col">Người thực hiện</th>
+              <th scope="col">Thao tác</th>
+              <th scope="col">Đối tượng</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id}>
-                <td>{dateLabel(r.createdAt, true)}</td>
-                <td>{r.identity?.username || "Webhook hệ thống"}</td>
-                <td>{r.action}</td>
-                <td>
-                  {r.entityType}
-                  <p>{r.entityId}</p>
+                <td data-label="Thời gian">
+                  <div className="admin-cell-value">
+                    {dateLabel(r.createdAt, true)}
+                  </div>
+                </td>
+                <td data-label="Người thực hiện">
+                  <div className="admin-cell-value">
+                    {r.identity?.username || "Webhook hệ thống"}
+                  </div>
+                </td>
+                <td data-label="Thao tác">
+                  <div className="admin-cell-value">{r.action}</div>
+                </td>
+                <td data-label="Đối tượng">
+                  <div className="admin-cell-value">
+                    {r.entityType}
+                    <p>{r.entityId}</p>
+                  </div>
                 </td>
               </tr>
             ))}

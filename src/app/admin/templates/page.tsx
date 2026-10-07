@@ -11,16 +11,12 @@ export default async function AdminTemplates() {
         <div>
           <p className="eyebrow">BỘ SƯU TẬP</p>
           <h1>Quản lý mẫu thiệp</h1>
-          <p>Ba bố cục, sáu phối màu. Tạo biến thể và quản lý mẫu đang bán.</p>
+          <p>Năm bố cục, sáu phối màu. Tạo biến thể và quản lý mẫu đang bán.</p>
         </div>
       </div>
       <section className="panel">
         <details>
-          <summary
-            style={{ cursor: "pointer", fontFamily: "Georgia", fontSize: 25 }}
-          >
-            + Thêm mẫu mới
-          </summary>
+          <summary className="admin-add-summary">+ Thêm mẫu mới</summary>
           <div style={{ marginTop: 25 }}>
             <AdminRecordForm kind="templates" />
           </div>

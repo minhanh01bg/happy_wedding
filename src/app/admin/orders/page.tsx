@@ -50,7 +50,7 @@ export default async function AdminOrders({
           <p>{count} đơn phù hợp</p>
         </div>
       </div>
-      <form className="panel inline-actions">
+      <form className="panel inline-actions admin-filter">
         <label>
           Tìm khách / mã đơn
           <input
@@ -61,7 +61,11 @@ export default async function AdminOrders({
         </label>
         <label>
           Trạng thái
-          <select name="status" defaultValue={status || ""}>
+          <select
+            aria-label="Trạng thái"
+            name="status"
+            defaultValue={status || ""}
+          >
             <option value="">Tất cả</option>
             {["pending", "paid", "cancelled"].map((s) => (
               <option value={s} key={s}>
@@ -70,52 +74,74 @@ export default async function AdminOrders({
             ))}
           </select>
         </label>
-        <button type="submit">Lọc đơn</button>
+        <div className="admin-filter-actions">
+          <button type="submit">Lọc đơn</button>
+          {(q || status) && (
+            <Link href="/admin/orders" className="button secondary">
+              Xóa bộ lọc
+            </Link>
+          )}
+        </div>
       </form>
       <section className="panel data-table-wrap">
-        <table className="data-table">
+        <table className="data-table admin-card-table">
+          <caption className="sr-only">Danh sách đơn dịch vụ</caption>
           <thead>
             <tr>
-              <th>Mã đơn</th>
-              <th>Khách hàng</th>
-              <th>Thiệp</th>
-              <th>Gói</th>
-              <th>Tổng tiền</th>
-              <th>Trạng thái</th>
-              <th />
+              <th scope="col">Mã đơn</th>
+              <th scope="col">Khách hàng</th>
+              <th scope="col">Thiệp</th>
+              <th scope="col">Gói</th>
+              <th scope="col">Tổng tiền</th>
+              <th scope="col">Trạng thái</th>
+              <th scope="col">Thao tác</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((o) => (
               <tr key={o.id}>
-                <td>
-                  {o.code}
-                  <p>{dateLabel(o.createdAt, true)}</p>
+                <td data-label="Mã đơn">
+                  <div className="admin-cell-value">
+                    {o.code}
+                    <p>{dateLabel(o.createdAt, true)}</p>
+                  </div>
                 </td>
-                <td>
-                  {o.account.displayName}
-                  <p>{o.account.phoneNormalized}</p>
+                <td data-label="Khách hàng">
+                  <div className="admin-cell-value">
+                    {o.account.displayName}
+                    <p>{o.account.phoneNormalized}</p>
+                  </div>
                 </td>
-                <td>
-                  {o.invitation.groom} & {o.invitation.bride}
+                <td data-label="Thiệp">
+                  <div className="admin-cell-value">
+                    {o.invitation.groom} & {o.invitation.bride}
+                  </div>
                 </td>
-                <td>
-                  {o.planName}
-                  {o.paymentNote && <p>Đã báo chuyển khoản</p>}
+                <td data-label="Gói">
+                  <div className="admin-cell-value">
+                    {o.planName}
+                    {o.paymentNote && <p>Đã báo chuyển khoản</p>}
+                  </div>
                 </td>
-                <td>{money(o.total)}</td>
-                <td>
-                  <span className={`badge ${o.status}`}>
-                    {STATUS_LABELS[o.status]}
-                  </span>
+                <td data-label="Tổng tiền">
+                  <div className="admin-cell-value">{money(o.total)}</div>
                 </td>
-                <td>
-                  <Link
-                    className="button secondary small"
-                    href={`/admin/orders/${o.id}`}
-                  >
-                    Kiểm tra đơn
-                  </Link>
+                <td data-label="Trạng thái">
+                  <div className="admin-cell-value">
+                    <span className={`badge ${o.status}`}>
+                      {STATUS_LABELS[o.status]}
+                    </span>
+                  </div>
+                </td>
+                <td data-label="Thao tác">
+                  <div className="admin-cell-value">
+                    <Link
+                      className="button secondary small"
+                      href={`/admin/orders/${o.id}`}
+                    >
+                      Kiểm tra đơn
+                    </Link>
+                  </div>
                 </td>
               </tr>
             ))}

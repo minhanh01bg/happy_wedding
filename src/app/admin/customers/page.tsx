@@ -82,7 +82,7 @@ export default async function Customers({
           </div>
         ))}
       </div>
-      <form className="panel inline-actions">
+      <form className="panel inline-actions admin-filter">
         <label>
           Tìm khách
           <input
@@ -93,7 +93,11 @@ export default async function Customers({
         </label>
         <label>
           Trạng thái tài khoản
-          <select name="status" defaultValue={status}>
+          <select
+            aria-label="Trạng thái tài khoản"
+            name="status"
+            defaultValue={status}
+          >
             <option value="all">Tất cả</option>
             <option value="active">Hoạt động</option>
             <option value="disabled">Đã khóa</option>
@@ -102,45 +106,61 @@ export default async function Customers({
         <button type="submit">Tìm kiếm</button>
       </form>
       <section className="panel data-table-wrap">
-        <table className="data-table">
+        <table className="data-table admin-card-table">
           <thead>
             <tr>
-              <th>Khách hàng</th>
-              <th>Điện thoại</th>
-              <th>Thiệp / đơn</th>
-              <th>Gói đã thanh toán</th>
-              <th>Ngày tạo</th>
-              <th>Trạng thái</th>
-              <th />
+              <th scope="col">Khách hàng</th>
+              <th scope="col">Điện thoại</th>
+              <th scope="col">Thiệp / đơn</th>
+              <th scope="col">Gói đã thanh toán</th>
+              <th scope="col">Ngày tạo</th>
+              <th scope="col">Trạng thái</th>
+              <th scope="col">Thao tác</th>
             </tr>
           </thead>
           <tbody>
             {customers.map((c) => (
               <tr key={c.id}>
-                <td>{c.displayName}</td>
-                <td>{c.phoneNormalized}</td>
-                <td>
-                  {c._count.invitations} thiệp / {c._count.serviceOrders} đơn
+                <td data-label="Khách hàng">
+                  <div className="admin-cell-value">{c.displayName}</div>
                 </td>
-                <td>
-                  {paidByCustomer.get(c.id)?._count.id || 0} đơn
-                  <p>{money(paidByCustomer.get(c.id)?._sum.total || 0)}</p>
+                <td data-label="Điện thoại">
+                  <div className="admin-cell-value">{c.phoneNormalized}</div>
                 </td>
-                <td>{dateLabel(c.createdAt)}</td>
-                <td>
-                  <span
-                    className={`badge ${c.disabledAt ? "suspended" : "published"}`}
-                  >
-                    {c.disabledAt ? "Đã khóa" : "Hoạt động"}
-                  </span>
+                <td data-label="Thiệp / đơn">
+                  <div className="admin-cell-value">
+                    {c._count.invitations} thiệp / {c._count.serviceOrders} đơn
+                  </div>
                 </td>
-                <td>
-                  <MutationButton
-                    endpoint="admin/customer-status"
-                    data={{ id: c.id, disabled: !c.disabledAt }}
-                  >
-                    {c.disabledAt ? "Mở tài khoản" : "Khóa tài khoản"}
-                  </MutationButton>
+                <td data-label="Gói đã thanh toán">
+                  <div className="admin-cell-value">
+                    {paidByCustomer.get(c.id)?._count.id || 0} đơn
+                    <p>{money(paidByCustomer.get(c.id)?._sum.total || 0)}</p>
+                  </div>
+                </td>
+                <td data-label="Ngày tạo">
+                  <div className="admin-cell-value">
+                    {dateLabel(c.createdAt)}
+                  </div>
+                </td>
+                <td data-label="Trạng thái">
+                  <div className="admin-cell-value">
+                    <span
+                      className={`badge ${c.disabledAt ? "suspended" : "published"}`}
+                    >
+                      {c.disabledAt ? "Đã khóa" : "Hoạt động"}
+                    </span>
+                  </div>
+                </td>
+                <td data-label="Thao tác">
+                  <div className="admin-cell-value">
+                    <MutationButton
+                      endpoint="admin/customer-status"
+                      data={{ id: c.id, disabled: !c.disabledAt }}
+                    >
+                      {c.disabledAt ? "Mở tài khoản" : "Khóa tài khoản"}
+                    </MutationButton>
+                  </div>
                 </td>
               </tr>
             ))}

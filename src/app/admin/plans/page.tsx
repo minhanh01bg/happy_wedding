@@ -19,11 +19,7 @@ export default async function Plans() {
       </div>
       <section className="panel">
         <details>
-          <summary
-            style={{ cursor: "pointer", fontFamily: "Georgia", fontSize: 25 }}
-          >
-            + Thêm gói dịch vụ
-          </summary>
+          <summary className="admin-add-summary">+ Thêm gói dịch vụ</summary>
           <div style={{ marginTop: 25 }}>
             <AdminRecordForm kind="plans" />
           </div>

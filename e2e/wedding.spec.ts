@@ -815,3 +815,82 @@ test("gift box opens two illustrative QR cards and supports keyboard closing", a
   await expect(box).not.toHaveAttribute("open");
   await expect(trigger).toBeFocused();
 });
+
+test("admin sidebar, mobile drawer and order filters stay usable when resized", async ({
+  page,
+}) => {
+  await page.goto("/login");
+  await page.getByLabel("Mật khẩu", { exact: true }).fill("e2e-admin-password");
+  await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
+  await expect(page).toHaveURL(/\/admin$/);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const desktopNav = page
+    .locator(".admin-sidebar")
+    .getByRole("navigation", { name: "Quản trị" });
+  await expect(desktopNav).toBeVisible();
+  await desktopNav
+    .getByRole("link", { name: "Đơn dịch vụ", exact: true })
+    .click();
+  await expect(
+    desktopNav.getByRole("link", { name: "Đơn dịch vụ", exact: true }),
+  ).toHaveAttribute("aria-current", "page");
+  await page.getByLabel("Trạng thái", { exact: true }).selectOption("paid");
+  await page.getByLabel("Tìm khách / mã đơn").fill("Khách kiểm thử");
+  await page.getByRole("button", { name: "Lọc đơn", exact: true }).click();
+  await expect(page).toHaveURL(/status=paid/);
+  await expect(page.getByLabel("Trạng thái", { exact: true })).toHaveValue(
+    "paid",
+  );
+  await expect(page.locator(".data-table tbody")).toContainText(
+    "Đã thanh toán",
+  );
+  await page.getByRole("link", { name: "Xóa bộ lọc" }).click();
+  await expect(page).toHaveURL(/\/admin\/orders$/);
+  await page.setViewportSize({ width: 375, height: 844 });
+  await expect(page.locator(".admin-sidebar")).not.toBeVisible();
+  const opener = page.getByRole("button", { name: "Mở menu quản trị" });
+  const drawer = page.getByRole("dialog", { name: "Quản trị", exact: true });
+  await opener.click();
+  await expect(drawer).toBeVisible();
+  await expect(
+    drawer.getByRole("button", { name: "Đóng menu quản trị" }),
+  ).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(
+    drawer.getByRole("link", { name: "Tổng quan", exact: true }),
+  ).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(drawer).not.toBeVisible();
+  await expect(opener).toBeFocused();
+  await opener.click();
+  await drawer.getByRole("link", { name: "Mẫu thiệp", exact: true }).click();
+  await expect(page).toHaveURL(/\/admin\/templates$/);
+  await expect(drawer).not.toBeVisible();
+  for (const width of [320, 375, 844, 1024]) {
+    await page.setViewportSize({ width, height: width === 844 ? 390 : 844 });
+    for (const route of [
+      "orders",
+      "customers",
+      "invitations",
+      "templates",
+      "plans",
+      "settings",
+      "audit",
+    ]) {
+      await page.goto(`/admin/${route}`);
+      await expect(page.locator("#admin-content")).toBeVisible();
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+    }
+  }
+  await page.setViewportSize({ width: 375, height: 844 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await opener.click();
+  await expect(drawer).toHaveCSS("animation-name", "none");
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await expect(drawer).not.toBeVisible();
+  await expect(desktopNav).toBeVisible();
+});

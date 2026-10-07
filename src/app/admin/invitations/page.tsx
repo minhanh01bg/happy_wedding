@@ -45,7 +45,7 @@ export default async function Invitations({
           <p>{count} thiệp phù hợp</p>
         </div>
       </div>
-      <form className="panel inline-actions">
+      <form className="panel inline-actions admin-filter">
         <label>
           Tìm thiệp
           <input
@@ -57,51 +57,61 @@ export default async function Invitations({
         <button type="submit">Tìm kiếm</button>
       </form>
       <section className="panel data-table-wrap">
-        <table className="data-table">
+        <table className="data-table admin-card-table">
           <thead>
             <tr>
-              <th>Cặp đôi</th>
-              <th>Khách hàng</th>
-              <th>Mẫu / ngày cưới</th>
-              <th>Trạng thái</th>
-              <th>Thao tác</th>
+              <th scope="col">Cặp đôi</th>
+              <th scope="col">Khách hàng</th>
+              <th scope="col">Mẫu / ngày cưới</th>
+              <th scope="col">Trạng thái</th>
+              <th scope="col">Thao tác</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((i) => (
               <tr key={i.id}>
-                <td>
-                  {i.groom} & {i.bride}
-                  <p>/w/{i.slug}</p>
+                <td data-label="Cặp đôi">
+                  <div className="admin-cell-value">
+                    {i.groom} & {i.bride}
+                    <p>/w/{i.slug}</p>
+                  </div>
                 </td>
-                <td>{i.owner.displayName}</td>
-                <td>
-                  {i.template.name}
-                  <p>{dateLabel(i.weddingDate)}</p>
+                <td data-label="Khách hàng">
+                  <div className="admin-cell-value">{i.owner.displayName}</div>
                 </td>
-                <td>
-                  <span className={`badge ${i.status}`}>
-                    {STATUS_LABELS[i.status]}
-                  </span>
+                <td data-label="Mẫu / ngày cưới">
+                  <div className="admin-cell-value">
+                    {i.template.name}
+                    <p>{dateLabel(i.weddingDate)}</p>
+                  </div>
                 </td>
-                <td>
-                  <div className="table-actions">
-                    {i.status === "published" && (
-                      <Link
-                        className="button secondary small"
-                        href={`/w/${i.slug}`}
+                <td data-label="Trạng thái">
+                  <div className="admin-cell-value">
+                    <span className={`badge ${i.status}`}>
+                      {STATUS_LABELS[i.status]}
+                    </span>
+                  </div>
+                </td>
+                <td data-label="Thao tác">
+                  <div className="admin-cell-value">
+                    <div className="table-actions">
+                      {i.status === "published" && (
+                        <Link
+                          className="button secondary small"
+                          href={`/w/${i.slug}`}
+                        >
+                          Xem thiệp
+                        </Link>
+                      )}
+                      <MutationButton
+                        endpoint="admin/invitation-status"
+                        data={{ id: i.id, suspended: i.status !== "suspended" }}
                       >
-                        Xem thiệp
-                      </Link>
-                    )}
-                    <MutationButton
-                      endpoint="admin/invitation-status"
-                      data={{ id: i.id, suspended: i.status !== "suspended" }}
-                    >
-                      {i.status === "suspended"
-                        ? "Mở khóa về bản nháp"
-                        : "Tạm khóa thiệp"}
-                    </MutationButton>
+                        {i.status === "suspended"
+                          ? "Mở khóa về bản nháp"
+                          : "Tạm khóa thiệp"}
+                      </MutationButton>
+                    </div>
                   </div>
                 </td>
               </tr>

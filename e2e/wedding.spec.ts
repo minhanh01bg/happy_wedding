@@ -241,13 +241,28 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
     admin.getByRole("cell", { name: "Khách kiểm thử", exact: true }),
   ).toBeVisible();
   await expect(admin.locator(".data-table")).toContainText("199.000");
-  await admin
-    .getByRole("combobox", { name: "Trạng thái tài khoản", exact: true })
-    .selectOption("disabled");
+  const accountStatus = admin.getByRole("combobox", {
+    name: "Trạng thái tài khoản",
+    exact: true,
+  });
+  await accountStatus.click();
+  await admin.getByRole("option", { name: "Đã khóa", exact: true }).click();
   await admin.getByRole("button", { name: "Tìm kiếm", exact: true }).click();
   await expect(
     admin.getByText("Không có tài khoản phù hợp.", { exact: false }),
   ).toBeVisible();
+  await expect(accountStatus).toContainText("Đã khóa");
+  await expect(admin.locator('input[name="status"]')).toHaveValue("disabled");
+  await accountStatus.click();
+  await admin.getByRole("option", { name: "Hoạt động", exact: true }).click();
+  await admin.getByRole("button", { name: "Tìm kiếm", exact: true }).click();
+  await expect(
+    admin.getByRole("cell", { name: "Khách kiểm thử", exact: true }),
+  ).toBeVisible();
+  await accountStatus.click();
+  await admin.getByRole("option", { name: "Tất cả", exact: true }).click();
+  await admin.getByRole("button", { name: "Tìm kiếm", exact: true }).click();
+  await expect(admin.locator('input[name="status"]')).toHaveValue("all");
   await admin.goto("http://127.0.0.1:3201/admin/orders");
   for (const width of [320, 768, 1024]) {
     for (const workspacePage of [page, admin]) {

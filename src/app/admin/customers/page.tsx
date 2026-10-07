@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DropdownField } from "@/components/kit/dropdown-field";
 import { prisma } from "@/server/db/prisma";
 import { MutationButton } from "@/components/wedding/actions";
 import { dateLabel, money } from "@/lib/wedding";
@@ -93,15 +94,17 @@ export default async function Customers({
         </label>
         <label>
           Trạng thái tài khoản
-          <select
+          <DropdownField
+            key={status}
             aria-label="Trạng thái tài khoản"
             name="status"
             defaultValue={status}
-          >
-            <option value="all">Tất cả</option>
-            <option value="active">Hoạt động</option>
-            <option value="disabled">Đã khóa</option>
-          </select>
+            options={[
+              { value: "all", label: "Tất cả" },
+              { value: "active", label: "Hoạt động" },
+              { value: "disabled", label: "Đã khóa" },
+            ]}
+          />
         </label>
         <button type="submit">Tìm kiếm</button>
       </form>

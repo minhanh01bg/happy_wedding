@@ -69,3 +69,5 @@ Toàn bộ select ứng dụng chuyển sang DropdownField/Select của template
 07/10/2026: hiệu ứng lấy cảm hứng từ public preview Layers được viết bằng CSS/WAAPI và RAF theo sự kiện, không thêm thư viện animation. Nội dung SSR không bị ẩn chờ JavaScript; reduced motion hủy reveal và reset pointer/parallax; touch dùng native scroll. Không đổi cấu hình template hoặc concurrency.
 
 Hộp quà demo dùng isDemo thay vì kết hợp preview/isDemo để bản demo công khai có cùng trải nghiệm. Không mở fallback minh họa cho thiệp khách thông thường.
+
+Gift reveal dùng native dialog cho top layer/focus trap và CSS keyframes một lần cho lid/glow/confetti. Không thêm dependency, không dùng random lúc SSR; preference giảm motion bỏ animation. Dialog cuộn độc lập và khôi phục overflow nền/focus khi đóng.

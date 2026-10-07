@@ -164,7 +164,7 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
   await guest.getByRole("button", { name: /^Mở thiệp/ }).click();
   await expect(guest.locator(".invitation-opening")).not.toBeVisible();
   await expect(guest.getByText("Trân trọng kính mời Chị Lan")).toBeVisible();
-  await guest.locator("#gifts summary").click();
+  await guest.locator("#gifts .gift-box-trigger").click();
   await expect(
     guest.getByRole("heading", { name: "NGUYEN VAN A", exact: true }),
   ).toBeVisible();
@@ -188,6 +188,9 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
     "Chưa tải được mã QR",
   );
   await expect(guest.locator(".gift-card").first()).toContainText("1111122222");
+  await guest
+    .getByRole("button", { name: "Đóng hộp quà", exact: true })
+    .click();
   await chooseDropdown(
     guest,
     "Bạn có thể đến chung vui không?",
@@ -826,18 +829,27 @@ for (const giftRoute of ["/preview/khoanh-khac", "/w/thiep-mau"]) {
   test(`gift box opens two illustrative QR cards and supports keyboard closing on ${giftRoute}`, async ({
     page,
   }) => {
+    const hydrationErrors: string[] = [];
+    page.on("console", (message) => {
+      if (/hydrated|hydration/i.test(message.text()))
+        hydrationErrors.push(message.text());
+    });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(giftRoute);
     await page
       .getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" })
       .click();
     const box = page.locator(".wedding-gift-box");
-    const trigger = box.locator("summary");
+    const trigger = box.locator(".gift-box-trigger");
+    const modal = box.getByRole("dialog");
     await trigger.scrollIntoViewIfNeeded();
     await expect(box.locator(".gift-card").first()).not.toBeVisible();
     await trigger.focus();
     await page.keyboard.press("Enter");
-    await expect(box).toHaveAttribute("open", "");
+    await expect(modal).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Đóng hộp quà", exact: true }),
+    ).toBeFocused();
     await expect(box.locator(".gift-card")).toHaveCount(2);
     await expect(box.getByText("Nhà trai", { exact: true })).toBeVisible();
     await expect(box.getByText("Nhà gái", { exact: true })).toBeVisible();
@@ -858,10 +870,21 @@ for (const giftRoute of ["/preview/khoanh-khac", "/w/thiep-mau"]) {
       ),
     ).toBe(true);
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await trigger.focus();
-    await page.keyboard.press("Space");
-    await expect(box).not.toHaveAttribute("open");
+    await page.keyboard.press("Escape");
+    await expect(modal).not.toBeVisible();
     await expect(trigger).toBeFocused();
+    await trigger.click();
+    await expect(modal).toBeVisible();
+    expect(
+      await box
+        .locator(".gift-celebration i")
+        .first()
+        .evaluate((el) => getComputedStyle(el).animationName),
+    ).toBe("none");
+    await page.mouse.click(2, 2);
+    await expect(modal).not.toBeVisible();
+    await expect(trigger).toBeFocused();
+    expect(hydrationErrors).toEqual([]);
   });
 }
 

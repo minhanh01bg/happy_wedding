@@ -245,3 +245,5 @@ Toàn bộ select ứng dụng chuyển sang DropdownField/Select của template
 Trang chủ hỗ trợ spotlight/độ nghiêng theo chuột chính xác và reveal thẻ mẫu theo viewport; ảnh bìa dịch chuyển nhẹ theo native scroll. Photo chapter có tối đa bốn ảnh phụ từ album, gom dần vào ảnh chính theo tiến trình hiện có. SSR luôn có nội dung; thiết bị touch không phụ thuộc hover; reduced motion hủy animation và xóa các biến tương tác.
 
 Thiệp demo công khai `/w/thiep-mau` cũng hiển thị mục Quà mừng và hộp hai QR minh họa khi chưa có tài khoản, giống trang preview. Thiệp khách không có tài khoản vẫn ẩn mục này; tài khoản đã cấu hình dùng QR thật như trước.
+
+Hộp quà mở native dialog thay cho chèn QR vào trang. Nắp bật, glow và 40 hạt confetti/trái tim chạy một lần khi mở; QR xuất hiện sau nhịp mở. Modal có tên, focus trap native, Escape/nút đóng/backdrop, trả focus, khóa cuộn nền và cuộn riêng trên mobile. Reduced motion hiện QR ngay và bỏ burst/reveal. Tài khoản thật và fallback tải QR/sao chép giữ nguyên.

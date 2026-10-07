@@ -212,3 +212,11 @@ Playwright thủ công ở 1440/375px: homepage có spotlight, preview mở kèm
 ### 07/10/2026 — hộp quà trên demo công khai
 
 Sửa điều kiện mục/link Mừng cưới từ preview && isDemo thành isDemo: `/w/thiep-mau` không có tài khoản cũng có hộp hai QR minh họa như preview. Không thay thiệp khách hoặc dữ liệu ngân hàng. `pnpm check` exit 0 (126/126, 17 files, lint/typecheck), `pnpm build` exit 0, `pnpm test:e2e` exit 0 (22/22 Chromium, 3.3m). Regression mở hộp, hai QR tải, reduced motion, bàn phím đóng trên cả preview và public demo. Logs `/tmp/gift-demo-check.log`, `/tmp/gift-demo-build.log`, `/tmp/gift-demo-e2e.log`. Playwright dev 375px mở hộp public có hai thẻ, đã xem `/tmp/gift-demo-public.png`. Dev 3200 khởi động lại với cache mới; không deploy production.
+
+### 07/10/2026 — hộp quà tưng bừng và QR modal
+
+Thay details inline bằng button/native dialog: backdrop blur, nắp bật/glow/40 confetti và trái tim, QR reveal sau nhịp mở, hai cột desktop/một cột cuộn riêng mobile, đóng nút/Escape/backdrop, focus trap/return focus, khóa và khôi phục cuộn nền. QR thật/copy/retry và QR demo giữ nguyên. Reduced motion bỏ animation.
+
+Lần E2E đầu phát hiện Math.sin có sai số chuỗi CSS giữa Node và Chromium; dừng chạy, làm tròn tọa độ nguyên và thêm bắt console hydration trong test hai route. `pnpm check` cuối exit 0 (126/126, 17 files, lint/typecheck), `pnpm build` cuối exit 0; `pnpm test:e2e` cuối exit 0 (22/22 Chromium, 3.2m), log không có hydrated. Luồng QR thật xác nhận dữ liệu/fallback tải lỗi rồi đóng modal trước RSVP; demo hai route xác nhận QR, autofocus close, Escape/return focus, mở lại reduced motion không animation, backdrop đóng. Logs `/tmp/gift-modal-check-final.log`, `/tmp/gift-modal-build-final.log`, `/tmp/gift-modal-e2e-final.log`.
+
+Playwright dev 1440/375px mở hộp, xem ảnh burst/modal, không page errors; modal mobile width347/height731 và nội dung cuộn1403, Escape trả focus. Đã xem screenshots `/tmp/gift-modal-burst.png`, `/tmp/gift-modal-desktop.png`, `/tmp/gift-modal-mobile.png`; sửa vị trí hộp tránh che eyebrow và kiểm tra lại. Dev 3200 đã khởi động lại từ cache mới sau build; không deploy production hoặc kiểm tra iPhone thật.

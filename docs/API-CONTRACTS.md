@@ -160,3 +160,5 @@ Toàn bộ select ứng dụng chuyển sang DropdownField/Select của template
 Giao diện 07/10/2026: spotlight/cascade trang chủ và bốn lớp ảnh photo chapter chỉ dùng dữ liệu render hiện có; không thêm endpoint, payload hoặc mutation. Các ảnh phụ trang trí có alt rỗng/aria-hidden; album tương tác vẫn giữ nhãn và lightbox.
 
 Demo public và preview đều render hộp QR minh họa khi isDemo và chưa có gift account; không tạo tài khoản ngân hàng, ghi DB hay thay API chuyển khoản.
+
+Gift UI mở QR trong dialog, không thay endpoint/VietQR URL hoặc cách sao chép số tài khoản. QR demo vẫn được ghi rõ không dùng chuyển khoản.

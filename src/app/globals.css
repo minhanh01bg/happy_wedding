@@ -4711,3 +4711,97 @@ body:has(.admin-drawer[open]) {
     animation: none;
   }
 }
+
+/* Select của template gốc: màu Hỷ Studio áp dụng cả trong portal. */
+[data-slot="select-trigger"],
+.admin-content .admin-filter button[data-slot="select-trigger"] {
+  width: 100%;
+  height: 48px;
+  min-width: 0;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+  box-shadow: 0 1px 2px #302b2905;
+  outline-offset: 2px;
+}
+[data-slot="select-trigger"]:hover,
+.admin-content .admin-filter button[data-slot="select-trigger"]:hover {
+  border-color: #ad8392;
+  background: #fcfaf8;
+}
+[data-slot="select-trigger"][data-popup-open],
+[data-slot="select-trigger"]:focus-visible {
+  border-color: var(--rose);
+  box-shadow: 0 0 0 3px #79485819;
+}
+[data-slot="select-trigger"] [data-slot="select-value"] {
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+}
+[data-slot="select-trigger"] > span:last-child {
+  background: var(--soft);
+  color: var(--rose);
+}
+[data-slot="select-content"] {
+  max-height: min(320px, var(--available-height));
+  min-width: var(--anchor-width);
+  max-width: calc(100vw - 24px);
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fffdfb;
+  color: var(--ink);
+  box-shadow:
+    0 18px 48px #302b2926,
+    0 3px 10px #302b290a;
+  font-family: var(--sans);
+  transform-origin: var(--transform-origin);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+[data-slot="select-content"][data-starting-style],
+[data-slot="select-content"][data-ending-style] {
+  opacity: 0;
+  transform: translateY(-4px) scale(0.98);
+}
+[data-slot="select-item"] {
+  min-height: 46px;
+  padding: 11px 42px 11px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+}
+[data-slot="select-item"][data-selected] {
+  background: #7948580f;
+  color: var(--rose);
+}
+[data-slot="select-item"][data-highlighted] {
+  background: var(--soft);
+  color: var(--rose);
+}
+[data-slot="select-item"] > span:last-child:not(:first-child) {
+  background: var(--rose);
+  color: white;
+}
+[data-slot="select-scroll-up-button"],
+[data-slot="select-scroll-down-button"] {
+  background: #fffdfb;
+  color: var(--muted);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="select-content"],
+  [data-slot="select-trigger"] > span:last-child {
+    transition: none;
+  }
+}

@@ -834,19 +834,41 @@ test("admin sidebar, mobile drawer and order filters stay usable when resized", 
   await expect(
     desktopNav.getByRole("link", { name: "Đơn dịch vụ", exact: true }),
   ).toHaveAttribute("aria-current", "page");
-  await page.getByLabel("Trạng thái", { exact: true }).selectOption("paid");
+  const statusDropdown = page.getByRole("combobox", {
+    name: "Trạng thái",
+    exact: true,
+  });
+  await statusDropdown.click();
+  await expect(page.getByRole("listbox")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(statusDropdown).toBeFocused();
+  await statusDropdown.click();
+  await page
+    .getByRole("option", { name: "Đã thanh toán", exact: true })
+    .click();
   await page.getByLabel("Tìm khách / mã đơn").fill("Khách kiểm thử");
   await page.getByRole("button", { name: "Lọc đơn", exact: true }).click();
   await expect(page).toHaveURL(/status=paid/);
-  await expect(page.getByLabel("Trạng thái", { exact: true })).toHaveValue(
-    "paid",
-  );
+  await expect(statusDropdown).toContainText("Đã thanh toán");
+  await expect(page.locator('input[name="status"]')).toHaveValue("paid");
   await expect(page.locator(".data-table tbody")).toContainText(
     "Đã thanh toán",
   );
   await page.getByRole("link", { name: "Xóa bộ lọc" }).click();
   await expect(page).toHaveURL(/\/admin\/orders$/);
+  await expect(statusDropdown).toContainText("Tất cả trạng thái");
+  await expect(page.locator('input[name="status"]')).toHaveValue("");
   await page.setViewportSize({ width: 375, height: 844 });
+  await statusDropdown.focus();
+  await page.keyboard.press("ArrowDown");
+  const statusMenu = page.getByRole("listbox");
+  await expect(statusMenu).toBeVisible();
+  const menuBounds = await statusMenu.boundingBox();
+  expect(menuBounds).not.toBeNull();
+  expect(menuBounds!.x).toBeGreaterThanOrEqual(0);
+  expect(menuBounds!.x + menuBounds!.width).toBeLessThanOrEqual(375);
+  await page.keyboard.press("Escape");
+  await expect(statusDropdown).toBeFocused();
   await expect(page.locator(".admin-sidebar")).not.toBeVisible();
   const opener = page.getByRole("button", { name: "Mở menu quản trị" });
   const drawer = page.getByRole("dialog", { name: "Quản trị", exact: true });

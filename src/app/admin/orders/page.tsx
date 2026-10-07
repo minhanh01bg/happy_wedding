@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DropdownField } from "@/components/kit/dropdown-field";
 import { prisma } from "@/server/db/prisma";
 import { money, dateLabel } from "@/lib/wedding";
 import { STATUS_LABELS } from "@/components/wedding/status";
@@ -61,18 +62,20 @@ export default async function AdminOrders({
         </label>
         <label>
           Trạng thái
-          <select
+          <DropdownField
+            key={status || "all"}
             aria-label="Trạng thái"
             name="status"
+            placeholder="Tất cả trạng thái"
             defaultValue={status || ""}
-          >
-            <option value="">Tất cả</option>
-            {["pending", "paid", "cancelled"].map((s) => (
-              <option value={s} key={s}>
-                {STATUS_LABELS[s]}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: "", label: "Tất cả trạng thái" },
+              ...["pending", "paid", "cancelled"].map((value) => ({
+                value,
+                label: STATUS_LABELS[value],
+              })),
+            ]}
+          />
         </label>
         <div className="admin-filter-actions">
           <button type="submit">Lọc đơn</button>

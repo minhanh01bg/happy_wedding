@@ -822,42 +822,48 @@ test("a failed soundtrack keeps the invitation usable and exposes a retry", asyn
   await expect(page.locator(".wedding-hero h1")).toBeFocused();
 });
 
-test("gift box opens two illustrative QR cards and supports keyboard closing", async ({
-  page,
-}) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/preview/khoanh-khac");
-  await page.getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" }).click();
-  const box = page.locator(".wedding-gift-box");
-  const trigger = box.locator("summary");
-  await trigger.scrollIntoViewIfNeeded();
-  await expect(box.locator(".gift-card").first()).not.toBeVisible();
-  await trigger.focus();
-  await page.keyboard.press("Enter");
-  await expect(box).toHaveAttribute("open", "");
-  await expect(box.locator(".gift-card")).toHaveCount(2);
-  await expect(box.getByText("Nhà trai", { exact: true })).toBeVisible();
-  await expect(box.getByText("Nhà gái", { exact: true })).toBeVisible();
-  await expect(box.locator(".gift-demo-note")).toContainText(
-    "không dùng để chuyển khoản",
-  );
-  for (const qr of await box.locator("img").all()) {
-    await expect(qr).toBeVisible();
-    await expect
-      .poll(() => qr.evaluate((image: HTMLImageElement) => image.naturalWidth))
-      .toBeGreaterThan(0);
-  }
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth,
-    ),
-  ).toBe(true);
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await trigger.focus();
-  await page.keyboard.press("Space");
-  await expect(box).not.toHaveAttribute("open");
-  await expect(trigger).toBeFocused();
-});
+for (const giftRoute of ["/preview/khoanh-khac", "/w/thiep-mau"]) {
+  test(`gift box opens two illustrative QR cards and supports keyboard closing on ${giftRoute}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(giftRoute);
+    await page
+      .getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" })
+      .click();
+    const box = page.locator(".wedding-gift-box");
+    const trigger = box.locator("summary");
+    await trigger.scrollIntoViewIfNeeded();
+    await expect(box.locator(".gift-card").first()).not.toBeVisible();
+    await trigger.focus();
+    await page.keyboard.press("Enter");
+    await expect(box).toHaveAttribute("open", "");
+    await expect(box.locator(".gift-card")).toHaveCount(2);
+    await expect(box.getByText("Nhà trai", { exact: true })).toBeVisible();
+    await expect(box.getByText("Nhà gái", { exact: true })).toBeVisible();
+    await expect(box.locator(".gift-demo-note")).toContainText(
+      "không dùng để chuyển khoản",
+    );
+    for (const qr of await box.locator("img").all()) {
+      await expect(qr).toBeVisible();
+      await expect
+        .poll(() =>
+          qr.evaluate((image: HTMLImageElement) => image.naturalWidth),
+        )
+        .toBeGreaterThan(0);
+    }
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await trigger.focus();
+    await page.keyboard.press("Space");
+    await expect(box).not.toHaveAttribute("open");
+    await expect(trigger).toBeFocused();
+  });
+}
 
 test("admin sidebar, mobile drawer and order filters stay usable when resized", async ({
   page,

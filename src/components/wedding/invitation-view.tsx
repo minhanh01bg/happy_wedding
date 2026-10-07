@@ -102,7 +102,7 @@ export function InvitationView({
           <a href="#lich-tiec">Lịch tiệc & chỉ đường</a>
           <a href="#rsvp">Xác nhận tham dự</a>
           {!!photos.length && <a href="#album">Album ảnh</a>}
-          {(giftAccounts.length > 0 || (preview && invitation.isDemo)) && (
+          {(giftAccounts.length > 0 || invitation.isDemo) && (
             <a href="#gifts">Mừng cưới</a>
           )}
         </nav>
@@ -307,7 +307,7 @@ export function InvitationView({
             </div>
           </section>
         )}
-        {(giftAccounts.length > 0 || (preview && invitation.isDemo)) && (
+        {(giftAccounts.length > 0 || invitation.isDemo) && (
           <section className="wedding-section" id="gifts">
             <p className="eyebrow">GỬI CHÚT YÊU THƯƠNG</p>
             <h2>Quà mừng ngày cưới</h2>

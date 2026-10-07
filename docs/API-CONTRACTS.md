@@ -158,3 +158,5 @@ Phần Câu chuyện dùng bố cục ảnh in giấy chữ nhật nghiêng nh�
 Toàn bộ select ứng dụng chuyển sang DropdownField/Select của template: admin catalog/category/palette/layout, ngân hàng dịch vụ, khoảng báo cáo/ngày biểu đồ; editor mẫu/nhạc/ngân hàng; RSVP attendance/eventIndex/partySize. Hidden input giữ tên và giá trị form; controlled state nhận onValueChange; ngân hàng BIN cũ ngoài danh mục vẫn hiển thị. Popup cuộn với danh sách dài và nhãn dài xuống dòng; không đổi hợp đồng payload/authorization/validation.
 
 Giao diện 07/10/2026: spotlight/cascade trang chủ và bốn lớp ảnh photo chapter chỉ dùng dữ liệu render hiện có; không thêm endpoint, payload hoặc mutation. Các ảnh phụ trang trí có alt rỗng/aria-hidden; album tương tác vẫn giữ nhãn và lightbox.
+
+Demo public và preview đều render hộp QR minh họa khi isDemo và chưa có gift account; không tạo tài khoản ngân hàng, ghi DB hay thay API chuyển khoản.

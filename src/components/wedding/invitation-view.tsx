@@ -39,6 +39,14 @@ export function InvitationView({
     readPhotos(invitation.photosJson),
     invitation.isDemo,
   );
+  const storyPhoto =
+    photos.find(
+      (photo) =>
+        weddingImageSource(photo) !== weddingImageSource(invitation.coverUrl),
+    ) || invitation.coverUrl;
+  const storyDetail = photos.find(
+    (photo) => weddingImageSource(photo) !== weddingImageSource(storyPhoto),
+  );
   const musicUrl =
     invitation.musicUrl || (invitation.isDemo ? WEDDING_MUSIC.url : "");
   const giftAccounts: GiftAccount[] = [
@@ -178,16 +186,30 @@ export function InvitationView({
             <em>một đời bên nhau.</em>
           </h2>
           <div className="wedding-story-layout">
-            <div className="wedding-story-photo">
-              <Image
-                src={weddingImageSource(invitation.coverUrl)}
-                alt={`${invitation.groom} và ${invitation.bride} — câu chuyện của hai người`}
-                fill
-                sizes="(max-width:800px) 80vw, 420px"
-              />
-              <span aria-hidden="true">
-                {invitation.groom} &amp; {invitation.bride}
-              </span>
+            <div className="wedding-story-collage">
+              <div className="wedding-story-photo">
+                <div className="wedding-story-print">
+                  <Image
+                    src={weddingImageSource(storyPhoto)}
+                    alt={`${invitation.groom} và ${invitation.bride} — câu chuyện của hai người`}
+                    fill
+                    sizes="(max-width:800px) 80vw, 420px"
+                  />
+                </div>
+                <span aria-hidden="true">
+                  {invitation.groom} &amp; {invitation.bride}
+                </span>
+              </div>
+              {storyDetail && (
+                <div className="wedding-story-detail" aria-hidden="true">
+                  <Image
+                    src={weddingImageSource(storyDetail)}
+                    alt=""
+                    fill
+                    sizes="(max-width:800px) 35vw, 190px"
+                  />
+                </div>
+              )}
             </div>
             <div className="wedding-story-copy">
               <blockquote>{invitation.headline}</blockquote>

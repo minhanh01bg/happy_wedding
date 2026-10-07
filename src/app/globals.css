@@ -4850,3 +4850,59 @@ body:has(.admin-drawer[open]) {
   object-fit: cover;
   object-position: center;
 }
+
+/* Câu chuyện: ảnh in trên giấy, khác khung vòm ở phần mở đầu. */
+.wedding-story-collage {
+  position: relative;
+  width: calc(100% - 24px);
+  margin: 16px 12px 48px;
+}
+.wedding-story-collage .wedding-story-photo {
+  width: 100%;
+  margin: 0;
+  padding: 14px;
+  overflow: visible;
+  border-radius: 2px;
+  background: var(--card);
+  box-shadow: 0 12px 36px color-mix(in srgb, var(--tone) 14%, transparent);
+  rotate: -3deg;
+}
+.wedding-story-print {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+.wedding-story-collage .wedding-story-photo span {
+  display: none;
+  bottom: 9px;
+  left: 14px;
+  right: 14px;
+  padding: 4px;
+  font-size: clamp(15px, 2vw, 20px);
+}
+.wedding-story-detail {
+  position: absolute;
+  right: -18px;
+  bottom: -34px;
+  width: 44%;
+  aspect-ratio: 3 / 4;
+  border: 8px solid var(--card);
+  background: var(--card);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--tone) 18%, transparent);
+  rotate: 7deg;
+  overflow: hidden;
+}
+.wedding-story-detail img {
+  object-fit: cover;
+}
+@media (max-width: 800px) {
+  .wedding-story-collage {
+    width: min(calc(100% - 32px), 340px);
+    margin: 16px auto 42px;
+  }
+}
+@media (max-width: 480px) {
+  .wedding-story-collage .wedding-story-photo {
+    height: 360px;
+  }
+}

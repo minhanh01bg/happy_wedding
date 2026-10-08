@@ -1091,3 +1091,113 @@ test("landing photo showcase fans out with scroll and FAQ works by keyboard", as
   );
   expect(errors).toEqual([]);
 });
+
+test("all ten catalog templates have complete distinct invitations on desktop and mobile", async ({
+  page,
+}) => {
+  test.setTimeout(180000);
+  const templates = [
+    "loi-yeu",
+    "vuon-thuong",
+    "song-hy",
+    "ngay-chung-doi",
+    "dem-sao",
+    "nang-thu",
+    "loi-hen",
+    "thu-tinh",
+    "khoanh-khac",
+    "ben-nhau",
+  ];
+  const compositions = new Set<string>();
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (/hydrated|hydration/i.test(message.text())) errors.push(message.text());
+  });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const slug of templates) {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`/preview/${slug}`);
+    await expect(page.locator(".wedding-page")).toHaveClass(
+      new RegExp(`design-${slug}`),
+    );
+    const opening = page.locator(".invitation-opening");
+    await expect(opening).toBeVisible();
+    await page
+      .getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" })
+      .click();
+    await expect(opening).not.toBeVisible();
+    await expect(page.locator(".wedding-hero h1")).toBeFocused();
+    await expect(page.locator(".wedding-hero-image img")).toBeVisible();
+    compositions.add(
+      await page.locator(".wedding-hero").evaluate((el) => {
+        const hero = getComputedStyle(el);
+        const photo = getComputedStyle(
+          el.querySelector(".wedding-hero-image")!,
+        );
+        const copy = getComputedStyle(el.querySelector(".wedding-hero-copy")!);
+        return [
+          hero.display,
+          hero.flexDirection,
+          hero.gridTemplateColumns,
+          photo.borderRadius,
+          photo.position,
+          photo.height,
+          copy.textAlign,
+          copy.borderWidth,
+        ].join("|");
+      }),
+    );
+    await expect(page.locator(".family-grid > div")).toHaveCount(2);
+    await expect(page.locator(".event-card")).toHaveCount(2);
+    await expect(page.locator(".wedding-album > button")).toHaveCount(6);
+    await expect(
+      page.getByRole("button", { name: "Gửi xác nhận & lời chúc" }),
+    ).toBeDisabled();
+    for (const width of [1280, 375]) {
+      await page.setViewportSize({ width, height: 900 });
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        `${slug} at ${width}`,
+      ).toBe(true);
+      const gift = page.locator(".gift-box-trigger");
+      await gift.click();
+      await expect(page.locator(".gift-modal .gift-demo-card")).toHaveCount(2);
+      await page.keyboard.press("Escape");
+      await expect(gift).toBeFocused();
+    }
+  }
+  expect(compositions.size).toBe(10);
+  expect(errors).toEqual([]);
+});
+
+test("letter and curtain openings animate and release focus", async ({
+  page,
+}) => {
+  for (const [slug, variant, movement] of [
+    ["loi-hen", "letter", "translateY"],
+    ["ben-nhau", "curtain", "translateX"],
+  ]) {
+    await page.goto(`/preview/${slug}`);
+    const opening = page.locator(".invitation-opening");
+    await expect(opening).toHaveClass(new RegExp(`opening-${variant}`));
+    await page.getByRole("button", { name: /^Mở thiệp/ }).click();
+    await expect
+      .poll(() =>
+        page.locator(".door-left").evaluate((el) => {
+          const effect = el.getAnimations()[0]?.effect as
+            | KeyframeEffect
+            | undefined;
+          return JSON.stringify(effect?.getKeyframes() ?? []);
+        }),
+      )
+      .toContain(movement);
+    await expect(opening).not.toBeVisible();
+    await expect(page.locator(".wedding-hero h1")).toBeFocused();
+    expect(
+      await page.evaluate(() => getComputedStyle(document.body).overflow),
+    ).not.toBe("hidden");
+  }
+});

@@ -229,3 +229,12 @@ Playwright dev 1440/375px mở hộp, xem ảnh burst/modal, không page errors;
 - Manual Chromium ở 375/768/1024/1440 px: ảnh hero decode, không tràn ngang; xem screenshot và chỉnh căn giữa album mobile. Kiểm tra pageerror/console và hydration: không lỗi trong landing review. Tắt JavaScript ở public URL: HTTP 200, h1, năm ảnh và bốn FAQ vẫn hiện; không tràn ngang.
 - Native FAQ hỗ trợ Enter; scroll làm thay đổi transform ảnh; reduced motion xóa biến cuộn, bỏ sticky và giữ nội dung đọc được. Regression mới chứng minh các hành vi này.
 - Ảnh bằng chứng: `docs/previews/home-desktop.png`, `home-mobile.png`, `home-showcase.png`. Dev preview port 3200 đã khởi động lại sau build bằng cache mới. Không deploy production; chưa kiểm tra Safari/iPhone thật.
+
+### 08/10/2026 — hoàn thiện 10 mẫu thiệp trong catalog
+
+- Mười cặp layout/palette đã có composition riêng cho thiệp đầy đủ và thumbnail, được chọn thống nhất tại `src/lib/invitation-designs.ts`. Không đổi schema/API/price/auth hoặc nội dung cá nhân. Admin đổi layout/palette vẫn được áp dụng; tổ hợp khác dùng fallback theo layout.
+- `pnpm check`: exit 0, **126/126 tests, 17 files**. `pnpm build`: exit 0. `pnpm test:e2e` lượt cuối: exit 0, **25/25 passed (3.9m)**. Lượt trước 24 passed, một bài quản trị gặp Chromium `ERR_INSUFFICIENT_RESOURCES`; chạy lại full không có browser manual song song đã qua.
+- Regression mới duyệt cả **10** preview: xác nhận **10** signature bố cục desktop khác nhau, hai gia đình/hai tiệc/sáu ảnh, RSVP demo disabled, không hydration/pageerror, không tràn ngang ở 1280 và 375 px; mở/đóng hai QR minh họa, trả focus cho trigger ở cả hai kích thước.
+- Regression mở thư và kéo rèm kiểm tra keyframes chuyển động thực, dialog đóng, focus về h1 và body được trả quyền cuộn. Các bài hiện có về mở cửa, music gesture/pause/quiet skip/retry, album swipe/reduced motion vẫn qua.
+- Manual Chromium: xem cả 10 hero desktop/mobile và catalog 10 thumbnail; decode cover image, xem câu chuyện Lời yêu/Song hỷ, sửa foliage và panorama tràn ngang. Script duyệt 19/20 viewport-case xong rồi timeout đợi hydration của lượt cuối; kiểm tra riêng Bên nhau 375 px qua và không tràn/pageerror. Không dùng lượt manual dang dở để khẳng định cả script exit 0; full regression 10 mẫu trên hai kích thước là bằng chứng cuối.
+- Ảnh catalog: `docs/previews/templates-catalog.png`. Dev port 3200 đã khởi động lại sau build với cache mới. Chưa kiểm tra Safari/iPhone thật; không deploy production.

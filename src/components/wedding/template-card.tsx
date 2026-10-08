@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { invitationDesign } from "@/lib/invitation-designs";
 import Image from "next/image";
 import { weddingImageSource } from "@/lib/wedding-images";
 import { ArrowUpRight } from "lucide-react";
@@ -32,11 +33,12 @@ export function TemplateArtwork({
   template: Pick<WeddingTemplate, "palette" | "layout">;
   large?: boolean;
 }) {
+  const design = invitationDesign(template);
   return (
     <div
-      className={`template-art palette-${template.palette} layout-${template.layout} ${large ? "large" : ""}`}
+      className={`template-art palette-${template.palette} layout-${template.layout} design-${design.key} ${large ? "large" : ""}`}
     >
-      {template.layout === "cinematic" && (
+      {design.artPhoto && (
         <Image
           src={weddingImageSource("/images/couple.jpg")}
           alt=""
@@ -49,9 +51,7 @@ export function TemplateArtwork({
       <Botanical className="branch-right" />
       <div className="art-border">
         <span className="art-kicker">CHÚNG MÌNH KẾT HÔN</span>
-        <span className="art-symbol">
-          {template.layout === "classic" ? "囍" : "♡"}
-        </span>
+        <span className="art-symbol">{design.motif}</span>
         <span className="art-names">
           Minh Anh<span>&</span>Ngọc Hà
         </span>

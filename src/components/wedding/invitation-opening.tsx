@@ -4,12 +4,16 @@ import { useEffect, useRef } from "react";
 import { Heart } from "lucide-react";
 
 export function InvitationOpening({
+  variant = "doors",
+  motif = "♡",
   groom,
   bride,
   date,
   guestName,
   hasMusic = false,
 }: {
+  variant?: "doors" | "curtain" | "letter";
+  motif?: string;
   groom: string;
   bride: string;
   date: string;
@@ -55,12 +59,22 @@ export function InvitationOpening({
                     opacity: 1,
                   },
                   {
-                    transform: `rotateY(${i ? 38 : -38}deg) translateX(${i ? 4 : -4}%)`,
+                    transform:
+                      variant === "curtain"
+                        ? `translateX(${i ? 45 : -45}%) scaleX(.85)`
+                        : variant === "letter"
+                          ? `translateY(${i ? 35 : -35}%) rotateX(${i ? -20 : 20}deg)`
+                          : `rotateY(${i ? 38 : -38}deg) translateX(${i ? 4 : -4}%)`,
                     opacity: 1,
                     offset: 0.55,
                   },
                   {
-                    transform: `rotateY(${i ? 82 : -82}deg) translateX(${i ? 12 : -12}%)`,
+                    transform:
+                      variant === "curtain"
+                        ? `translateX(${i ? 110 : -110}%) scaleX(.5)`
+                        : variant === "letter"
+                          ? `translateY(${i ? 110 : -110}%) rotateX(${i ? -45 : 45}deg)`
+                          : `rotateY(${i ? 82 : -82}deg) translateX(${i ? 12 : -12}%)`,
                     opacity: 0,
                   },
                 ],
@@ -116,7 +130,7 @@ export function InvitationOpening({
   return (
     <dialog
       ref={dialog}
-      className="invitation-opening"
+      className={`invitation-opening opening-${variant}`}
       aria-labelledby="opening-title"
       onCancel={(event) => {
         event.preventDefault();
@@ -134,7 +148,11 @@ export function InvitationOpening({
       <div className="opening-glow" aria-hidden="true" />
       <div className="invitation-seal">
         <div className="opening-wax" aria-hidden="true">
-          <Heart size={24} strokeWidth={1.2} />
+          {motif === "♡" ? (
+            <Heart size={24} strokeWidth={1.2} />
+          ) : (
+            <span>{motif}</span>
+          )}
         </div>
         <p className="eyebrow">TRÂN TRỌNG KÍNH MỜI</p>
         {guestName && <p className="opening-guest">{guestName}</p>}

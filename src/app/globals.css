@@ -5526,3 +5526,752 @@ body:has(.admin-drawer[open]) {
     will-change: auto;
   }
 }
+
+/* Ten catalog compositions. Shared data/actions, complete visual systems. */
+.wedding-design-mark {
+  display: block;
+  font: 44px/1.1 var(--serif);
+  margin-bottom: 22px;
+  color: var(--tone);
+}
+.hero-design-caption {
+  position: absolute;
+  bottom: 18px;
+  right: 40px;
+  left: 40px;
+  text-align: center;
+  font: italic 12px var(--serif);
+  letter-spacing: 0.04em;
+}
+.hero-botanical-frame {
+  display: none;
+  pointer-events: none;
+}
+.template-art .art-photo {
+  object-fit: cover;
+}
+.wedding-page[class*="design-"] .wedding-hero-copy h1 {
+  overflow-wrap: anywhere;
+}
+.opening-wax > span {
+  font: 30px var(--serif);
+}
+.opening-curtain .invitation-door {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--card),
+    color-mix(in srgb, var(--tone) 12%, var(--card)) 5%,
+    var(--card) 10%
+  );
+}
+.opening-curtain .invitation-door > span {
+  border-radius: 0;
+  border: 1px solid color-mix(in srgb, var(--tone) 35%, transparent);
+}
+.opening-letter .invitation-door {
+  width: 100%;
+  height: 50%;
+  inset: auto 0;
+}
+.opening-letter .door-left {
+  top: 0;
+  border: 0;
+  border-bottom: 1px solid var(--tone);
+  transform-origin: center top;
+}
+.opening-letter .door-right {
+  bottom: 0;
+  transform-origin: center bottom;
+}
+.opening-letter .invitation-door > span {
+  border-radius: 0;
+  inset: 18px;
+  border-width: 1px;
+}
+.opening-letter .door-floral {
+  opacity: 0.15;
+}
+
+/* Lời yêu — an intimate rose portrait with fine oval lines. */
+.design-loi-yeu.wedding-page .wedding-hero-image {
+  border: 8px solid var(--card);
+  outline: 1px solid color-mix(in srgb, var(--tone) 35%, transparent);
+  outline-offset: 8px;
+  border-radius: 230px 230px 12px 12px;
+}
+.design-loi-yeu.wedding-page .wedding-countdown {
+  border-bottom: 1px solid color-mix(in srgb, var(--tone) 25%, transparent);
+}
+.design-loi-yeu.wedding-page .event-card {
+  border-radius: 160px 160px 8px 8px;
+  padding-top: 65px;
+}
+.design-loi-yeu.template-art .art-border {
+  border-radius: 130px 130px 4px 4px;
+  border-width: 2px;
+}
+
+/* Vườn thương — wreath, oval portrait and garden panels. */
+.design-vuon-thuong.wedding-page .wedding-hero {
+  display: flex;
+  flex-direction: column;
+  padding: 55px 40px 60px;
+  background: radial-gradient(ellipse at center, var(--card), transparent 70%);
+}
+.design-vuon-thuong.wedding-page .wedding-hero-copy {
+  padding: 20px 0 35px;
+}
+.design-vuon-thuong.wedding-page .wedding-hero-image {
+  width: min(530px, 80%);
+  height: 570px;
+  border-radius: 50%;
+  border: 12px solid var(--card);
+  outline: 1px solid var(--tone);
+  outline-offset: 8px;
+}
+.design-vuon-thuong .hero-botanical-frame {
+  display: block;
+  position: absolute;
+  inset: 25% 0 0;
+}
+.design-vuon-thuong .hero-botanical-frame .botanical {
+  width: 30%;
+  max-width: 240px;
+  bottom: 12%;
+  left: 3%;
+  opacity: 0.3;
+  transform: rotate(-25deg);
+}
+.design-vuon-thuong .hero-botanical-frame .botanical:last-child {
+  left: auto;
+  right: 3%;
+  transform: scaleX(-1) rotate(-25deg);
+}
+.design-vuon-thuong.wedding-page .family-grid > div,
+.design-vuon-thuong.wedding-page .event-card {
+  border-radius: 90px 90px 12px 12px;
+  background: var(--card);
+  padding: 42px 24px;
+}
+.design-vuon-thuong.wedding-page .wedding-story {
+  background: var(--card);
+  border-radius: 220px 220px 16px 16px;
+}
+.design-vuon-thuong.template-art .art-border {
+  border-radius: 50%;
+  width: 90%;
+  height: 90%;
+  border: 1px solid currentColor;
+}
+.design-vuon-thuong.template-art .branch-left {
+  bottom: 4%;
+  left: -3%;
+  width: 45%;
+}
+.design-vuon-thuong.template-art .branch-right {
+  top: 4%;
+  right: -3%;
+  width: 45%;
+}
+
+/* Song hỷ — a formal red invitation with gold double frames. */
+.design-song-hy.wedding-page .wedding-hero {
+  flex-direction: column;
+  max-width: 940px;
+  padding: 55px 45px 65px;
+}
+.design-song-hy.wedding-page .wedding-hero-copy {
+  margin: 0 0 30px;
+  width: 100%;
+  padding: 40px 28px;
+  outline: 1px solid var(--tone);
+  outline-offset: 8px;
+}
+.design-song-hy.wedding-page .wedding-design-mark {
+  font-size: 72px;
+}
+.design-song-hy.wedding-page .wedding-hero-image {
+  width: min(520px, 100%);
+  height: 590px;
+  border: 8px solid var(--card);
+  outline: 1px solid var(--tone);
+}
+.design-song-hy.wedding-page .wedding-story,
+.design-song-hy.wedding-page .event-card,
+.design-song-hy.wedding-page .wedding-rsvp {
+  border: 4px double color-mix(in srgb, var(--tone) 65%, transparent);
+  border-radius: 0;
+}
+.design-song-hy.wedding-page .family-grid {
+  border-top: 3px double currentColor;
+  border-bottom: 3px double currentColor;
+  padding: 30px 0;
+}
+.design-song-hy.template-art .art-border {
+  border: 5px double currentColor;
+  outline: 1px solid currentColor;
+  outline-offset: 6px;
+}
+.design-song-hy.template-art .art-symbol {
+  font-size: 50px;
+}
+
+/* Ngày chung đôi — modern editorial cover and magazine rhythm. */
+.design-ngay-chung-doi.wedding-page .wedding-hero {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 35px;
+  max-width: 1200px;
+  padding: 75px 40px;
+}
+.design-ngay-chung-doi.wedding-page .wedding-hero-copy {
+  text-align: left;
+  border-top: 1px solid var(--tone);
+  padding-top: 25px;
+}
+.design-ngay-chung-doi.wedding-page .wedding-hero-copy h1 {
+  font-size: clamp(44px, 5.5vw, 78px);
+  letter-spacing: -0.05em;
+}
+.design-ngay-chung-doi.wedding-page .wedding-hero-image {
+  border-radius: 0;
+  height: 640px;
+}
+.design-ngay-chung-doi.wedding-page .wedding-design-mark {
+  font-size: 66px;
+  font-style: italic;
+}
+.design-ngay-chung-doi.wedding-page .wedding-story-layout {
+  grid-template-columns: 1.1fr 1fr;
+}
+.design-ngay-chung-doi.wedding-page .wedding-story-copy {
+  text-align: left;
+}
+.design-ngay-chung-doi.wedding-page .event-card {
+  border: 0;
+  border-top: 1px solid currentColor;
+  background: transparent;
+  text-align: left;
+}
+.design-ngay-chung-doi.template-art {
+  padding: 0;
+}
+.design-ngay-chung-doi.template-art .art-border {
+  width: 52%;
+  height: 100%;
+  margin-right: auto;
+  background: var(--card);
+  border: 0;
+  padding: 15px 5px;
+}
+.design-ngay-chung-doi.template-art .art-names {
+  font-size: clamp(22px, 2.5vw, 30px);
+}
+.design-ngay-chung-doi.template-art .botanical {
+  display: none;
+}
+
+/* Đêm sao — constellation, circular portrait and midnight ceremony. */
+.design-dem-sao.wedding-page {
+  background-image:
+    radial-gradient(circle at 12% 18%, #dcc89355 1px, transparent 2px),
+    radial-gradient(circle at 75% 45%, #dcc89355 1px, transparent 2px);
+  background-size:
+    95px 130px,
+    145px 165px;
+}
+.design-dem-sao.wedding-page .wedding-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  padding: 70px 40px;
+}
+.design-dem-sao.wedding-page .wedding-hero-copy {
+  border: 0;
+  margin: 0;
+  width: 100%;
+  background: transparent;
+  padding: 35px 0;
+}
+.design-dem-sao.wedding-page .wedding-hero-image {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid var(--tone);
+  padding: 10px;
+  box-shadow: 0 0 65px #dcc89318;
+}
+.design-dem-sao.wedding-page .wedding-design-mark {
+  font-size: 78px;
+}
+.design-dem-sao.wedding-page .wedding-countdown {
+  border-top: 1px solid var(--tone);
+  border-bottom: 1px solid var(--tone);
+}
+.design-dem-sao.wedding-page .event-card {
+  border-radius: 0;
+  border: 1px solid var(--tone);
+  background: var(--card);
+}
+.design-dem-sao.template-art {
+  background-image: radial-gradient(circle, #dcc89370 1px, transparent 2px);
+  background-size: 28px 33px;
+}
+.design-dem-sao.template-art .art-border {
+  border-radius: 150px 150px 0 0;
+  border: 1px solid currentColor;
+  background: transparent;
+}
+.design-dem-sao.template-art .art-symbol {
+  font-size: 45px;
+}
+
+/* Nắng thu — organic frame, warm paper and pressed-leaf details. */
+.design-nang-thu.wedding-page .wedding-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  padding: 70px 45px;
+}
+.design-nang-thu.wedding-page .wedding-hero-image {
+  grid-row: 1;
+  grid-column: 1;
+  width: 100%;
+  height: 620px;
+  border-radius: 48% 48% 8px 8px;
+  transform: rotate(-3deg);
+  border: 10px solid var(--card);
+}
+.design-nang-thu.wedding-page .wedding-hero-copy {
+  grid-column: 2;
+  text-align: left;
+}
+.design-nang-thu.wedding-page .wedding-story-photo {
+  transform: rotate(3deg);
+}
+.design-nang-thu.wedding-page .event-card {
+  border-radius: 50% 50% 8px 8px;
+  padding-top: 65px;
+  background: var(--card);
+}
+.design-nang-thu.wedding-page .wedding-countdown {
+  background: var(--card);
+  border-radius: 65% 65% 0 0 / 20% 20% 0 0;
+}
+.design-nang-thu.template-art .art-border {
+  border-radius: 45% 45% 4px 4px;
+  transform: rotate(-4deg);
+  border: 0;
+}
+.design-nang-thu.template-art .branch-left {
+  width: 55%;
+  opacity: 0.65;
+}
+
+/* Lời hẹn — contemporary letter, horizontal photograph and fine rules. */
+.design-loi-hen.wedding-page .wedding-hero-copy h1 {
+  display: block;
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: clamp(32px, 4.5vw, 56px);
+  letter-spacing: -0.045em;
+}
+.design-loi-hen.wedding-page .wedding-hero-copy h1 em {
+  display: inline;
+  font-size: 0.6em;
+  padding: 0 16px;
+}
+.design-loi-hen.wedding-page .wedding-hero-image {
+  height: 420px;
+  border-radius: 0;
+}
+.design-loi-hen.wedding-page .wedding-story-ornament,
+.design-loi-hen.wedding-page .wedding-story-detail {
+  display: none;
+}
+.design-loi-hen.wedding-page .wedding-story-photo {
+  transform: none;
+  box-shadow: none;
+  padding: 0;
+}
+.design-loi-hen.wedding-page .event-card {
+  background: transparent;
+  border: 0;
+  border-top: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
+}
+.design-loi-hen.wedding-page .wedding-rsvp {
+  border: 0;
+  border-top: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
+}
+.design-loi-hen.template-art .art-border {
+  align-items: flex-start;
+  text-align: left;
+  padding-left: 22px;
+}
+.design-loi-hen.template-art .art-symbol {
+  align-self: flex-start;
+}
+.design-loi-hen.template-art .art-names {
+  font-size: 28px;
+}
+
+/* Thư tình — folded stationery with a photograph tucked behind. */
+.design-thu-tinh.wedding-page .wedding-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  padding: 70px 45px;
+}
+.design-thu-tinh.wedding-page .wedding-hero-copy {
+  padding: 45px 30px;
+  background: var(--card);
+  box-shadow: 0 20px 55px #6b40451f;
+  border: 1px solid color-mix(in srgb, var(--tone) 25%, transparent);
+  z-index: 1;
+  margin-right: -45px;
+  width: auto;
+}
+.design-thu-tinh.wedding-page .wedding-hero-copy h1 {
+  font-family: var(--serif);
+  font-style: italic;
+}
+.design-thu-tinh.wedding-page .wedding-hero-image {
+  width: 100%;
+  height: 640px;
+  border-radius: 4px;
+  transform: rotate(4deg);
+  border: 10px solid var(--card);
+}
+.design-thu-tinh.wedding-page .wedding-story-copy blockquote {
+  font-style: italic;
+  border-left: 1px solid var(--tone);
+  padding-left: 25px;
+}
+.design-thu-tinh.wedding-page .event-card {
+  background: var(--card);
+  border: 1px solid color-mix(in srgb, var(--tone) 30%, transparent);
+  box-shadow: 0 12px 30px #6b404512;
+}
+.design-thu-tinh.template-art {
+  padding: 0;
+}
+.design-thu-tinh.template-art .art-border {
+  margin: 0;
+  width: 82%;
+  height: 88%;
+  background: var(--card);
+  transform: rotate(-5deg);
+  box-shadow: 0 10px 25px #6b404540;
+  border: 1px solid currentColor;
+}
+.design-thu-tinh.template-art .art-names {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 32px;
+}
+
+/* Khoảnh khắc — cinematic full-bleed image and lower-left title. */
+.design-khoanh-khac.wedding-page .wedding-hero {
+  min-height: 850px;
+  justify-content: flex-start;
+  align-items: flex-end;
+  padding: 75px 65px;
+}
+.design-khoanh-khac.wedding-page .wedding-hero-image::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, #102025d9, transparent 85%),
+    linear-gradient(0deg, #102025b3, transparent 75%);
+}
+.design-khoanh-khac.wedding-page .wedding-hero-copy {
+  background: transparent;
+  color: #fff5df;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  width: min(600px, 100%);
+}
+.design-khoanh-khac.wedding-page .wedding-hero-copy h1 {
+  font-size: clamp(44px, 6vw, 80px);
+}
+.design-khoanh-khac.wedding-page .wedding-hero-copy .eyebrow,
+.design-khoanh-khac.wedding-page .wedding-hero-copy > p {
+  color: #fff5df;
+}
+.design-khoanh-khac.wedding-page .hero-design-caption {
+  color: #fff5df;
+}
+.design-khoanh-khac.wedding-page .wedding-story {
+  background: var(--card);
+}
+.design-khoanh-khac.wedding-page .event-card {
+  border: 1px solid var(--tone);
+  border-radius: 0;
+}
+.design-khoanh-khac.template-art .art-border {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 66%;
+  width: 100%;
+  margin: 0;
+  padding: 15px;
+  background: linear-gradient(transparent, #102025e6 30%);
+  color: #fff5df;
+  border: 0;
+  align-items: flex-start;
+}
+.design-khoanh-khac.template-art .art-symbol,
+.design-khoanh-khac.template-art .art-footer {
+  display: none;
+}
+.design-khoanh-khac.template-art .art-names {
+  font-size: 32px;
+  text-align: left;
+}
+
+/* Bên nhau — a panoramic image above a warm inset title plaque. */
+.design-ben-nhau.wedding-page .wedding-hero {
+  display: flex;
+  flex-direction: column-reverse;
+  padding: 0 40px 65px;
+  min-height: 0;
+  gap: 0;
+}
+.design-ben-nhau.wedding-page .wedding-hero-image {
+  position: relative;
+  inset: auto;
+  width: calc(100% + 80px);
+  height: 620px;
+  z-index: 0;
+}
+.design-ben-nhau.wedding-page .wedding-hero-copy {
+  width: min(750px, 100%);
+  margin-top: -100px;
+  z-index: 1;
+  background: var(--card);
+  border: 0;
+  padding: 42px;
+  box-shadow: 0 18px 55px #6b3d2526;
+}
+.design-ben-nhau.wedding-page .wedding-hero-copy h1 {
+  display: block;
+  font-size: clamp(36px, 4.5vw, 64px);
+}
+.design-ben-nhau.wedding-page .wedding-hero-copy h1 em {
+  display: inline;
+  padding: 0 12px;
+}
+.design-ben-nhau.wedding-page .wedding-countdown {
+  background: var(--card);
+}
+.design-ben-nhau.wedding-page .wedding-story-layout {
+  grid-template-columns: 1fr 1fr;
+}
+.design-ben-nhau.wedding-page .event-card {
+  background: var(--card);
+  border-radius: 16px;
+  border: 0;
+}
+.design-ben-nhau.template-art .art-border {
+  width: 88%;
+  height: 60%;
+  position: absolute;
+  bottom: 6%;
+  margin: 0;
+  background: var(--card);
+  border: 0;
+  box-shadow: 0 10px 25px #6b3d2540;
+  padding: 12px;
+}
+.design-ben-nhau.template-art .art-names {
+  font-size: 28px;
+}
+.design-ben-nhau.template-art .art-symbol,
+.design-ben-nhau.template-art .art-footer {
+  display: none;
+}
+
+@media (max-width: 800px) {
+  .wedding-page[class*="design-"] .wedding-hero {
+    padding-left: 24px;
+    padding-right: 24px;
+    gap: 28px;
+  }
+  .design-ngay-chung-doi.wedding-page .wedding-hero,
+  .design-dem-sao.wedding-page .wedding-hero,
+  .design-nang-thu.wedding-page .wedding-hero,
+  .design-thu-tinh.wedding-page .wedding-hero {
+    grid-template-columns: 1fr;
+  }
+  .design-nang-thu.wedding-page .wedding-hero-copy {
+    grid-column: auto;
+    grid-row: 1;
+    text-align: center;
+  }
+  .design-nang-thu.wedding-page .wedding-hero-image {
+    grid-row: 2;
+    grid-column: auto;
+    height: 520px;
+  }
+  .design-ngay-chung-doi.wedding-page .wedding-hero-copy {
+    text-align: center;
+  }
+  .design-ngay-chung-doi.wedding-page .wedding-hero-image {
+    height: 520px;
+  }
+  .design-dem-sao.wedding-page .wedding-hero-image {
+    width: min(430px, 90%);
+    margin: auto;
+  }
+  .design-thu-tinh.wedding-page .wedding-hero-copy {
+    margin: 0;
+    padding: 30px 22px;
+  }
+  .design-thu-tinh.wedding-page .wedding-hero-image {
+    width: 90%;
+    margin: -60px auto 0;
+    height: 490px;
+  }
+  .design-khoanh-khac.wedding-page .wedding-hero {
+    min-height: 760px;
+    padding: 50px 28px;
+  }
+  .design-ben-nhau.wedding-page .wedding-hero {
+    gap: 0;
+    padding-top: 0;
+  }
+  .design-ben-nhau.wedding-page .wedding-hero-image {
+    width: calc(100% + 48px);
+    height: 500px;
+  }
+  .design-ben-nhau.wedding-page .wedding-hero-copy {
+    margin-top: -70px;
+    padding: 28px 20px;
+  }
+  .design-ngay-chung-doi.wedding-page .wedding-story-layout,
+  .design-ben-nhau.wedding-page .wedding-story-layout {
+    grid-template-columns: 1fr;
+  }
+  .design-vuon-thuong.wedding-page .wedding-story {
+    border-radius: 140px 140px 12px 12px;
+  }
+}
+@media (max-width: 480px) {
+  .wedding-page[class*="design-"] .wedding-hero-copy h1 {
+    font-size: 40px;
+  }
+  .design-vuon-thuong.wedding-page .wedding-hero-image {
+    width: 82%;
+    height: 380px;
+    border-width: 7px;
+  }
+  .design-song-hy.wedding-page .wedding-hero-copy {
+    padding: 30px 15px;
+  }
+  .design-song-hy.wedding-page .wedding-hero-image {
+    height: 460px;
+  }
+  .design-nang-thu.wedding-page .wedding-hero-image,
+  .design-ngay-chung-doi.wedding-page .wedding-hero-image {
+    height: 440px;
+  }
+  .design-loi-hen.wedding-page .wedding-hero-image {
+    height: 260px;
+  }
+  .design-thu-tinh.wedding-page .wedding-hero-image {
+    height: 410px;
+  }
+  .design-khoanh-khac.wedding-page .wedding-hero {
+    min-height: 740px;
+  }
+  .design-ben-nhau.wedding-page .wedding-hero-image {
+    height: 400px;
+  }
+  .hero-design-caption {
+    left: 20px;
+    right: 20px;
+    font-size: 10px;
+    bottom: 15px;
+  }
+  .design-loi-hen.wedding-page .wedding-hero-copy h1,
+  .design-ben-nhau.wedding-page .wedding-hero-copy h1 {
+    font-size: 32px;
+  }
+}
+
+/* Keep decorative foliage clipped and cinematic photos independent of old layout rules. */
+.hero-botanical-frame {
+  overflow: clip;
+}
+.design-khoanh-khac.wedding-page .wedding-hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  order: 0;
+}
+.design-khoanh-khac.wedding-page .wedding-hero-copy {
+  margin: 0;
+}
+.design-ben-nhau.wedding-page .wedding-hero {
+  align-items: center;
+}
+.design-ben-nhau.wedding-page .wedding-hero-image {
+  order: 0;
+}
+@media (max-width: 800px) {
+  .design-khoanh-khac.wedding-page .wedding-hero {
+    flex-direction: row;
+  }
+}
+.design-song-hy .invitation-door > span {
+  border-radius: 0;
+  border-width: 5px;
+}
+.design-song-hy .invitation-door svg,
+.design-dem-sao .invitation-door svg {
+  display: none;
+}
+.design-dem-sao .invitation-door {
+  background-image: radial-gradient(circle, #dcc89366 1px, transparent 2px);
+  background-size: 38px 45px;
+}
+.design-dem-sao .wedding-petals i {
+  background: var(--tone);
+  border-radius: 0;
+  clip-path: polygon(
+    50% 0,
+    60% 40%,
+    100% 50%,
+    60% 60%,
+    50% 100%,
+    40% 60%,
+    0 50%,
+    40% 40%
+  );
+}
+.design-song-hy .wedding-petals i {
+  background: var(--tone);
+  border-radius: 0;
+}
+.design-loi-hen .wedding-petals,
+.design-thu-tinh .wedding-petals {
+  display: none;
+}
+.design-ben-nhau.wedding-page .wedding-hero-image {
+  margin-inline: -40px;
+}
+@media (max-width: 800px) {
+  .design-ben-nhau.wedding-page .wedding-hero-image {
+    margin-inline: -24px;
+  }
+}

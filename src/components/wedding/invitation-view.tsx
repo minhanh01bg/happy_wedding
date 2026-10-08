@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { invitationDesign } from "@/lib/invitation-designs";
 import type { CSSProperties } from "react";
 import { demonstrationPhotos, weddingImageSource } from "@/lib/wedding-images";
 import { weddingCalendarUrl } from "@/lib/wedding-calendar";
@@ -17,6 +18,7 @@ import { Music } from "./music";
 import { InvitationMotion } from "./invitation-motion";
 import { InvitationAlbum } from "./invitation-album";
 import { GiftAccounts, type GiftAccount } from "./gift-accounts";
+import { Botanical } from "./template-card";
 import { InvitationOpening } from "./invitation-opening";
 
 export function InvitationView({
@@ -34,6 +36,7 @@ export function InvitationView({
   preview?: boolean;
   removeBranding?: boolean;
 }) {
+  const design = invitationDesign(invitation.template);
   const events = readEvents(invitation.eventsJson);
   const photos = demonstrationPhotos(
     readPhotos(invitation.photosJson),
@@ -77,9 +80,11 @@ export function InvitationView({
   return (
     <InvitationMotion>
       <article
-        className={`wedding-page palette-${invitation.template.palette} layout-${invitation.template.layout}`}
+        className={`wedding-page palette-${invitation.template.palette} layout-${invitation.template.layout} design-${design.key}`}
       >
         <InvitationOpening
+          variant={design.opening}
+          motif={design.motif}
           groom={invitation.groom}
           bride={invitation.bride}
           date={dateLabel(invitation.weddingDate)}
@@ -107,6 +112,10 @@ export function InvitationView({
           )}
         </nav>
         <section className="wedding-hero">
+          <div className="hero-botanical-frame" aria-hidden="true">
+            <Botanical />
+            <Botanical />
+          </div>
           <div className="wedding-petals" aria-hidden="true">
             {Array.from({ length: 24 }, (_, i) => (
               <i
@@ -123,6 +132,9 @@ export function InvitationView({
             ))}
           </div>
           <div className="wedding-hero-copy">
+            <span className="wedding-design-mark" aria-hidden="true">
+              {design.motif}
+            </span>
             <p className="eyebrow">CHÚNG MÌNH KẾT HÔN</p>
             <h1 tabIndex={-1}>
               {invitation.groom}
@@ -155,8 +167,11 @@ export function InvitationView({
               priority
             />
           </div>
+          <span className="hero-design-caption" aria-hidden="true">
+            {invitation.groom} &amp; {invitation.bride} · Ngày mình chung đôi
+          </span>
         </section>
-        <section className="wedding-section">
+        <section className="wedding-section wedding-countdown">
           <p className="eyebrow">CHÚNG MÌNH SẮP CHUNG MỘT NHÀ</p>
           <h2>Cùng đếm ngược ngày vui</h2>
           <Countdown date={invitation.weddingDate.toISOString()} />

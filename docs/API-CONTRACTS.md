@@ -162,3 +162,7 @@ Giao diện 07/10/2026: spotlight/cascade trang chủ và bốn lớp ảnh phot
 Demo public và preview đều render hộp QR minh họa khi isDemo và chưa có gift account; không tạo tài khoản ngân hàng, ghi DB hay thay API chuyển khoản.
 
 Gift UI mở QR trong dialog, không thay endpoint/VietQR URL hoặc cách sao chép số tài khoản. QR demo vẫn được ghi rõ không dùng chuyển khoản.
+
+### Landing studio — 08/10/2026
+
+Trang chủ bổ sung showcase năm ảnh cưới minh họa ghim theo cuộn, ảnh mở thành hình quạt; bốn thẻ lợi ích, FAQ dùng native details và bố cục editorial. Tham khảo preview công khai Showcase Equator / Carousel Spotlight của https://www.getlayers.ai/; không dùng mã nguồn/prompt Premium. Nội dung catalog vẫn đọc server, animation chỉ tăng cường client qua HomeMotion, giữ HTML hiển thị khi không có JS. Reduced motion bỏ ghim và chuyển động. Các CTA dẫn tới catalog, thiệp mẫu và tạo bản nháp; không thay API, giá, entitlement hay dữ liệu khách hàng.

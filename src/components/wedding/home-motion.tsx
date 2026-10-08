@@ -15,12 +15,14 @@ export function HomeMotion({ children }: { children: ReactNode }) {
     const cards = Array.from(
       container.querySelectorAll<HTMLElement>(".template-card"),
     );
+    const showcase = container.querySelector<HTMLElement>(".love-showcase");
     let frame = 0;
     let pointer: { element: HTMLElement; x: number; y: number } | null = null;
     const clear = () => {
       cancelAnimationFrame(frame);
       frame = 0;
       pointer = null;
+      showcase?.style.removeProperty("--showcase-spread");
       [hero, ...cards].forEach((element) => {
         [
           "--light-x",
@@ -39,6 +41,12 @@ export function HomeMotion({ children }: { children: ReactNode }) {
         const bounds = hero.getBoundingClientRect();
         const progress = Math.max(0, Math.min(1, -bounds.top / bounds.height));
         hero.style.setProperty("--hero-travel", `${progress * -65}px`);
+      }
+      if (showcase) {
+        const bounds = showcase.getBoundingClientRect();
+        const distance = Math.max(1, bounds.height - innerHeight);
+        const progress = Math.max(0, Math.min(1, -bounds.top / distance));
+        showcase.style.setProperty("--showcase-spread", progress.toFixed(3));
       }
       if (pointer && fine.matches) {
         const { element, x, y } = pointer;
@@ -118,7 +126,7 @@ export function HomeMotion({ children }: { children: ReactNode }) {
     );
     container
       .querySelectorAll(
-        ".hero-copy > *, .hero-visual, .section-heading-row, .template-card, .story-image, .story-copy, .steps-grid > article, .closing-cta > *",
+        ".hero-copy > *, .hero-visual, .section-heading-row, .template-card, .story-image, .story-copy, .steps-grid > article, .benefits-intro, .benefits-grid article, .studio-faq > div, .closing-cta > *",
       )
       .forEach((element) => observer.observe(element));
     const preference = () => {

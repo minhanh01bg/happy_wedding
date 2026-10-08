@@ -1030,3 +1030,64 @@ test("home spotlight responds to pointer and respects reduced motion", async ({
   ).toBe(true);
   await expect(page.locator("h1")).toBeVisible();
 });
+
+test("landing photo showcase fans out with scroll and FAQ works by keyboard", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (/hydrated|hydration/i.test(message.text())) errors.push(message.text());
+  });
+  await page.goto("/");
+  const showcase = page.locator(".love-showcase");
+  await expect(showcase.locator("figure")).toHaveCount(5);
+  await page.evaluate(() => {
+    const element = document.querySelector(".love-showcase")!;
+    window.scrollTo({
+      top: element.getBoundingClientRect().top + scrollY,
+      behavior: "instant",
+    });
+  });
+  const first = showcase.locator("figure").first();
+  await expect
+    .poll(() =>
+      showcase.evaluate((el) => el.style.getPropertyValue("--showcase-spread")),
+    )
+    .toBe("0.000");
+  const before = await first.evaluate((el) => getComputedStyle(el).transform);
+  await page.evaluate(() => scrollBy({ top: 300, behavior: "instant" }));
+  await expect
+    .poll(() => first.evaluate((el) => getComputedStyle(el).transform))
+    .not.toBe(before);
+  const summary = page.locator(".faq-list summary").first();
+  await summary.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".faq-list details").first()).toHaveAttribute(
+    "open",
+    "",
+  );
+  await expect(page.locator(".faq-list details p").first()).toBeVisible();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect
+    .poll(() =>
+      showcase.evaluate((el) => el.style.getPropertyValue("--showcase-spread")),
+    )
+    .toBe("");
+  expect(
+    await showcase
+      .locator(".showcase-stage")
+      .evaluate((el) => getComputedStyle(el).position),
+  ).toBe("relative");
+  await page.setViewportSize({ width: 375, height: 812 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await expect(showcase.getByRole("link")).toHaveAttribute(
+    "href",
+    "/w/thiep-mau",
+  );
+  expect(errors).toEqual([]);
+});

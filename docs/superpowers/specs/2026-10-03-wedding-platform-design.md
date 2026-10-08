@@ -247,3 +247,7 @@ Trang chủ hỗ trợ spotlight/độ nghiêng theo chuột chính xác và rev
 Thiệp demo công khai `/w/thiep-mau` cũng hiển thị mục Quà mừng và hộp hai QR minh họa khi chưa có tài khoản, giống trang preview. Thiệp khách không có tài khoản vẫn ẩn mục này; tài khoản đã cấu hình dùng QR thật như trước.
 
 Hộp quà mở native dialog thay cho chèn QR vào trang. Nắp bật, glow và 40 hạt confetti/trái tim chạy một lần khi mở; QR xuất hiện sau nhịp mở. Modal có tên, focus trap native, Escape/nút đóng/backdrop, trả focus, khóa cuộn nền và cuộn riêng trên mobile. Reduced motion hiện QR ngay và bỏ burst/reveal. Tài khoản thật và fallback tải QR/sao chép giữ nguyên.
+
+### Landing studio — 08/10/2026
+
+Trang chủ bổ sung showcase năm ảnh cưới minh họa ghim theo cuộn, ảnh mở thành hình quạt; bốn thẻ lợi ích, FAQ dùng native details và bố cục editorial. Tham khảo preview công khai Showcase Equator / Carousel Spotlight của https://www.getlayers.ai/; không dùng mã nguồn/prompt Premium. Nội dung catalog vẫn đọc server, animation chỉ tăng cường client qua HomeMotion, giữ HTML hiển thị khi không có JS. Reduced motion bỏ ghim và chuyển động. Các CTA dẫn tới catalog, thiệp mẫu và tạo bản nháp; không thay API, giá, entitlement hay dữ liệu khách hàng.

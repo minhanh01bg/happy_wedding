@@ -71,3 +71,7 @@ Toàn bộ select ứng dụng chuyển sang DropdownField/Select của template
 Hộp quà demo dùng isDemo thay vì kết hợp preview/isDemo để bản demo công khai có cùng trải nghiệm. Không mở fallback minh họa cho thiệp khách thông thường.
 
 Gift reveal dùng native dialog cho top layer/focus trap và CSS keyframes một lần cho lid/glow/confetti. Không thêm dependency, không dùng random lúc SSR; preference giảm motion bỏ animation. Dialog cuộn độc lập và khôi phục overflow nền/focus khi đóng.
+
+### Landing studio — 08/10/2026
+
+Trang chủ bổ sung showcase năm ảnh cưới minh họa ghim theo cuộn, ảnh mở thành hình quạt; bốn thẻ lợi ích, FAQ dùng native details và bố cục editorial. Tham khảo preview công khai Showcase Equator / Carousel Spotlight của https://www.getlayers.ai/; không dùng mã nguồn/prompt Premium. Nội dung catalog vẫn đọc server, animation chỉ tăng cường client qua HomeMotion, giữ HTML hiển thị khi không có JS. Reduced motion bỏ ghim và chuyển động. Các CTA dẫn tới catalog, thiệp mẫu và tạo bản nháp; không thay API, giá, entitlement hay dữ liệu khách hàng.

@@ -220,3 +220,12 @@ Thay details inline bằng button/native dialog: backdrop blur, nắp bật/glow
 Lần E2E đầu phát hiện Math.sin có sai số chuỗi CSS giữa Node và Chromium; dừng chạy, làm tròn tọa độ nguyên và thêm bắt console hydration trong test hai route. `pnpm check` cuối exit 0 (126/126, 17 files, lint/typecheck), `pnpm build` cuối exit 0; `pnpm test:e2e` cuối exit 0 (22/22 Chromium, 3.2m), log không có hydrated. Luồng QR thật xác nhận dữ liệu/fallback tải lỗi rồi đóng modal trước RSVP; demo hai route xác nhận QR, autofocus close, Escape/return focus, mở lại reduced motion không animation, backdrop đóng. Logs `/tmp/gift-modal-check-final.log`, `/tmp/gift-modal-build-final.log`, `/tmp/gift-modal-e2e-final.log`.
 
 Playwright dev 1440/375px mở hộp, xem ảnh burst/modal, không page errors; modal mobile width347/height731 và nội dung cuộn1403, Escape trả focus. Đã xem screenshots `/tmp/gift-modal-burst.png`, `/tmp/gift-modal-desktop.png`, `/tmp/gift-modal-mobile.png`; sửa vị trí hộp tránh che eyebrow và kiểm tra lại. Dev 3200 đã khởi động lại từ cache mới sau build; không deploy production hoặc kiểm tra iPhone thật.
+
+### 08/10/2026 — nâng cấp landing studio
+
+- Tham khảo trực tiếp preview công khai GetLayers Showcase Equator và hướng Carousel Spotlight; xây showcase ảnh ghim theo cuộn và hình quạt bằng CSS/RAF riêng, không dùng source/prompt Premium. Bổ sung thẻ lợi ích, FAQ native details, typography, khoảng cách và CTA.
+- `pnpm check`: exit 0, 126/126 tests trong 17 files; lint có một warning đã tồn tại tại `music.tsx:55`, không có lỗi. `pnpm build`: exit 0.
+- `pnpm test:e2e`: lượt gate cuối exit 0, **23/23 passed (3.4m)**. Trước đó đã sửa test đọc vị trí trước khi smooth scroll xong bằng instant scroll. Một lượt có timeout 120s ở luồng nghiệp vụ dài nhất; retry riêng exit 0, sau đó chạy lại full gate và tất cả đều đạt. `pnpm exec tsc --noEmit` trên test cuối: exit 0.
+- Manual Chromium ở 375/768/1024/1440 px: ảnh hero decode, không tràn ngang; xem screenshot và chỉnh căn giữa album mobile. Kiểm tra pageerror/console và hydration: không lỗi trong landing review. Tắt JavaScript ở public URL: HTTP 200, h1, năm ảnh và bốn FAQ vẫn hiện; không tràn ngang.
+- Native FAQ hỗ trợ Enter; scroll làm thay đổi transform ảnh; reduced motion xóa biến cuộn, bỏ sticky và giữ nội dung đọc được. Regression mới chứng minh các hành vi này.
+- Ảnh bằng chứng: `docs/previews/home-desktop.png`, `home-mobile.png`, `home-showcase.png`. Dev preview port 3200 đã khởi động lại sau build bằng cache mới. Không deploy production; chưa kiểm tra Safari/iPhone thật.

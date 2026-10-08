@@ -1,7 +1,7 @@
 import { HomeMotion } from "@/components/wedding/home-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { weddingImageSource } from "@/lib/wedding-images";
+import { DEMO_PHOTOS, weddingImageSource } from "@/lib/wedding-images";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -30,7 +30,7 @@ export default async function Home() {
     <>
       <Header />
       <HomeMotion>
-        <main>
+        <main className="studio-landing">
           <section className="home-hero">
             <div className="hero-copy">
               <p className="eyebrow">
@@ -117,11 +117,120 @@ export default async function Home() {
               ))}
             </div>
           </section>
+          <section className="love-showcase" aria-labelledby="showcase-title">
+            <div className="showcase-stage">
+              <div className="showcase-heading">
+                <p className="eyebrow">ĐỂ CÂU CHUYỆN ĐƯỢC CẤT LỜI</p>
+                <h2 id="showcase-title">
+                  Một ngày trọng đại.
+                  <br />
+                  <em>Vạn điều muốn kể.</em>
+                </h2>
+                <p>
+                  Những tấm ảnh, một bản nhạc, lời hẹn chung đôi.
+                  <br />
+                  Đặt vào tấm thiệp, giữ lại thành kỷ niệm.
+                </p>
+              </div>
+              <div
+                className="showcase-photos"
+                aria-label="Album ảnh cưới minh họa"
+              >
+                {DEMO_PHOTOS.slice(1, 6).map((photo, index) => (
+                  <figure
+                    key={photo}
+                    className={`showcase-print showcase-print-${index}`}
+                  >
+                    <div>
+                      <Image
+                        src={photo}
+                        alt={`Khoảnh khắc cưới minh họa ${index + 1}`}
+                        fill
+                        sizes="(max-width: 700px) 60vw, 25vw"
+                      />
+                    </div>
+                    <figcaption>
+                      {
+                        [
+                          "Nụ cười của chúng mình",
+                          "Chỉ cần có nhau",
+                          "Ngày mình chung đôi",
+                          "Một đời thương",
+                          "Hẹn nhau mãi về sau",
+                        ][index]
+                      }
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+              <Link href="/w/thiep-mau" className="showcase-link text-link">
+                Mở thiệp và cảm nhận <ArrowUpRight size={18} />
+              </Link>
+              <span className="showcase-scroll" aria-hidden="true">
+                CUỘN ĐỂ LƯU GIỮ YÊU THƯƠNG ↓
+              </span>
+            </div>
+          </section>
+          <section
+            className="studio-benefits section"
+            aria-labelledby="benefits-title"
+          >
+            <div className="benefits-intro">
+              <p className="eyebrow">ĐẸP TRONG TỪNG CHI TIẾT</p>
+              <h2 id="benefits-title">
+                Chăm chút lời mời.
+                <br />
+                <em>Thảnh thơi ngày cưới.</em>
+              </h2>
+              <p>
+                Từ lúc gửi thiệp đến khi gặp nhau, mọi điều cần thiết đã ở ngay
+                trong lời mời.
+              </p>
+              <Link href="/templates" className="text-link">
+                Khám phá mẫu thiệp <ArrowRight size={18} />
+              </Link>
+            </div>
+            <div className="benefits-grid">
+              {[
+                {
+                  icon: Heart,
+                  number: "01",
+                  title: "Có câu chuyện của hai bạn",
+                  body: "Album ảnh, những dấu mốc và nhạc nền làm nên một lời mời mang dấu ấn riêng.",
+                },
+                {
+                  icon: Mail,
+                  number: "02",
+                  title: "Gửi đi thật nhẹ nhàng",
+                  body: "Chia sẻ đường link qua Zalo, Messenger hoặc gửi lời mời riêng cho từng khách.",
+                },
+                {
+                  icon: Users,
+                  number: "03",
+                  title: "Biết ai sẽ chung vui",
+                  body: "Khách xác nhận ngay trên thiệp. Hai bạn theo dõi và xuất danh sách tại trang quản lý.",
+                },
+                {
+                  icon: Sparkles,
+                  number: "04",
+                  title: "Đủ đầy cho ngày trọng đại",
+                  body: "Lịch tiệc, chỉ đường, lời chúc và QR mừng cưới cùng hiện diện trong một tấm thiệp.",
+                },
+              ].map(({ icon: Icon, number, title, body }) => (
+                <article key={number}>
+                  <span className="benefit-number">{number}</span>
+                  <Icon size={25} strokeWidth={1.3} />
+                  <h3>{title}</h3>
+                  <p>{body}</p>
+                </article>
+              ))}
+            </div>
+          </section>
           <section className="story-section">
             <div className="story-image">
               <Image
-                src="/images/flowers.jpg"
-                alt="Hoa và chi tiết trang trí tiệc cưới"
+                src="/images/wedding-couple-traditional.jpg"
+                alt="Khoảnh khắc cưới trong trang phục truyền thống"
                 fill
                 sizes="(max-width: 800px) 100vw, 45vw"
               />
@@ -183,6 +292,44 @@ export default async function Home() {
                   <h3>{s.title}</h3>
                   <p>{s.body}</p>
                 </article>
+              ))}
+            </div>
+          </section>
+          <section className="studio-faq section" aria-labelledby="faq-title">
+            <div>
+              <p className="eyebrow">TRƯỚC KHI BẮT ĐẦU</p>
+              <h2 id="faq-title">
+                Một vài điều
+                <br />
+                <em>bạn muốn biết.</em>
+              </h2>
+            </div>
+            <div className="faq-list">
+              {[
+                [
+                  "Tôi có thể xem thử trước khi mua không?",
+                  "Có. Bạn có thể tạo bản nháp và xem thử trước khi chọn gói. Thiệp được xuất bản sau khi gói dịch vụ được kích hoạt.",
+                ],
+                [
+                  "Khách mời có cần tải ứng dụng không?",
+                  "Không cần. Khách mở đường link trên trình duyệt để xem thông tin, chỉ đường, gửi lời chúc và xác nhận tham dự.",
+                ],
+                [
+                  "Tôi có thể dùng ảnh và nhạc của mình không?",
+                  "Bạn có thể tải ảnh, chỉnh nội dung và chọn nhạc trong phần biên tập thiệp. Số lượng ảnh phụ thuộc vào quyền lợi của gói dịch vụ.",
+                ],
+                [
+                  "Làm sao biết ai sẽ đến dự tiệc?",
+                  "Phản hồi của khách được lưu trong trang quản lý thiệp. Bạn có thể theo dõi xác nhận tham dự và xuất danh sách để chuẩn bị cho ngày cưới.",
+                ],
+              ].map(([question, answer]) => (
+                <details key={question}>
+                  <summary>
+                    {question}
+                    <span aria-hidden="true">+</span>
+                  </summary>
+                  <p>{answer}</p>
+                </details>
               ))}
             </div>
           </section>

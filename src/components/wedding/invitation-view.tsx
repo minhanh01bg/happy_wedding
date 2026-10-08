@@ -1,7 +1,6 @@
-import Image from "next/image";
+import { Fragment } from "react";
 import { invitationDesign } from "@/lib/invitation-designs";
-import type { CSSProperties } from "react";
-import { demonstrationPhotos, weddingImageSource } from "@/lib/wedding-images";
+import { demonstrationPhotos } from "@/lib/wedding-images";
 import { weddingCalendarUrl } from "@/lib/wedding-calendar";
 import Link from "next/link";
 import type {
@@ -19,7 +18,7 @@ import { InvitationMotion } from "./invitation-motion";
 import { InvitationStory } from "./invitation-story";
 import { InvitationAlbum } from "./invitation-album";
 import { GiftAccounts, type GiftAccount } from "./gift-accounts";
-import { Botanical } from "./template-card";
+import { InvitationHero } from "./invitation-hero";
 import { InvitationOpening } from "./invitation-opening";
 
 export function InvitationView({
@@ -70,6 +69,99 @@ export function InvitationView({
     `Lễ cưới ${invitation.groom} & ${invitation.bride}`,
     mainEvent ? `${mainEvent.venue}, ${mainEvent.address}` : "",
   );
+  const sections = {
+    countdown: (
+      <section className="wedding-section wedding-countdown">
+        <p className="eyebrow">CHÚNG MÌNH SẮP CHUNG MỘT NHÀ</p>
+        <h2>Cùng đếm ngược ngày vui</h2>
+        <Countdown date={invitation.weddingDate.toISOString()} />
+        <a
+          className="text-link"
+          href={calendarUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ marginTop: 25 }}
+        >
+          <CalendarPlus size={16} />
+          Thêm ngày cưới vào lịch
+        </a>
+      </section>
+    ),
+    story: (
+      <InvitationStory
+        invitation={invitation}
+        design={design.key}
+        photos={photos}
+      />
+    ),
+    events: (
+      <section className="wedding-section" id="lich-tiec">
+        <p className="eyebrow">TRÂN TRỌNG KÍNH MỜI</p>
+        <h2>Ngày vui, có bạn.</h2>
+        <div className="event-grid">
+          {events.map((event, i) => (
+            <article
+              className="event-card"
+              key={`${event.title}-${event.date}-${event.venue}`}
+            >
+              <span className="event-day-art" aria-hidden="true">
+                {dateLabel(event.date).split("/")[0]}
+              </span>
+              <p className="eyebrow">0{i + 1} / LỊCH TIỆC</p>
+              <h3 style={{ marginTop: 20 }}>{event.title}</h3>
+              <strong>{dateLabel(event.date, true)}</strong>
+              <p>{event.venue}</p>
+              <p>{event.address}</p>
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${event.venue}, ${event.address}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <MapPin size={16} />
+                Chỉ đường đến tiệc
+              </a>
+              <a
+                href={weddingCalendarUrl(
+                  event.date,
+                  `${event.title} — ${invitation.groom} & ${invitation.bride}`,
+                  `${event.venue}, ${event.address}`,
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <CalendarPlus size={16} aria-hidden="true" />
+                Thêm tiệc này vào lịch
+              </a>
+            </article>
+          ))}
+        </div>
+      </section>
+    ),
+    album: !!photos.length && (
+      <section className="wedding-section" id="album">
+        <p className="eyebrow">MỖI KHOẢNH KHẮC, MỘT KỶ NIỆM</p>
+        <h2>Những khoảnh khắc của hai người</h2>
+        <InvitationAlbum
+          design={design.key}
+          photos={photos}
+          couple={`${invitation.groom} & ${invitation.bride}`}
+        />
+      </section>
+    ),
+  };
+  const orders: Record<string, (keyof typeof sections)[]> = {
+    "loi-yeu": ["countdown", "story", "events", "album"],
+    "vuon-thuong": ["story", "album", "countdown", "events"],
+    "song-hy": ["events", "countdown", "story", "album"],
+    "ngay-chung-doi": ["story", "events", "album", "countdown"],
+    "dem-sao": ["countdown", "album", "story", "events"],
+    "nang-thu": ["album", "story", "events", "countdown"],
+    "loi-hen": ["events", "story", "countdown", "album"],
+    "thu-tinh": ["story", "countdown", "album", "events"],
+    "khoanh-khac": ["album", "countdown", "story", "events"],
+    "ben-nhau": ["story", "album", "events", "countdown"],
+  };
+  const sectionOrder = orders[design.key] || orders["loi-yeu"];
   return (
     <InvitationMotion>
       <article
@@ -77,6 +169,7 @@ export function InvitationView({
       >
         <InvitationOpening
           variant={design.opening}
+          design={design.key}
           motif={design.motif}
           groom={invitation.groom}
           bride={invitation.bride}
@@ -104,138 +197,15 @@ export function InvitationView({
             <a href="#gifts">Mừng cưới</a>
           )}
         </nav>
-        <section className="wedding-hero">
-          <div className="hero-botanical-frame" aria-hidden="true">
-            <Botanical />
-            <Botanical />
-          </div>
-          <div className="wedding-petals" aria-hidden="true">
-            {Array.from({ length: 24 }, (_, i) => (
-              <i
-                key={i}
-                style={
-                  {
-                    "--leaf-left": `${((i * 37) % 96) + 2}%`,
-                    "--leaf-size": `${6 + (i % 5) * 2}px`,
-                    "--leaf-duration": `${11 + (i % 7)}s`,
-                    "--leaf-delay": `${-i * 0.73}s`,
-                  } as CSSProperties
-                }
-              />
-            ))}
-          </div>
-          <div className="wedding-hero-copy">
-            <span className="wedding-design-mark" aria-hidden="true">
-              {design.motif}
-            </span>
-            <p className="eyebrow">CHÚNG MÌNH KẾT HÔN</p>
-            <h1 tabIndex={-1}>
-              {invitation.groom}
-              <em>&</em>
-              {invitation.bride}
-            </h1>
-            <p>{invitation.headline}</p>
-            <p className="wedding-date">
-              {dateLabel(invitation.weddingDate).replaceAll("/", " . ")}
-            </p>
-            {guestName && (
-              <p className="guest-name">Trân trọng kính mời {guestName}</p>
-            )}
-            <a className="button" href="#rsvp">
-              Đến chung vui cùng chúng mình
-            </a>
-          </div>
-          <div className="wedding-hero-image">
-            <Image
-              src={weddingImageSource(invitation.coverUrl)}
-              alt={`${invitation.groom} và ${invitation.bride} — ảnh thiệp cưới`}
-              fill
-              sizes={
-                invitation.template.layout === "cinematic"
-                  ? "(max-width:1440px) 100vw, 1440px"
-                  : invitation.template.layout === "minimal"
-                    ? "(max-width:960px) 90vw, 880px"
-                    : "(max-width:800px) 95vw, 550px"
-              }
-              priority
-            />
-          </div>
-          <span className="hero-design-caption" aria-hidden="true">
-            {invitation.groom} &amp; {invitation.bride} · Ngày mình chung đôi
-          </span>
-        </section>
-        <section className="wedding-section wedding-countdown">
-          <p className="eyebrow">CHÚNG MÌNH SẮP CHUNG MỘT NHÀ</p>
-          <h2>Cùng đếm ngược ngày vui</h2>
-          <Countdown date={invitation.weddingDate.toISOString()} />
-          <a
-            className="text-link"
-            href={calendarUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ marginTop: 25 }}
-          >
-            <CalendarPlus size={16} />
-            Thêm ngày cưới vào lịch
-          </a>
-        </section>
-        <InvitationStory
+        <InvitationHero
           invitation={invitation}
           design={design.key}
           photos={photos}
+          guestName={guestName}
         />
-        <section className="wedding-section" id="lich-tiec">
-          <p className="eyebrow">TRÂN TRỌNG KÍNH MỜI</p>
-          <h2>Ngày vui, có bạn.</h2>
-          <div className="event-grid">
-            {events.map((event, i) => (
-              <article
-                className="event-card"
-                key={`${event.title}-${event.date}-${event.venue}`}
-              >
-                <span className="event-day-art" aria-hidden="true">
-                  {dateLabel(event.date).split("/")[0]}
-                </span>
-                <p className="eyebrow">0{i + 1} / LỊCH TIỆC</p>
-                <h3 style={{ marginTop: 20 }}>{event.title}</h3>
-                <strong>{dateLabel(event.date, true)}</strong>
-                <p>{event.venue}</p>
-                <p>{event.address}</p>
-                <a
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${event.venue}, ${event.address}`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <MapPin size={16} />
-                  Chỉ đường đến tiệc
-                </a>
-                <a
-                  href={weddingCalendarUrl(
-                    event.date,
-                    `${event.title} — ${invitation.groom} & ${invitation.bride}`,
-                    `${event.venue}, ${event.address}`,
-                  )}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <CalendarPlus size={16} aria-hidden="true" />
-                  Thêm tiệc này vào lịch
-                </a>
-              </article>
-            ))}
-          </div>
-        </section>
-        {!!photos.length && (
-          <section className="wedding-section" id="album">
-            <p className="eyebrow">MỖI KHOẢNH KHẮC, MỘT KỶ NIỆM</p>
-            <h2>Những khoảnh khắc của hai người</h2>
-            <InvitationAlbum
-              design={design.key}
-              photos={photos}
-              couple={`${invitation.groom} & ${invitation.bride}`}
-            />
-          </section>
-        )}
+        {sectionOrder.map((section) => (
+          <Fragment key={section}>{sections[section]}</Fragment>
+        ))}
         <section className="wedding-section" id="rsvp">
           <p className="eyebrow">SỰ HIỆN DIỆN CỦA BẠN LÀ NIỀM VUI</p>
           <h2>Bạn sẽ đến chứ?</h2>

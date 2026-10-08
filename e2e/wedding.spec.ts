@@ -368,7 +368,7 @@ test("invitation album restores focus and respects reduced motion on mobile", as
   await expect(firstPhoto).toBeFocused();
   expect(
     await page
-      .locator(".wedding-hero-image img")
+      .locator("[data-hero-photo] img")
       .evaluate((image) => getComputedStyle(image).animationName),
   ).toBe("none");
   expect(
@@ -385,9 +385,9 @@ test("invitation album restores focus and respects reduced motion on mobile", as
     ),
   ).toBe(true);
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await expect(page.locator(".wedding-hero-image img")).toHaveCSS(
+  await expect(page.locator("[data-hero-photo] img")).toHaveCSS(
     "animation-name",
-    "wedding-cover",
+    "none",
   );
   await firstPhoto.click();
   await page.getByRole("button", { name: "Đóng album" }).click();
@@ -1129,24 +1129,12 @@ test("all ten catalog templates have complete distinct invitations on desktop an
       .click();
     await expect(opening).not.toBeVisible();
     await expect(page.locator(".wedding-hero h1")).toBeFocused();
-    await expect(page.locator(".wedding-hero-image img")).toBeVisible();
+    await expect(page.locator("[data-hero-photo] img").first()).toBeVisible();
     compositions.add(
       await page.locator(".wedding-hero").evaluate((el) => {
-        const hero = getComputedStyle(el);
-        const photo = getComputedStyle(
-          el.querySelector(".wedding-hero-image")!,
-        );
-        const copy = getComputedStyle(el.querySelector(".wedding-hero-copy")!);
-        return [
-          hero.display,
-          hero.flexDirection,
-          hero.gridTemplateColumns,
-          photo.borderRadius,
-          photo.position,
-          photo.height,
-          copy.textAlign,
-          copy.borderWidth,
-        ].join("|");
+        const tree = (node: Element): string =>
+          `${node.tagName}(${Array.from(node.children).map(tree).join(",")})`;
+        return tree(el);
       }),
     );
     storyStructures.add(
@@ -1174,6 +1162,12 @@ test("all ten catalog templates have complete distinct invitations on desktop an
         ),
         `${slug} at ${width}`,
       ).toBe(true);
+      if (slug === "loi-hen" && width === 375) {
+        await expect(page.locator("[data-hero-photo] img")).toHaveCSS(
+          "object-fit",
+          "contain",
+        );
+      }
       const gift = page.locator(".gift-box-trigger");
       await gift.click();
       await expect(page.locator(".gift-modal .gift-demo-card")).toHaveCount(2);

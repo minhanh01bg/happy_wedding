@@ -122,7 +122,7 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
     };
     const photos = Array.from(
       container.querySelectorAll<HTMLElement>(
-        ".wedding-hero-image, .wedding-story-photo, .wedding-album > button",
+        "[data-hero-photo], .wedding-story-photo, .wedding-album > button",
       ),
     );
     const story = container.querySelector<HTMLElement>(".wedding-photo-story");
@@ -218,13 +218,11 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
         entries.forEach(({ target, isIntersecting }) => {
           if (!isIntersecting) return;
           const element = target as HTMLElement;
-          if (element.classList.contains("wedding-hero-copy")) {
+          if (element.matches("[data-hero-copy]")) {
             Array.from(element.children).forEach((child, i) =>
               reveal(child as HTMLElement, i),
             );
-          } else if (
-            element.matches("[data-story-image], .wedding-hero-image")
-          ) {
+          } else if (element.matches("[data-story-image], [data-hero-photo]")) {
             revealPhoto(element);
           } else if (
             element.matches(".wedding-section > h2, .wedding-thanks > h2")
@@ -292,7 +290,7 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
       schedule();
       container
         .querySelectorAll(
-          "[data-story-image], .story-words, .wedding-story-photo, .wedding-story-copy, .wedding-hero-copy, .wedding-hero-image, .wedding-section, .wedding-thanks, .wedding-album > button, .wedding-section > h2, .wedding-thanks > h2",
+          "[data-story-image], .story-words, .wedding-story-photo, .wedding-story-copy, [data-hero-copy], [data-hero-photo], .wedding-section, .wedding-thanks, .wedding-album > button, .wedding-section > h2, .wedding-thanks > h2",
         )
         .forEach((element) => observer.observe(element));
     };

@@ -178,3 +178,7 @@ Mở đầu dùng cửa cho rose/garden/traditional/night/autumn, thư cho edito
 Mười `/preview/{slug}` đang hoạt động dùng cấu trúc câu chuyện và album theo thiết kế, không chỉ đổi palette. Album Thư tình có phân trang phía client; Đêm sao có spotlight theo hover/focus; Lời hẹn cuộn ngang; Bên nhau có accordion ảnh; Khoảnh khắc xếp lớp khi cuộn. Chọn ảnh tiếp tục mở cùng lightbox hỗ trợ Escape, bàn phím và vuốt. Không phát sinh endpoint, payload, mutation hay yêu cầu mua gói; RSVP preview vẫn bị vô hiệu hóa.
 
 Album nhận diện ảnh ngang sau khi tải để dành khung rộng hoặc giữ toàn bộ ảnh trong trang sách/spotlight/cinema; ảnh demo ngang có cấu hình trước để ổn định bố cục. Accordion desktop giãn ảnh đủ chiều cao khung và mở rộng bằng hover hoặc focus bàn phím; trên điện thoại dùng các khung dọc. Không đổi payload hoặc dữ liệu ảnh lưu.
+
+### Trình bày bìa theo mẫu — 08/10/2026
+
+Hero, trình tự các mục và chuyển động opening resolve từ layout/palette hiện có. Không thêm trường request/response, không đổi API hoặc điều kiện public/preview. Ảnh phụ hero đọc từ photosJson đã lưu, không tạo ảnh hoặc thông tin cặp đôi mới. Preview tiếp tục khóa gửi RSVP; quà demo không chứa tài khoản thật.

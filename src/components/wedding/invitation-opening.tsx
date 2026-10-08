@@ -5,6 +5,7 @@ import { Heart } from "lucide-react";
 
 export function InvitationOpening({
   variant = "doors",
+  design = "loi-yeu",
   motif = "♡",
   groom,
   bride,
@@ -13,6 +14,7 @@ export function InvitationOpening({
   hasMusic = false,
 }: {
   variant?: "doors" | "curtain" | "letter";
+  design?: string;
   motif?: string;
   groom: string;
   bride: string;
@@ -51,6 +53,16 @@ export function InvitationOpening({
         element
           .querySelectorAll<HTMLElement>(".invitation-door")
           .forEach((door, i) => {
+            const sign = i ? 1 : -1;
+            const treatments: Record<string, string> = {
+              "vuon-thuong": `translateX(${sign * 110}%) rotate(${sign * 12}deg)`,
+              "song-hy": `translateY(${sign * 115}%) scaleY(.8)`,
+              "ngay-chung-doi": `perspective(1400px) rotateY(${sign * 100}deg) translateX(${sign * 30}%)`,
+              "dem-sao": "scale(.05) rotate(80deg)",
+              "nang-thu": `translateY(-115%) rotate(${sign * 28}deg)`,
+              "thu-tinh": `translateY(${sign * 110}%) rotateX(${sign * 75}deg)`,
+              "ben-nhau": `translateX(${sign * 115}%) rotate(${sign * 8}deg)`,
+            };
             animations.push(
               door.animate(
                 [
@@ -60,21 +72,23 @@ export function InvitationOpening({
                   },
                   {
                     transform:
-                      variant === "curtain"
+                      treatments[design] ||
+                      (variant === "curtain"
                         ? `translateX(${i ? 45 : -45}%) scaleX(.85)`
                         : variant === "letter"
                           ? `translateY(${i ? 35 : -35}%) rotateX(${i ? -20 : 20}deg)`
-                          : `rotateY(${i ? 38 : -38}deg) translateX(${i ? 4 : -4}%)`,
+                          : `rotateY(${i ? 38 : -38}deg) translateX(${i ? 4 : -4}%)`),
                     opacity: 1,
                     offset: 0.55,
                   },
                   {
                     transform:
-                      variant === "curtain"
+                      treatments[design] ||
+                      (variant === "curtain"
                         ? `translateX(${i ? 110 : -110}%) scaleX(.5)`
                         : variant === "letter"
                           ? `translateY(${i ? 110 : -110}%) rotateX(${i ? -45 : 45}deg)`
-                          : `rotateY(${i ? 82 : -82}deg) translateX(${i ? 12 : -12}%)`,
+                          : `rotateY(${i ? 82 : -82}deg) translateX(${i ? 12 : -12}%)`),
                     opacity: 0,
                   },
                 ],

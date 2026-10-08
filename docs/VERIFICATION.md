@@ -252,3 +252,23 @@ Playwright dev 1440/375px mở hộp, xem ảnh burst/modal, không page errors;
 
 - Ảnh ngang được nhận diện bằng kích thước ảnh đã tải (ảnh demo có cấu hình ban đầu), dành khung rộng hoặc object-fit contain trong album sách/spotlight/cinema. Thêm test ảnh ngang Vườn thương và Thư tình. Accordion được kiểm tra chiều cao, mở rộng bằng hover/Tab, mở đúng lightbox và trả focus. Khung ảnh bên trong picture giữ đúng yêu cầu Image fill khi nút bên ngoài sticky.
 - Ảnh đối chiếu cuối: `docs/previews/template-story-compositions.jpg` và `docs/previews/template-album-compositions.jpg`.
+
+## Bìa và nhịp đọc riêng — 08/10/2026
+
+Tự đặt câu hỏi nghiệm thu:
+
+- **Bỏ màu đi có nhận ra mẫu không?** Hero dùng mười cây HTML khác nhau: vòm, báo hỷ, masthead báo, quỹ đạo, scrapbook, letterhead, phong bì, màn phim, diptych và chân dung/lời hứa. E2E so sánh cây DOM thay vì chỉ chữ/màu/CSS.
+- **Toàn trang có còn cùng một nhịp đọc không?** Mỗi mẫu có thứ tự riêng cho countdown/câu chuyện/lịch tiệc/album trong DOM; điều hướng và các anchor chính giữ nguyên. RSVP ở sau phần thông tin và album.
+- **Ảnh có phải của khách không?** Hero nhận cover và album đã lưu, không suy diễn mốc chuyện tình hoặc thay nội dung khách. Diptych chọn ảnh album khác cover, fallback cover nếu không có ảnh khác.
+- **Animation có ảnh hưởng người dùng bàn phím/ít chuyển động không?** Opening vẫn dùng native dialog, focus h1 sau đóng, Escape/skip và reduced motion bỏ animation; yêu cầu nhạc nằm trong click trước await.
+- **Có thể gọi là hoàn thành 95% một cách đo được không?** Không có thang chấm khách quan cho tỷ lệ này. Báo cáo các tiêu chí và kết quả kiểm tra thực tế thay cho số phần trăm tự ước lượng.
+
+`pnpm check`: lint không lỗi (cảnh báo ref Music có sẵn), TypeScript và 126/126 test qua. `pnpm build`: thành công. Bằng chứng trình duyệt và ảnh đối chiếu được bổ sung sau lượt kiểm tra cuối.
+
+Lượt đầy đủ `pnpm test:e2e`: **29/29 qua (4,5 phút)**. Rà soát Chromium mười bìa desktop, chụp mobile 375px và kiểm tra 320/375/844px: 30/30 trường hợp không tràn ngang, không pageerror; ghi nhận mười thứ tự DOM khác nhau. Ảnh đối chiếu: `docs/previews/template-hero-compositions.jpg`.
+
+Đối chiếu ảnh phát hiện bìa Lời hẹn cắt ảnh chân dung quá nhiều trong khung panorama. Đã chọn ảnh ngang từ album demo; các bìa demo còn lại phối ảnh theo phong cách (nghi lễ/vườn/polaroid/phim). Chỉ áp dụng khi là demo, cover vẫn là ảnh stock mặc định và ảnh được chọn đã có trong album; cover khách hoặc cover demo đã tùy chỉnh giữ nguyên. Gate cuối chạy lại check/build và nhóm E2E liên quan sau điều chỉnh ảnh.
+
+Sau chỉnh ảnh: `pnpm check` 126/126 qua; `pnpm build` thành công; nhóm E2E liên quan **7/7 qua (1,3 phút)** gồm mười mẫu, intro mobile, letter/curtain, nhạc và QR. Manual Chromium cuối chạy đủ mười mẫu, 30/30 kiểm tra chiều rộng và không pageerror; ảnh đối chiếu được chụp lại. Dev preview port 3200 khởi động từ cache mới. Chưa kiểm tra Safari/iPhone thật; chưa deploy production.
+
+Rà soát mobile bổ sung phát hiện panorama vẫn cắt mép người ở 375px. Khung mobile Lời hẹn đổi sang tỷ lệ 3:2 và object-fit contain; ảnh chụp cuối giữ cả hai người. E2E mười mẫu thêm assertion object-fit contain ở 375px và chạy lại **1/1 qua (32 giây)**. Manual cuối đủ mười mẫu/30 viewport-case qua, không pageerror. Gate check/build được chạy lại sau chỉnh CSS.

@@ -102,3 +102,11 @@ Lượt hoàn thiện hero trước đây vẫn dùng cùng cấu trúc câu chu
 Ảnh demo được chọn theo bố cục; thiệp khách dùng ảnh đã cung cấp, không suy diễn mốc chuyện tình hoặc thêm thông tin gia đình. Mẫu còn dùng layout/palette để resolve thiết kế, không đổi schema/catalog ID. Không thêm thư viện animation; WAAPI có cleanup/reduced motion. Preview vẫn miễn phí, khóa gửi RSVP. Hộp quà, nhạc và quyền truy cập giữ hợp đồng hiện tại.
 
 Album nhận diện ảnh ngang sau khi tải để dành khung rộng hoặc giữ toàn bộ ảnh trong trang sách/spotlight/cinema; ảnh demo ngang có cấu hình trước để ổn định bố cục. Accordion desktop giãn ảnh đủ chiều cao khung và mở rộng bằng hover hoặc focus bàn phím; trên điện thoại dùng các khung dọc. Không đổi payload hoặc dữ liệu ảnh lưu.
+
+## Bìa và nhịp đọc riêng — 08/10/2026
+
+Hero chuyển từ một cây HTML chung sang mười cấu trúc server riêng trong `InvitationHero`: chân dung lãng mạn, vòm vườn, báo hỷ nghi lễ, trang báo, chân dung quỹ đạo, scrapbook, lời hẹn tối giản, thư/phong bì, màn phim và diptych. CSS Modules giới hạn phong cách trong thiệp; không phụ thuộc thứ tự CSS global để dựng lại cùng một cây HTML. Tên, ngày, lời mời và ảnh vẫn lấy từ Invitation; ảnh thứ hai lấy từ album đã có, fallback cover nếu không có ảnh khác.
+
+Count­down, story, events và album được sắp lại trong DOM theo từng design, giữ RSVP và hành động chính dễ tìm bằng điều hướng đầu trang. Không dùng CSS order để làm thứ tự đọc của trình đọc màn hình khác thứ tự hiển thị. Mở thiệp có thêm chuyển động theo design, giữ native dialog, bỏ qua/Escape, reduced motion và yêu cầu phát nhạc ngay trong thao tác người dùng.
+
+Bìa demo stock chọn ảnh từ chính album demo theo thiết kế, đặc biệt ảnh ngang cho Lời hẹn và Khoảnh khắc. Chỉ thay lựa chọn trình bày nếu isDemo, cover là stock mặc định và ảnh nằm trong photos đã đọc; không ghi DB hay thay cover khách tùy chỉnh.

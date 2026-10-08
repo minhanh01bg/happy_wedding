@@ -263,3 +263,7 @@ Mở đầu dùng cửa cho rose/garden/traditional/night/autumn, thư cho edito
 Hoàn thiện hero không đủ để phân biệt template. Câu chuyện phải có cấu trúc riêng theo từng thiết kế; album phải khác cách sắp ảnh và tương tác, với hướng chuyển động theo phong cách. Mười cách dựng cụ thể được ghi tại ADR 0004 ngày 08/10/2026. Dữ liệu người dùng không bị ghi đè hoặc bổ sung sự kiện tưởng tượng. Nội dung SSR đọc được trước enhancement, reduced motion có phiên bản tĩnh; trên mobile giữ nội dung và lightbox nhưng điều chỉnh bố cục (đặc biệt accordion và album ghim ảnh).
 
 Album nhận diện ảnh ngang sau khi tải để dành khung rộng hoặc giữ toàn bộ ảnh trong trang sách/spotlight/cinema; ảnh demo ngang có cấu hình trước để ổn định bố cục. Accordion desktop giãn ảnh đủ chiều cao khung và mở rộng bằng hover hoặc focus bàn phím; trên điện thoại dùng các khung dọc. Không đổi payload hoặc dữ liệu ảnh lưu.
+
+### Bìa và nhịp đọc riêng — 08/10/2026
+
+Mười mẫu có cấu trúc hero khác nhau thật trong HTML, không chỉ màu hoặc CSS của một khung chung. Trình tự câu chuyện, countdown, lịch tiệc và album khác theo ý tưởng mẫu; các anchor lịch tiệc/album/RSVP/quà giữ nguyên. Opening bổ sung chuyển động theo thiết kế, và thiệp vẫn đọc được nếu không có JavaScript. Chi tiết lựa chọn tại ADR 0004. Không thay đổi nội dung khách, dữ liệu ngân hàng hay hợp đồng nghiệp vụ.

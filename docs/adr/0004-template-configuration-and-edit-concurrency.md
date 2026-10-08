@@ -81,3 +81,24 @@ Trang chủ bổ sung showcase năm ảnh cưới minh họa ghim theo cuộn, �
 `invitationDesign` chọn composition theo cặp layout/palette hiện có, dùng chung cho thumbnail và thiệp đầy đủ: Lời yêu (editorial/rose), Vườn thương (botanical/sage), Song hỷ (classic/wine), Ngày chung đôi (editorial/sand), Đêm sao (classic/midnight), Nắng thu (botanical/terracotta), Lời hẹn (minimal/sand), Thư tình (minimal/rose), Khoảnh khắc (cinematic/midnight), Bên nhau (cinematic/terracotta). Mỗi composition có hero và chi tiết câu chuyện/lịch tiệc riêng; giữ đầy đủ countdown, lịch/bản đồ, gia đình, album/lightbox, RSVP, lời chúc được duyệt, nhạc, hộp quà QR và branding theo quyền lợi. Thumbnail phản ánh khung ảnh/chữ của composition.
 
 Mở đầu dùng cửa cho rose/garden/traditional/night/autumn, thư cho editorial/sand và minimal, rèm cho cinematic. Skip/Escape/reduced motion vẫn đóng ngay, đưa focus tới h1 và không tự phát nhạc khi skip. Modal QR và preview RSVP disabled giữ nguyên semantics. Không đổi schema, giá, auth, API hay bank data. Tổ hợp mới ngoài 10 cặp được render fallback theo layout; admin đổi layout/palette làm composition đổi tương ứng, không khóa preset theo slug.
+
+### Bố cục câu chuyện và album theo mẫu — 08/10/2026
+
+Lượt hoàn thiện hero trước đây vẫn dùng cùng cấu trúc câu chuyện và album. Thay thế bằng `InvitationStory` với mười cây bố cục riêng, dùng chung dữ liệu Invitation và giữ nguyên authorization. `InvitationAlbum` giữ một lightbox native, nhưng trình bày ảnh theo từng mẫu:
+
+| Mẫu            | Câu chuyện                                              | Album / chuyển động ảnh                                                     |
+| -------------- | ------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Lời yêu        | Hai ảnh in so le cạnh lời kể                            | Mosaic so le, chương ảnh ghim/cuộn gom ảnh                                  |
+| Vườn thương    | Chân dung trong vòng hoa, ảnh phụ và gia đình phía dưới | Khung vòm, ảnh ngang và khung tròn cho ảnh dọc, reveal từ tâm               |
+| Song hỷ        | Gia đình trước ảnh nghi lễ, dấu song hỷ                 | Khung đôi đối xứng, mở ảnh theo trục Y                                      |
+| Ngày chung đôi | Trang tạp chí, ảnh chủ đạo lớn, chân trang riêng        | Lưới 12 cột, ảnh panorama xen kẽ, wipe ngang                                |
+| Đêm sao        | Chân dung tròn và ảnh vệ tinh                           | Ảnh spotlight đổi bằng hover/focus thumbnail, reveal blur/zoom              |
+| Nắng thu       | Nhật ký có dòng kẻ, ảnh dán băng giấy                   | Polaroid nghiêng, chuyển động rơi/xoay                                      |
+| Lời hẹn        | Thư hai cột, ảnh ngang, tên gia đình cuối               | Filmstrip cuộn ngang có scroll snap, mở ảnh từ đường giữa                   |
+| Thư tình       | Giấy thư cùng hai bản in, gia đình trong thư            | Album hai trang, nút chuyển trang, rotateY                                  |
+| Khoảnh khắc    | Khung ảnh lớn với chữ chồng ảnh, đoạn kể riêng          | Các ảnh sticky xếp lớp khi cuộn; reduced motion chuyển thành danh sách tĩnh |
+| Bên nhau       | Diptych cao thấp, lời kể và gia đình chia đôi           | Accordion ngang mở rộng khi hover/focus, điện thoại dùng khung dọc          |
+
+Ảnh demo được chọn theo bố cục; thiệp khách dùng ảnh đã cung cấp, không suy diễn mốc chuyện tình hoặc thêm thông tin gia đình. Mẫu còn dùng layout/palette để resolve thiết kế, không đổi schema/catalog ID. Không thêm thư viện animation; WAAPI có cleanup/reduced motion. Preview vẫn miễn phí, khóa gửi RSVP. Hộp quà, nhạc và quyền truy cập giữ hợp đồng hiện tại.
+
+Album nhận diện ảnh ngang sau khi tải để dành khung rộng hoặc giữ toàn bộ ảnh trong trang sách/spotlight/cinema; ảnh demo ngang có cấu hình trước để ổn định bố cục. Accordion desktop giãn ảnh đủ chiều cao khung và mở rộng bằng hover hoặc focus bàn phím; trên điện thoại dùng các khung dọc. Không đổi payload hoặc dữ liệu ảnh lưu.

@@ -63,6 +63,63 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
     container.addEventListener("pointerleave", resetTilt);
     finePointer.addEventListener("change", resetTilt);
     const animations = new Set<Animation>();
+    const design = container
+      .querySelector(".wedding-page")
+      ?.className.match(/design-([\w-]+)/)?.[1];
+    const entrances: Record<string, Keyframe[]> = {
+      "vuon-thuong": [
+        { clipPath: "circle(0% at 50% 65%)", opacity: 0.3 },
+        { clipPath: "circle(100% at 50% 65%)", opacity: 1 },
+      ],
+      "song-hy": [
+        { transform: "perspective(1000px) rotateY(-35deg)", opacity: 0 },
+        { transform: "perspective(1000px) rotateY(0deg)", opacity: 1 },
+      ],
+      "ngay-chung-doi": [
+        { clipPath: "inset(0 100% 0 0)" },
+        { clipPath: "inset(0 0% 0 0)" },
+      ],
+      "dem-sao": [
+        { transform: "scale(.7)", filter: "blur(12px)", opacity: 0 },
+        { transform: "scale(1)", filter: "blur(0px)", opacity: 1 },
+      ],
+      "nang-thu": [
+        { transform: "translateY(90px) rotate(-18deg)", opacity: 0 },
+        { transform: "translateY(0px) rotate(0deg)", opacity: 1 },
+      ],
+      "loi-hen": [
+        { clipPath: "inset(50% 0 50% 0)" },
+        { clipPath: "inset(0% 0 0% 0)" },
+      ],
+      "thu-tinh": [
+        { transform: "perspective(1200px) rotateX(-45deg)", opacity: 0 },
+        { transform: "perspective(1200px) rotateX(0deg)", opacity: 1 },
+      ],
+      "khoanh-khac": [
+        { transform: "scale(1.18)", opacity: 0.2 },
+        { transform: "scale(1)", opacity: 1 },
+      ],
+      "ben-nhau": [
+        { clipPath: "inset(0 45% 0 45%)" },
+        { clipPath: "inset(0 0% 0 0%)" },
+      ],
+    };
+    const revealPhoto = (element: HTMLElement, index = 0) => {
+      if (preference.matches || !element.animate) return;
+      const animation = element.animate(
+        entrances[design || ""] || [
+          { opacity: 0, transform: "translateY(40px) rotate(-5deg)" },
+          { opacity: 1, transform: "translateY(0) rotate(0deg)" },
+        ],
+        {
+          duration: 1100,
+          delay: index * 80,
+          easing: "cubic-bezier(.22,1,.36,1)",
+        },
+      );
+      animations.add(animation);
+      animation.onfinish = () => animations.delete(animation);
+    };
     const photos = Array.from(
       container.querySelectorAll<HTMLElement>(
         ".wedding-hero-image, .wedding-story-photo, .wedding-album > button",
@@ -165,18 +222,10 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
             Array.from(element.children).forEach((child, i) =>
               reveal(child as HTMLElement, i),
             );
-          } else if (element.classList.contains("wedding-hero-image")) {
-            if (!preference.matches) {
-              const animation = element.animate(
-                [
-                  { clipPath: "inset(12% 12% 12% 12%)", opacity: 0.5 },
-                  { clipPath: "inset(0% 0% 0% 0%)", opacity: 1 },
-                ],
-                { duration: 1400, easing: "cubic-bezier(.22,1,.36,1)" },
-              );
-              animations.add(animation);
-              animation.onfinish = () => animations.delete(animation);
-            }
+          } else if (
+            element.matches("[data-story-image], .wedding-hero-image")
+          ) {
+            revealPhoto(element);
           } else if (
             element.matches(".wedding-section > h2, .wedding-thanks > h2")
           ) {
@@ -219,7 +268,7 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
             const index = Array.from(element.parentElement!.children).indexOf(
               element,
             );
-            reveal(element, index % 3);
+            revealPhoto(element, index % 3);
           } else {
             element.classList.add("is-revealed");
             reveal(element);
@@ -243,7 +292,7 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
       schedule();
       container
         .querySelectorAll(
-          ".wedding-story-photo, .wedding-story-copy, .wedding-hero-copy, .wedding-hero-image, .wedding-section, .wedding-thanks, .wedding-album > button, .wedding-section > h2, .wedding-thanks > h2",
+          "[data-story-image], .story-words, .wedding-story-photo, .wedding-story-copy, .wedding-hero-copy, .wedding-hero-image, .wedding-section, .wedding-thanks, .wedding-album > button, .wedding-section > h2, .wedding-thanks > h2",
         )
         .forEach((element) => observer.observe(element));
     };

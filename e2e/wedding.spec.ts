@@ -598,7 +598,7 @@ test("photo storytelling follows scroll and becomes static when motion is reduce
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.goto("/preview/khoanh-khac");
+  await page.goto("/preview/loi-yeu");
   await page.getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" }).click();
   const story = page.locator(".wedding-photo-story");
   await expect(story).toBeAttached();
@@ -643,7 +643,7 @@ test("photo scenes reverse with scrolling and hover depth clears on reduced moti
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await page.goto("/preview/khoanh-khac");
+  await page.goto("/preview/loi-yeu");
   await page.getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" }).click();
   const story = page.locator(".wedding-photo-story");
   const { start, travel } = await story.evaluate((el) => ({
@@ -1109,6 +1109,7 @@ test("all ten catalog templates have complete distinct invitations on desktop an
     "ben-nhau",
   ];
   const compositions = new Set<string>();
+  const storyStructures = new Set<string>();
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => {
@@ -1148,6 +1149,17 @@ test("all ten catalog templates have complete distinct invitations on desktop an
         ].join("|");
       }),
     );
+    storyStructures.add(
+      await page.locator("[data-story-composition]").evaluate((el) => {
+        const tree = (node: Element): string =>
+          `${node.tagName}(${Array.from(node.children).map(tree).join(",")})`;
+        return tree(el);
+      }),
+    );
+    await expect(page.locator("[data-album-composition]")).toHaveAttribute(
+      "data-album-composition",
+      slug,
+    );
     await expect(page.locator(".family-grid > div")).toHaveCount(2);
     await expect(page.locator(".event-card")).toHaveCount(2);
     await expect(page.locator(".wedding-album > button")).toHaveCount(6);
@@ -1170,6 +1182,7 @@ test("all ten catalog templates have complete distinct invitations on desktop an
     }
   }
   expect(compositions.size).toBe(10);
+  expect(storyStructures.size).toBe(10);
   expect(errors).toEqual([]);
 });
 
@@ -1200,4 +1213,132 @@ test("letter and curtain openings animate and release focus", async ({
       await page.evaluate(() => getComputedStyle(document.body).overflow),
     ).not.toBe("hidden");
   }
+});
+
+test("distinct album compositions support pages, spotlight and filmstrip", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/preview/thu-tinh");
+  await page.getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" }).click();
+  const prints = page.locator("[data-album-photo]:visible");
+  await expect(prints).toHaveCount(2);
+  await expect(prints.first()).toHaveAttribute("data-photo-index", "0");
+  await page.getByRole("button", { name: "Trang sau" }).click();
+  await expect(prints.first()).toHaveAttribute("data-photo-index", "2");
+  await prints.first().click();
+  await expect(page.locator(".lightbox-toolbar p")).toHaveText("Ảnh 3 / 6");
+  await page.keyboard.press("Escape");
+  await expect(prints.first()).toBeFocused();
+  await page.getByRole("button", { name: "Trang trước" }).click();
+  await expect(prints.first()).toHaveAttribute("data-photo-index", "0");
+  await page.goto("/preview/dem-sao");
+  await page.getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" }).click();
+  await page.locator("[data-album-photo]").nth(2).focus();
+  await expect(page.locator(".album-spotlight img")).toHaveAttribute(
+    "alt",
+    /Kỷ niệm 3/,
+  );
+  await page.goto("/preview/loi-hen");
+  await page.getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" }).click();
+  await page.setViewportSize({ width: 375, height: 850 });
+  const film = page.locator(".wedding-album");
+  expect(await film.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(
+    true,
+  );
+  await film.evaluate((el) => {
+    el.scrollLeft = el.scrollWidth;
+  });
+  await expect
+    .poll(() => film.evaluate((el) => el.scrollLeft))
+    .toBeGreaterThan(100);
+});
+
+test("template photo entrances stay within the mobile viewport while animating", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  for (const slug of [
+    "loi-yeu",
+    "vuon-thuong",
+    "song-hy",
+    "ngay-chung-doi",
+    "dem-sao",
+    "nang-thu",
+    "loi-hen",
+    "thu-tinh",
+    "khoanh-khac",
+    "ben-nhau",
+  ]) {
+    await page.goto(`/preview/${slug}`);
+    await page
+      .getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" })
+      .click();
+    const widest = await page.evaluate(async () => {
+      let width = 0;
+      const start = performance.now();
+      while (performance.now() - start < 1400) {
+        width = Math.max(width, document.documentElement.scrollWidth);
+        await new Promise<void>((resolve) =>
+          requestAnimationFrame(() => resolve()),
+        );
+      }
+      return width;
+    });
+    expect(widest, `${slug} photo entrance`).toBeLessThanOrEqual(390);
+  }
+});
+
+test("landscape wedding photos retain a wide frame or fit within the book spread", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/preview/vuon-thuong");
+  await page.getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" }).click();
+  const wide = page.locator("[data-album-photo]").nth(5);
+  await wide.scrollIntoViewIfNeeded();
+  await expect(wide).toHaveClass(/is-landscape/);
+  const frame = await wide.boundingBox();
+  expect(frame!.width / frame!.height).toBeGreaterThan(1.4);
+  await page.goto("/preview/thu-tinh");
+  await page.getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" }).click();
+  await page.getByRole("button", { name: "Trang sau" }).click();
+  await page.getByRole("button", { name: "Trang sau" }).click();
+  const photo = page.locator("[data-album-photo]").nth(5).locator("img");
+  await expect(photo).toBeVisible();
+  expect(await photo.evaluate((el) => getComputedStyle(el).objectFit)).toBe(
+    "contain",
+  );
+});
+
+test("accordion wedding album fills its scene and expands with pointer or keyboard", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/preview/ben-nhau");
+  await page.getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" }).click();
+  const first = page.locator("[data-album-photo]").first();
+  await first.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(1400);
+  const initial = await first.boundingBox();
+  expect(initial!.height).toBeGreaterThan(500);
+  await first.hover();
+  await expect
+    .poll(async () => (await first.boundingBox())!.width)
+    .toBeGreaterThan(initial!.width * 2);
+  await page.mouse.move(1, 1);
+  const second = page.locator("[data-album-photo]").nth(1);
+  await first.focus();
+  await page.keyboard.press("Tab");
+  await expect(second).toBeFocused();
+  await expect
+    .poll(async () => (await second.boundingBox())!.width)
+    .toBeGreaterThan(initial!.width * 2);
+  await page.keyboard.press("Enter");
+  await expect(page.locator(".lightbox-toolbar p")).toHaveText("Ảnh 2 / 6");
+  await page.keyboard.press("Escape");
+  await expect(second).toBeFocused();
 });

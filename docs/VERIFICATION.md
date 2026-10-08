@@ -238,3 +238,17 @@ Playwright dev 1440/375px mở hộp, xem ảnh burst/modal, không page errors;
 - Regression mở thư và kéo rèm kiểm tra keyframes chuyển động thực, dialog đóng, focus về h1 và body được trả quyền cuộn. Các bài hiện có về mở cửa, music gesture/pause/quiet skip/retry, album swipe/reduced motion vẫn qua.
 - Manual Chromium: xem cả 10 hero desktop/mobile và catalog 10 thumbnail; decode cover image, xem câu chuyện Lời yêu/Song hỷ, sửa foliage và panorama tràn ngang. Script duyệt 19/20 viewport-case xong rồi timeout đợi hydration của lượt cuối; kiểm tra riêng Bên nhau 375 px qua và không tràn/pageerror. Không dùng lượt manual dang dở để khẳng định cả script exit 0; full regression 10 mẫu trên hai kích thước là bằng chứng cuối.
 - Ảnh catalog: `docs/previews/templates-catalog.png`. Dev port 3200 đã khởi động lại sau build với cache mới. Chưa kiểm tra Safari/iPhone thật; không deploy production.
+
+## Câu chuyện và album theo thiết kế — 08/10/2026
+
+- `pnpm check`: lint không lỗi (còn cảnh báo cleanup ref có sẵn ở Music), TypeScript và **126/126 bài test, 17 file** qua.
+- `pnpm build`: production build thành công.
+- Rà soát ảnh chụp câu chuyện/album của mười mẫu ở desktop 1280px; kiểm tra mobile 375px không cuộn ngang. Bố cục câu chuyện khác cấu trúc, album khác hình học/tương tác.
+- Test scroll chapter cũ được chuyển sang Lời yêu vì chương gom ảnh nay thuộc riêng thiết kế này. Khoảnh khắc dùng album sticky xếp lớp. Thêm kiểm tra chuyển trang Thư tình (mở đúng ảnh/focus return), spotlight Đêm sao và filmstrip Lời hẹn; bài kiểm tra mười mẫu so sánh cây cấu trúc câu chuyện thay vì chỉ chữ/màu.
+- Truy cập tham khảo: OnePlus 15 và public preview Cards Cascade trên Layers mở được; Zenlove chuyển sang trang kiểm tra truy cập từ máy thử nghiệm, không có chứng cứ đối chiếu lại toàn bộ trang đó trong lượt này.
+- Kiểm tra cuối **29 kịch bản Chromium** trên DB/cổng test riêng: lượt đầy đủ 28 bài qua; bài accordion thất bại vì test dùng programmatic focus trong ngữ cảnh chuột thay cho Tab. Đổi test sang Tab thật, `pnpm test:e2e --last-failed` chạy lại 1/1 qua (15,7 giây). Bài mới đo chiều rộng trên từng frame trong 1,4 giây animation đầu thiệp của đủ mười mẫu ở 390×844.
+- Lượt đầu bắt được zoom ảnh hero Khoảnh khắc làm tràn ngang tạm thời; đã giới hạn hiệu ứng trong khung cảnh. Class ảnh câu chuyện được tách khỏi class trang chủ để tránh min-height cũ ép ảnh mobile rộng hơn cột. Sau sửa, kiểm tra/build qua; kết quả từng lượt E2E được ghi ở trên.
+- Một lượt chạy lại bị ENOSPC khi ghi cache; dọn các bản `.next` tạm đã cũ trong `/tmp` và cache E2E rồi chạy đủ 27 bài thành công. Không xóa dữ liệu ứng dụng/ảnh tải lên.
+
+- Ảnh ngang được nhận diện bằng kích thước ảnh đã tải (ảnh demo có cấu hình ban đầu), dành khung rộng hoặc object-fit contain trong album sách/spotlight/cinema. Thêm test ảnh ngang Vườn thương và Thư tình. Accordion được kiểm tra chiều cao, mở rộng bằng hover/Tab, mở đúng lightbox và trả focus. Khung ảnh bên trong picture giữ đúng yêu cầu Image fill khi nút bên ngoài sticky.
+- Ảnh đối chiếu cuối: `docs/previews/template-story-compositions.jpg` và `docs/previews/template-album-compositions.jpg`.

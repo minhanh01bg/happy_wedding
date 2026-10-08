@@ -6275,3 +6275,1108 @@ body:has(.admin-drawer[open]) {
     margin-inline: -24px;
   }
 }
+
+/* Complete invitation compositions: shared data, deliberately different reading rhythms. */
+.wedding-page .story-composition {
+  max-width: none;
+  padding-inline: clamp(20px, 6vw, 100px);
+  overflow: hidden;
+}
+.story-heading h2 {
+  font-size: clamp(36px, 5vw, 70px);
+  line-height: 1.15;
+}
+.story-heading {
+  margin-bottom: 54px;
+}
+.story-composition .invitation-story-image {
+  position: relative;
+  margin: 0;
+  min-width: 0;
+  aspect-ratio: 3/4;
+  overflow: hidden;
+}
+.invitation-story-image img {
+  object-fit: cover;
+}
+.invitation-story-image figcaption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  background: linear-gradient(transparent, #0008);
+  color: white;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+}
+.story-words {
+  text-align: left;
+  max-width: 550px;
+  align-self: center;
+  position: relative;
+}
+.story-words blockquote {
+  font-family: var(--serif);
+  font-size: clamp(25px, 3vw, 42px);
+  line-height: 1.4;
+  margin: 24px 0;
+}
+.story-words p {
+  line-height: 1.95;
+  white-space: pre-line;
+}
+.story-chapter {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+}
+.story-signature {
+  display: block;
+  margin-top: 30px;
+  font-family: var(--serif);
+  font-size: 32px;
+}
+.story-composition .family-grid {
+  max-width: 960px;
+  margin: 70px auto 0;
+}
+.story-romance {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 80px;
+  max-width: 1000px;
+  margin: auto;
+  align-items: center;
+}
+.story-romance-prints {
+  position: relative;
+  padding-right: 60px;
+  padding-bottom: 60px;
+}
+.story-romance-prints .story-primary {
+  transform: rotate(-6deg);
+  border: 12px solid white;
+  border-bottom-width: 40px;
+  box-shadow: 0 15px 50px #593f3220;
+}
+.story-romance-prints .story-secondary {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 43%;
+  transform: rotate(9deg);
+  border: 8px solid white;
+  box-shadow: 0 10px 35px #593f3220;
+}
+.story-garden {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  max-width: 1050px;
+  margin: auto;
+  align-items: center;
+}
+.story-wreath {
+  position: relative;
+  border: 1px solid currentColor;
+  border-radius: 50% 50% 4px 4px;
+  padding: 20px;
+}
+.story-wreath .story-primary {
+  border-radius: 50% 50% 0 0;
+}
+.story-wreath > span {
+  position: absolute;
+  font-size: 70px;
+  bottom: -45px;
+  left: 45%;
+  background: var(--paper, #faf8f1);
+}
+.story-garden-detail {
+  grid-column: 1/-1;
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 50px;
+  align-items: center;
+}
+.story-garden-detail .story-secondary {
+  aspect-ratio: 3/2;
+  border-radius: 100% 100% 0 0;
+}
+.story-garden-detail .family-grid {
+  display: block;
+  margin: 0;
+  text-align: left;
+}
+.story-garden-detail .family-grid > div + div {
+  margin-top: 30px;
+}
+.story-song-hy .family-grid {
+  margin: 0 auto 45px;
+  border-block: 1px solid currentColor;
+  padding: 25px;
+}
+.story-ceremony {
+  max-width: 720px;
+  margin: auto;
+  position: relative;
+  border: 1px solid currentColor;
+  padding: 28px;
+}
+.story-ceremony .story-primary {
+  aspect-ratio: 4/3;
+  border: 7px double currentColor;
+}
+.ceremony-seal {
+  display: block;
+  font-size: 72px;
+  line-height: 1;
+  margin-bottom: 25px;
+}
+.story-ceremony .story-words {
+  text-align: center;
+  margin: 40px auto 0;
+}
+.story-editorial-masthead {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  border-block: 1px solid currentColor;
+  padding: 30px 0;
+  max-width: 1200px;
+  margin: auto;
+}
+.story-editorial-masthead .story-heading {
+  text-align: left;
+  margin: 0;
+}
+.story-editorial-masthead > span {
+  writing-mode: vertical-rl;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+}
+.story-editorial-lead {
+  max-width: 1200px;
+  margin: 36px auto 0;
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 50px;
+}
+.story-editorial-lead .story-primary {
+  aspect-ratio: 4/5;
+}
+.story-editorial-foot {
+  max-width: 1200px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+  margin: 50px auto 0;
+  align-items: center;
+}
+.story-editorial-foot .family-grid {
+  margin: 0;
+  display: block;
+  text-align: left;
+}
+.story-editorial-foot .family-grid > div {
+  padding: 25px;
+  border-bottom: 1px solid currentColor;
+}
+.story-editorial-foot .story-secondary {
+  aspect-ratio: 16/9;
+}
+.story-constellation {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 60px;
+  max-width: 1050px;
+  margin: auto;
+  align-items: center;
+  padding: 40px 0;
+}
+.story-stars {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 32px;
+  letter-spacing: 30px;
+}
+.story-moon {
+  padding: 20px;
+  border: 1px solid #d2b57470;
+  border-radius: 50%;
+}
+.story-moon .story-primary {
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+.story-constellation > .story-secondary {
+  width: 180px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  position: absolute;
+  bottom: -30px;
+  left: 45%;
+  border: 8px solid #15202e;
+}
+.story-dem-sao .family-grid {
+  padding-top: 50px;
+  border-top: 1px solid #d2b57450;
+}
+.story-journal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+  max-width: 1000px;
+  margin: auto;
+  padding: 25px;
+}
+.story-journal > .invitation-story-image {
+  border: 12px solid #fffdf6;
+  border-bottom-width: 45px;
+  box-shadow: 0 12px 35px #6a3a2320;
+  transform: rotate(-7deg);
+  overflow: visible;
+}
+.story-journal > .invitation-story-image::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: -25px;
+  left: 30%;
+  width: 100px;
+  height: 35px;
+  background: #c6a77280;
+  transform: rotate(8deg);
+}
+.story-journal .story-secondary {
+  grid-column: 2;
+  width: 65%;
+  margin-top: -40px;
+  justify-self: end;
+  transform: rotate(9deg);
+}
+.journal-note {
+  padding: 35px;
+  background: repeating-linear-gradient(#fff7e900 0 31px, #a77a3b25 32px 33px);
+  transform: rotate(2deg);
+}
+.journal-note > span {
+  font-family: var(--serif);
+  font-size: 32px;
+  display: block;
+  margin-top: 25px;
+}
+.story-minimal-letter {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 70px;
+  max-width: 1100px;
+  margin: 0 auto 60px;
+}
+.story-minimal-letter .story-heading {
+  text-align: left;
+  margin: 0;
+}
+.story-loi-hen > .story-primary {
+  aspect-ratio: 21/9;
+  max-width: 1200px;
+  margin: auto;
+}
+.story-minimal-foot {
+  max-width: 1100px;
+  display: flex;
+  align-items: center;
+  gap: 80px;
+  margin: 45px auto 0;
+}
+.story-minimal-foot > span {
+  font-size: 110px;
+  font-family: var(--serif);
+}
+.story-minimal-foot .family-grid {
+  flex: 1;
+  margin: 0;
+  text-align: left;
+}
+.story-envelope {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  max-width: 1100px;
+  margin: auto;
+  gap: 40px;
+  align-items: center;
+}
+.story-letter-paper {
+  padding: 55px;
+  background: #fffefa;
+  box-shadow: 0 20px 70px #663e3e15;
+  transform: rotate(-2deg);
+  border-top: 6px double #ba82824a;
+}
+.story-letter-paper .family-grid {
+  display: block;
+  text-align: left;
+  margin: 35px 0 0;
+  border-top: 1px solid #ba82824a;
+  padding-top: 25px;
+}
+.story-letter-paper .family-grid > div + div {
+  margin-top: 20px;
+}
+.story-letter-prints {
+  position: relative;
+  padding: 20px 60px 75px 0;
+}
+.story-letter-prints .story-primary {
+  transform: rotate(5deg);
+  border: 12px solid white;
+  box-shadow: 0 15px 40px #663e3e20;
+}
+.story-letter-prints .story-secondary {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 45%;
+  transform: rotate(-9deg);
+  border: 8px solid white;
+}
+.wedding-page .story-khoanh-khac {
+  padding: 0;
+  background: #101820;
+  color: #f9f6ed;
+}
+.story-cinema-scene {
+  position: relative;
+}
+.story-cinema-scene .story-primary {
+  aspect-ratio: 16/10;
+  max-height: 900px;
+}
+.story-cinema-scene .story-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(transparent, #101820e8);
+}
+.story-cinema-title {
+  position: absolute;
+  inset: auto 8% 9%;
+  text-align: left;
+}
+.story-cinema-title .story-heading {
+  margin: 0;
+}
+.story-cinema-title h2 {
+  font-size: clamp(40px, 7vw, 100px);
+}
+.story-cinema-interlude {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  padding: 100px 8%;
+  align-items: center;
+}
+.story-cinema-interlude .story-secondary {
+  aspect-ratio: 4/3;
+}
+.story-khoanh-khac > .family-grid {
+  margin-top: 0;
+  padding: 0 30px 80px;
+}
+.story-diptych {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  position: relative;
+  max-width: 1150px;
+  margin: auto;
+  padding-bottom: 70px;
+}
+.story-diptych .story-secondary {
+  margin-top: 90px;
+}
+.story-diptych > span {
+  position: absolute;
+  bottom: 15px;
+  left: 5%;
+  font-size: clamp(45px, 8vw, 110px);
+  letter-spacing: -0.07em;
+  font-family: var(--serif);
+  line-height: 1;
+}
+.story-diptych-note {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 70px;
+  max-width: 1000px;
+  margin: 30px auto;
+}
+.story-diptych-note .family-grid {
+  display: block;
+  margin: 0;
+  text-align: left;
+  border-left: 1px solid currentColor;
+  padding-left: 40px;
+}
+.story-diptych-note .family-grid > div + div {
+  margin-top: 35px;
+}
+/* Gallery variants reset the old universal mosaic before establishing their own geometry. */
+.album-composition {
+  max-width: 1200px;
+  margin: auto;
+}
+.album-title-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 30px 0;
+}
+.album-title-line p {
+  margin: 0;
+}
+.album-title-line > span {
+  margin-left: auto;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+}
+.wedding-page .album-composition .wedding-album {
+  max-width: none;
+  margin: 0;
+  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.wedding-page .album-composition .wedding-album > button {
+  margin: 0;
+  grid-column: auto;
+  aspect-ratio: 3/4;
+  min-width: 0;
+  border-radius: 0;
+  transform: none;
+}
+.wedding-page .album-composition .wedding-album > button[hidden] {
+  display: none;
+}
+.album-composition .wedding-album > button > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.album-composition .wedding-album > button > span b {
+  font-size: 18px;
+  font-weight: 400;
+}
+.wedding-page .album-loi-yeu .wedding-album {
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 35px;
+}
+.wedding-page .album-loi-yeu .wedding-album > button:nth-child(even) {
+  margin-top: 65px;
+}
+.wedding-page .album-loi-yeu .wedding-album > button:nth-child(3n) {
+  grid-column: 1/-1;
+  aspect-ratio: 16/9;
+}
+.wedding-page .album-vuon-thuong .wedding-album {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 30px;
+}
+.wedding-page .album-vuon-thuong .wedding-album > button {
+  border-radius: 50% 50% 0 0;
+  border: 8px solid #f5f7ee;
+  outline: 1px solid #7e947d50;
+}
+.wedding-page .album-vuon-thuong .wedding-album > button:nth-child(3n + 2) {
+  margin-top: 90px;
+}
+.wedding-page .album-vuon-thuong .wedding-album > button:nth-child(3n) {
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+.wedding-page .album-song-hy .wedding-album {
+  gap: 45px;
+  padding: 30px;
+  border: 1px solid currentColor;
+}
+.wedding-page .album-song-hy .wedding-album > button {
+  border: 8px double #c5a268;
+  outline: 1px solid #c5a268;
+  outline-offset: 6px;
+}
+.wedding-page .album-song-hy .wedding-album > button:nth-child(4n + 3),
+.wedding-page .album-song-hy .wedding-album > button:nth-child(4n + 4) {
+  aspect-ratio: 1;
+}
+.wedding-page .album-ngay-chung-doi .wedding-album {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+}
+.wedding-page .album-ngay-chung-doi .wedding-album > button {
+  grid-column: span 5;
+  aspect-ratio: 4/5;
+}
+.wedding-page .album-ngay-chung-doi .wedding-album > button:nth-child(3n + 1) {
+  grid-column: span 7;
+  aspect-ratio: 5/4;
+}
+.wedding-page .album-ngay-chung-doi .wedding-album > button:nth-child(3n) {
+  grid-column: 1/-1;
+  aspect-ratio: 21/9;
+}
+.album-spotlight {
+  position: relative;
+  aspect-ratio: 16/10;
+  max-width: 850px;
+  margin: 0 auto 30px;
+  overflow: hidden;
+  border-radius: 50% 50% 4px 4px;
+  border: 1px solid #c5a268;
+}
+.album-spotlight img {
+  object-fit: cover;
+  animation: star-photo-arrival 0.65s ease;
+}
+.album-spotlight > span {
+  position: absolute;
+  bottom: 25px;
+  left: 0;
+  right: 0;
+  font-size: 11px;
+  color: white;
+  text-shadow: 0 2px 10px black;
+}
+.wedding-page .album-dem-sao .wedding-album {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding: 30px 10px;
+  overflow-x: auto;
+}
+.wedding-page .album-dem-sao .wedding-album > button {
+  width: clamp(65px, 12vw, 150px);
+  flex: 0 0 auto;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  opacity: 0.55;
+  transition:
+    transform 0.4s,
+    opacity 0.4s;
+}
+.wedding-page .album-dem-sao .wedding-album > button:nth-child(odd) {
+  transform: translateY(12px);
+}
+.wedding-page .album-dem-sao .wedding-album > button.is-current {
+  opacity: 1;
+  outline: 2px solid #c5a268;
+  outline-offset: 5px;
+  transform: translateY(-12px);
+}
+.album-dem-sao .wedding-album > button > span {
+  display: none;
+}
+.wedding-page .album-nang-thu .wedding-album {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 45px;
+  padding: 35px 25px;
+}
+.wedding-page .album-nang-thu .wedding-album > button {
+  border: 10px solid #fffdf5;
+  border-bottom-width: 50px;
+  overflow: visible;
+  transform: rotate(var(--print-turn));
+  box-shadow: 0 15px 30px #583b2525;
+}
+.album-nang-thu .wedding-album > button > span {
+  bottom: -43px;
+  opacity: 1;
+  color: #614937;
+  background: none;
+  font-family: var(--serif);
+  font-size: 18px;
+  inset-inline: 0;
+  padding: 8px;
+}
+.wedding-page .album-nang-thu .wedding-album > button:nth-child(3n + 2) {
+  margin-top: 50px;
+}
+.wedding-page .album-loi-hen .wedding-album {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 20px;
+  padding: 0 0 20px;
+}
+.wedding-page .album-loi-hen .wedding-album > button {
+  flex: 0 0 65%;
+  aspect-ratio: 4/3;
+  scroll-snap-align: center;
+  box-shadow: none;
+}
+.album-scroll-hint {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  margin-top: 25px;
+}
+.wedding-page .album-thu-tinh .wedding-album {
+  gap: 2px;
+  padding: 25px;
+  background: #fff9ee;
+  box-shadow: 0 20px 70px #5d393020;
+  perspective: 1300px;
+}
+.wedding-page .album-thu-tinh .wedding-album > button {
+  border: 15px solid #fffdf7;
+  box-shadow: none;
+  animation: album-page-turn 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: left center;
+}
+.wedding-page .album-thu-tinh .wedding-album > button:nth-child(odd) {
+  transform-origin: right center;
+  border-right: 20px solid #eee5d9;
+}
+.album-page-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 35px;
+}
+.album-page-controls button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid currentColor;
+  border-radius: 99px;
+  padding: 10px 16px;
+  background: transparent;
+  font-size: 12px;
+}
+.album-page-controls button:disabled {
+  opacity: 0.35;
+}
+.album-page-controls > span {
+  font-size: 12px;
+}
+.wedding-page .album-khoanh-khac .wedding-album {
+  display: block;
+}
+.wedding-page .album-khoanh-khac .wedding-album > button {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16/10;
+  position: sticky;
+  top: 70px;
+  box-shadow: 0 -20px 60px #0005;
+  margin-bottom: 15vh;
+  border: 0;
+  border-radius: 8px;
+}
+.wedding-page .album-khoanh-khac .wedding-album > button > span {
+  opacity: 1;
+  padding: 28px;
+  background: linear-gradient(transparent, #0009);
+}
+.wedding-page .album-ben-nhau .wedding-album {
+  display: flex;
+  height: 600px;
+  gap: 8px;
+  overflow: hidden;
+}
+.wedding-page .album-ben-nhau .wedding-album > button {
+  flex: 1;
+  aspect-ratio: auto;
+  transition: flex 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.wedding-page
+  .album-ben-nhau
+  .wedding-album
+  > button:is(:hover, :focus-visible) {
+  flex: 5;
+}
+.wedding-page .album-ben-nhau .wedding-album > button > span {
+  writing-mode: vertical-rl;
+  opacity: 1;
+  inset: 20px auto auto 12px;
+  background: none;
+  padding: 0;
+  text-shadow: 0 2px 8px black;
+}
+.wedding-page
+  .album-ben-nhau
+  .wedding-album
+  > button:is(:hover, :focus-visible)
+  > span {
+  writing-mode: horizontal-tb;
+}
+@keyframes album-page-turn {
+  from {
+    transform: rotateY(-65deg);
+    opacity: 0.3;
+  }
+  to {
+    transform: rotateY(0);
+    opacity: 1;
+  }
+}
+@keyframes star-photo-arrival {
+  from {
+    opacity: 0.4;
+    transform: scale(1.08);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+/* Ceremony rhythm follows the composition instead of sharing the same card row. */
+.design-song-hy #lich-tiec .event-grid {
+  max-width: 780px;
+  margin-inline: auto;
+  display: block;
+}
+.design-song-hy #lich-tiec .event-card + .event-card {
+  margin-top: 35px;
+}
+.design-song-hy #lich-tiec .event-card {
+  border: 7px double currentColor;
+  text-align: center;
+}
+.design-ngay-chung-doi #lich-tiec .event-grid {
+  gap: 0;
+  border-block: 1px solid currentColor;
+}
+.design-ngay-chung-doi #lich-tiec .event-card {
+  border-radius: 0;
+  border: 0;
+  border-right: 1px solid currentColor;
+  box-shadow: none;
+  background: transparent;
+  text-align: left;
+}
+.design-loi-hen #lich-tiec .event-card {
+  border: 0;
+  border-top: 1px solid currentColor;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  border-radius: 0;
+}
+.design-nang-thu #lich-tiec .event-card {
+  transform: rotate(-2deg);
+  border-radius: 0;
+  box-shadow: 0 15px 30px #583b2520;
+}
+.design-nang-thu #lich-tiec .event-card:nth-child(even) {
+  transform: rotate(2deg);
+}
+.design-thu-tinh #lich-tiec .event-grid {
+  display: block;
+  max-width: 700px;
+  margin: auto;
+}
+.design-thu-tinh #lich-tiec .event-card {
+  border-radius: 0;
+  background: #fffefa;
+  border: 0;
+  border-bottom: 1px dashed #ba8282;
+  padding: 40px;
+  box-shadow: none;
+}
+@media (max-width: 760px) {
+  .story-heading {
+    margin-bottom: 35px;
+  }
+  .story-romance,
+  .story-garden,
+  .story-editorial-lead,
+  .story-constellation,
+  .story-journal,
+  .story-minimal-letter,
+  .story-envelope,
+  .story-cinema-interlude,
+  .story-diptych-note {
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+  .story-romance-prints {
+    max-width: 450px;
+    margin: auto;
+  }
+  .story-garden-detail {
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+  .story-garden-detail .story-secondary {
+    max-width: 400px;
+    width: 100%;
+    margin: auto;
+  }
+  .story-garden-detail .family-grid {
+    display: grid;
+    text-align: center;
+  }
+  .story-editorial-foot {
+    gap: 20px;
+  }
+  .story-editorial-foot .family-grid > div {
+    padding: 12px;
+  }
+  .story-editorial-masthead {
+    padding: 20px 0;
+  }
+  .story-editorial-masthead > span {
+    display: none;
+  }
+  .story-constellation {
+    padding-bottom: 70px;
+  }
+  .story-constellation > .story-secondary {
+    left: auto;
+    right: 0;
+    width: 130px;
+  }
+  .story-constellation .story-words {
+    order: 2;
+  }
+  .story-moon {
+    max-width: 420px;
+    margin: auto;
+    width: 100%;
+  }
+  .story-journal {
+    padding: 20px 15px;
+  }
+  .story-journal .story-secondary {
+    grid-column: auto;
+    margin-top: 0;
+    width: 70%;
+  }
+  .journal-note {
+    padding: 15px;
+  }
+  .story-journal > .invitation-story-image {
+    max-width: 380px;
+    width: 100%;
+    margin: auto;
+  }
+  .story-minimal-foot {
+    gap: 25px;
+  }
+  .story-minimal-foot > span {
+    font-size: 70px;
+  }
+  .story-minimal-foot .family-grid {
+    gap: 20px;
+  }
+  .story-loi-hen > .story-primary {
+    aspect-ratio: 4/3;
+  }
+  .story-letter-paper {
+    padding: 30px 25px;
+  }
+  .story-letter-prints {
+    max-width: 430px;
+    margin: auto;
+  }
+  .story-cinema-scene .story-primary {
+    aspect-ratio: 3/4;
+  }
+  .story-cinema-interlude {
+    padding: 55px 25px;
+  }
+  .story-diptych {
+    gap: 8px;
+    padding-bottom: 40px;
+  }
+  .story-diptych .story-secondary {
+    margin-top: 45px;
+  }
+  .story-diptych-note .family-grid {
+    border-left: 0;
+    border-top: 1px solid currentColor;
+    padding: 30px 0 0;
+    display: grid;
+    text-align: center;
+  }
+  .story-diptych-note .family-grid > div + div {
+    margin: 0;
+  }
+  .album-title-line {
+    font-size: 12px;
+  }
+  .album-title-line > span {
+    font-size: 9px;
+  }
+  .wedding-page .album-composition .wedding-album {
+    gap: 12px;
+  }
+  .wedding-page .album-vuon-thuong .wedding-album {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .wedding-page .album-vuon-thuong .wedding-album > button:nth-child(3n + 2) {
+    margin-top: 0;
+  }
+  .wedding-page .album-vuon-thuong .wedding-album > button:nth-child(even) {
+    margin-top: 35px;
+  }
+  .wedding-page .album-song-hy .wedding-album {
+    padding: 18px;
+    gap: 22px;
+  }
+  .wedding-page .album-song-hy .wedding-album > button {
+    border-width: 4px;
+  }
+  .wedding-page .album-nang-thu .wedding-album {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 20px 12px;
+    gap: 25px;
+  }
+  .wedding-page .album-nang-thu .wedding-album > button {
+    border-width: 6px;
+    border-bottom-width: 40px;
+  }
+  .album-nang-thu .wedding-album > button > span {
+    bottom: -36px;
+    font-size: 14px;
+  }
+  .album-nang-thu .wedding-album > button > span b {
+    display: none;
+  }
+  .wedding-page .album-nang-thu .wedding-album > button:nth-child(3n + 2) {
+    margin-top: 0;
+  }
+  .wedding-page .album-nang-thu .wedding-album > button:nth-child(even) {
+    margin-top: 35px;
+  }
+  .wedding-page .album-loi-hen .wedding-album > button {
+    flex-basis: 88%;
+  }
+  .wedding-page .album-thu-tinh .wedding-album {
+    padding: 10px;
+    gap: 0;
+  }
+  .wedding-page .album-thu-tinh .wedding-album > button {
+    border-width: 6px;
+  }
+  .wedding-page .album-thu-tinh .wedding-album > button:nth-child(odd) {
+    border-right-width: 10px;
+  }
+  .album-page-controls {
+    gap: 10px;
+  }
+  .album-page-controls button {
+    padding: 10px;
+    font-size: 11px;
+  }
+  .wedding-page .album-khoanh-khac .wedding-album > button {
+    aspect-ratio: 3/4;
+    top: 55px;
+    margin-bottom: 12vh;
+  }
+  .wedding-page .album-ben-nhau .wedding-album {
+    height: auto;
+    display: block;
+  }
+  .wedding-page .album-ben-nhau .wedding-album > button {
+    width: 100%;
+    display: block;
+    aspect-ratio: 16/9;
+    margin-bottom: 8px;
+  }
+  .wedding-page .album-ben-nhau .wedding-album > button > span {
+    writing-mode: horizontal-tb;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .album-composition * {
+    animation: none !important;
+    transition: none !important;
+  }
+  .wedding-page .album-khoanh-khac .wedding-album > button {
+    position: relative;
+    top: auto;
+    margin-bottom: 20px;
+  }
+  .wedding-page .album-ben-nhau .wedding-album {
+    height: auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .wedding-page .album-ben-nhau .wedding-album > button {
+    aspect-ratio: 3/4;
+    width: 100%;
+    height: auto;
+  }
+}
+
+/* Zoom the cinematic image inside its scene, without widening the document. */
+.wedding-page .wedding-hero {
+  overflow: clip;
+}
+.album-composition {
+  overflow-x: clip;
+}
+.story-composition .story-words {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .story-cinema-interlude {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.album-photo-surface {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+/* Wide portraits retain both people instead of inheriting a narrow photo crop. */
+.wedding-page
+  :is(
+    .album-loi-yeu,
+    .album-vuon-thuong,
+    .album-song-hy,
+    .album-ngay-chung-doi,
+    .album-nang-thu
+  )
+  .wedding-album
+  > button.is-landscape {
+  grid-column: 1 / -1;
+  aspect-ratio: 3 / 2;
+  margin-top: 0;
+}
+.wedding-page .album-vuon-thuong .wedding-album > button.is-landscape {
+  border-radius: 4px 60px 4px 60px;
+}
+.wedding-page .album-nang-thu .wedding-album > button.is-landscape {
+  transform: rotate(1deg);
+}
+:is(.album-thu-tinh, .album-dem-sao, .album-khoanh-khac) .is-landscape img {
+  object-fit: contain;
+}
+.album-ben-nhau .is-landscape:is(:hover, :focus-visible) img {
+  object-fit: contain;
+}
+@media (max-width: 760px) {
+  .album-ben-nhau .is-landscape img {
+    object-fit: contain;
+  }
+}
+.wedding-page .album-ben-nhau .wedding-album {
+  align-items: stretch;
+}
+.album-photo-surface img,
+.album-spotlight img {
+  object-position: 50% 25%;
+}
+.wedding-page .album-dem-sao .wedding-album {
+  justify-content: safe center;
+}

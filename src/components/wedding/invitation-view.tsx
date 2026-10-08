@@ -16,6 +16,7 @@ import { Countdown } from "./countdown";
 import { RsvpForm } from "./rsvp-form";
 import { Music } from "./music";
 import { InvitationMotion } from "./invitation-motion";
+import { InvitationStory } from "./invitation-story";
 import { InvitationAlbum } from "./invitation-album";
 import { GiftAccounts, type GiftAccount } from "./gift-accounts";
 import { Botanical } from "./template-card";
@@ -41,14 +42,6 @@ export function InvitationView({
   const photos = demonstrationPhotos(
     readPhotos(invitation.photosJson),
     invitation.isDemo,
-  );
-  const storyPhoto =
-    photos.find(
-      (photo) =>
-        weddingImageSource(photo) !== weddingImageSource(invitation.coverUrl),
-    ) || invitation.coverUrl;
-  const storyDetail = photos.find(
-    (photo) => weddingImageSource(photo) !== weddingImageSource(storyPhoto),
   );
   const musicUrl =
     invitation.musicUrl || (invitation.isDemo ? WEDDING_MUSIC.url : "");
@@ -186,65 +179,11 @@ export function InvitationView({
             Thêm ngày cưới vào lịch
           </a>
         </section>
-        <section className="wedding-section wedding-story">
-          <svg
-            className="wedding-story-ornament"
-            viewBox="0 0 200 70"
-            aria-hidden="true"
-          >
-            <path d="M10 58 Q65 50 100 10 Q135 50 190 58 M100 10 Q80 42 40 32 Q52 12 82 28 M100 10 Q120 42 160 32 Q148 12 118 28 M65 42 Q50 65 20 54 M135 42 Q150 65 180 54" />
-          </svg>
-          <p className="eyebrow">CÂU CHUYỆN CỦA CHÚNG MÌNH</p>
-          <h2>
-            Một đời thương,
-            <br />
-            <em>một đời bên nhau.</em>
-          </h2>
-          <div className="wedding-story-layout">
-            <div className="wedding-story-collage">
-              <div className="wedding-story-photo">
-                <div className="wedding-story-print">
-                  <Image
-                    src={weddingImageSource(storyPhoto)}
-                    alt={`${invitation.groom} và ${invitation.bride} — câu chuyện của hai người`}
-                    fill
-                    sizes="(max-width:800px) 80vw, 420px"
-                  />
-                </div>
-                <span aria-hidden="true">
-                  {invitation.groom} &amp; {invitation.bride}
-                </span>
-              </div>
-              {storyDetail && (
-                <div className="wedding-story-detail" aria-hidden="true">
-                  <Image
-                    src={weddingImageSource(storyDetail)}
-                    alt=""
-                    fill
-                    sizes="(max-width:800px) 35vw, 190px"
-                  />
-                </div>
-              )}
-            </div>
-            <div className="wedding-story-copy">
-              <blockquote>{invitation.headline}</blockquote>
-              <p>{invitation.story}</p>
-              <span className="wedding-story-signature">
-                {invitation.groom} &amp; {invitation.bride}
-              </span>
-            </div>
-          </div>
-          <div className="family-grid">
-            <div>
-              <h3>Gia đình nhà trai</h3>
-              <p>{invitation.groomParents}</p>
-            </div>
-            <div>
-              <h3>Gia đình nhà gái</h3>
-              <p>{invitation.brideParents}</p>
-            </div>
-          </div>
-        </section>
+        <InvitationStory
+          invitation={invitation}
+          design={design.key}
+          photos={photos}
+        />
         <section className="wedding-section" id="lich-tiec">
           <p className="eyebrow">TRÂN TRỌNG KÍNH MỜI</p>
           <h2>Ngày vui, có bạn.</h2>
@@ -291,6 +230,7 @@ export function InvitationView({
             <p className="eyebrow">MỖI KHOẢNH KHẮC, MỘT KỶ NIỆM</p>
             <h2>Những khoảnh khắc của hai người</h2>
             <InvitationAlbum
+              design={design.key}
               photos={photos}
               couple={`${invitation.groom} & ${invitation.bride}`}
             />

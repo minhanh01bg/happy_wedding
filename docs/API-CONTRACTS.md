@@ -182,3 +182,7 @@ Album nhận diện ảnh ngang sau khi tải để dành khung rộng hoặc gi
 ### Trình bày bìa theo mẫu — 08/10/2026
 
 Hero, trình tự các mục và chuyển động opening resolve từ layout/palette hiện có. Không thêm trường request/response, không đổi API hoặc điều kiện public/preview. Ảnh phụ hero đọc từ photosJson đã lưu, không tạo ảnh hoặc thông tin cặp đôi mới. Preview tiếp tục khóa gửi RSVP; quà demo không chứa tài khoản thật.
+
+### Lịch tháng và composition lịch tiệc — 10/10/2026
+
+Không thay payload/schema. Lịch tháng đọc weddingDate theo Asia/Ho_Chi_Minh; các khung tiệc đọc eventsJson giữ nguyên index/ngày/địa điểm. Không có API chọn ngày công khai hoặc lịch âm. Không thêm mốc chương trình/trang phục lấy từ thiệp tham khảo. Quyền public/preview, RSVP và quà giữ hợp đồng hiện hành.

@@ -1,0 +1,276 @@
+.opening {
+  isolation: isolate;
+}
+.art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.art svg {
+  width: 100%;
+  height: 100%;
+  opacity: 0.4;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1;
+}
+.paperLines {
+  position: absolute;
+  inset: 12% 10%;
+  border-block: double 4px currentColor;
+  background: repeating-linear-gradient(
+    transparent 0 35px,
+    color-mix(in srgb, currentColor 12%, transparent) 35px 36px
+  );
+  opacity: 0.3;
+}
+.fold {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      145deg,
+      transparent 49.8%,
+      color-mix(in srgb, currentColor 18%, transparent) 50%,
+      transparent 50.4%
+    ),
+    linear-gradient(
+      35deg,
+      transparent 49.8%,
+      color-mix(in srgb, currentColor 18%, transparent) 50%,
+      transparent 50.4%
+    );
+}
+.postage {
+  position: absolute;
+  top: 8%;
+  right: 12%;
+  width: 70px;
+  height: 90px;
+  border: 4px dotted currentColor;
+  display: grid;
+  place-items: center;
+  font-size: 40px;
+  opacity: 0.45;
+  transform: rotate(8deg);
+}
+.pageColumns {
+  position: absolute;
+  inset: 12%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  opacity: 0.2;
+}
+.pageColumns > div {
+  border-top: 5px solid currentColor;
+  background: repeating-linear-gradient(
+    transparent 0 14px,
+    currentColor 14px 15px
+  );
+}
+.masthead {
+  position: absolute;
+  top: 5%;
+  left: 12%;
+  right: 12%;
+  border-block: 2px solid currentColor;
+  padding: 12px 0;
+  font-family: var(--serif);
+  font-size: clamp(16px, 2vw, 28px);
+  letter-spacing: 0.1em;
+  text-align: center;
+  opacity: 0.55;
+}
+.print {
+  position: absolute;
+  inset: 15% 15% 35%;
+  border: 12px solid #fff9;
+  border-bottom-width: 50px;
+  transform: rotate(-8deg);
+  box-shadow: 0 10px 50px #54352315;
+}
+.print::before {
+  content: "";
+  position: absolute;
+  width: 100px;
+  height: 30px;
+  left: calc(50% - 50px);
+  top: -24px;
+  background: #be9d5b70;
+  transform: rotate(10deg);
+}
+.cinema {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    #ffffff06 0 4%,
+    #00000018 8% 12%,
+    #ffffff06 16% 20%
+  );
+}
+.cinema::after {
+  content: "";
+  position: absolute;
+  inset: 25px 0;
+  border-block: 1px solid #ffffff30;
+}
+.joined {
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  font-family: var(--serif);
+  font-size: clamp(130px, 24vw, 300px);
+  opacity: 0.1;
+  transform: translateY(-50%);
+}
+.opening[data-opening-design="song-hy"] :global(.invitation-door) {
+  background: #792c3e;
+}
+.opening[data-opening-design="song-hy"] :global(.invitation-door > span) {
+  border: double 6px #d9b770;
+  border-radius: 0;
+  inset: 5%;
+}
+.opening[data-opening-design="song-hy"] :global(.invitation-seal) {
+  border-radius: 0;
+  border: double 5px #d9b770;
+  background: #792c3e;
+  color: #fff2cc;
+}
+.opening[data-opening-design="ngay-chung-doi"] :global(.invitation-door) {
+  background: #f5efdd;
+}
+.opening[data-opening-design="ngay-chung-doi"]
+  :global(.invitation-door > span) {
+  border: 0;
+}
+.opening[data-opening-design="ngay-chung-doi"] :global(.invitation-seal) {
+  border-radius: 0;
+  border-inline: 0;
+  border-block: 3px double currentColor;
+  box-shadow: 0 20px 70px #33291a20;
+}
+.opening[data-opening-design="dem-sao"] :global(.invitation-door) {
+  background: radial-gradient(ellipse at center, #243e4a, #101c29);
+  color: #e3cf9e;
+}
+.opening[data-opening-design="dem-sao"] :global(.invitation-door > span) {
+  border: 0;
+}
+.opening[data-opening-design="dem-sao"] :global(.invitation-seal) {
+  border-radius: 50% 50% 15px 15px;
+  background: #172b37;
+  color: #e3cf9e;
+  border: 1px solid #e3cf9e60;
+}
+.opening[data-opening-design="nang-thu"] :global(.invitation-door) {
+  background:
+    repeating-linear-gradient(transparent 0 39px, #ad765a18 39px 40px), #faeedb;
+}
+.opening[data-opening-design="nang-thu"] :global(.invitation-door > span) {
+  border: 0;
+}
+.opening[data-opening-design="nang-thu"] :global(.invitation-seal) {
+  border-radius: 0;
+  background: #fff9e8;
+  box-shadow: 12px 16px 0 #af806725;
+  border: 1px solid #ad765a35;
+}
+.opening[data-opening-design="loi-hen"] :global(.invitation-door > span) {
+  border: 0;
+  border-block: 1px solid currentColor;
+  inset: 12%;
+}
+.opening[data-opening-design="loi-hen"] :global(.invitation-seal) {
+  border-radius: 0;
+  box-shadow: none;
+  border: 0;
+  border-block: 1px solid currentColor;
+}
+.opening[data-opening-design="thu-tinh"] :global(.invitation-door) {
+  background: #ecd0c6;
+}
+.opening[data-opening-design="thu-tinh"] :global(.invitation-door > span) {
+  border: 0;
+}
+.opening[data-opening-design="thu-tinh"] :global(.invitation-seal) {
+  border-radius: 0;
+  background: #fffaf4;
+  border: 1px solid #bf9789;
+  box-shadow: 0 30px 65px #88556025;
+}
+.opening[data-opening-design="thu-tinh"] :global(.opening-wax) {
+  background: #a36672;
+  color: #fff4e5;
+  border: double 4px #ffffff50;
+}
+.opening[data-opening-design="khoanh-khac"] :global(.invitation-door) {
+  background: #121923;
+}
+.opening[data-opening-design="khoanh-khac"] :global(.invitation-door > span) {
+  border: 0;
+}
+.opening[data-opening-design="khoanh-khac"] :global(.invitation-seal) {
+  background: #101822;
+  border-block: 1px solid #e9d39d60;
+  border-inline: 0;
+  border-radius: 0;
+  box-shadow: none;
+  color: #f7e7c5;
+}
+.opening[data-opening-design="ben-nhau"] :global(.invitation-door) {
+  background: linear-gradient(110deg, #ede0cc, #f9efe0);
+}
+.opening[data-opening-design="ben-nhau"] :global(.invitation-door > span) {
+  border-radius: 180px 0 0 0;
+  inset: 7%;
+}
+.opening[data-opening-design="ben-nhau"] :global(.door-right > span) {
+  border-radius: 0 0 180px 0;
+}
+.opening[data-opening-design="ben-nhau"] :global(.invitation-seal) {
+  border-radius: 0;
+  box-shadow: none;
+  border-block: 1px solid currentColor;
+  border-inline: 0;
+}
+.opening[data-opening-design="vuon-thuong"] :global(.invitation-seal) {
+  border-radius: 50% 50% 0 0;
+  border: double 4px currentColor;
+}
+@media (max-width: 600px) {
+  .postage {
+    width: 40px;
+    height: 60px;
+    font-size: 24px;
+    right: 10%;
+  }
+  .pageColumns {
+    gap: 10px;
+  }
+  .print {
+    inset: 12% 10% 40%;
+    border-width: 7px;
+    border-bottom-width: 30px;
+  }
+  .opening[data-opening-design] :global(.invitation-seal) {
+    padding: 25px 20px;
+    max-height: 88dvh;
+  }
+}
+.opening[data-opening-design] :global(.opening-skip) {
+  background: transparent;
+  color: inherit;
+  border: 0;
+  opacity: 1;
+  padding: 12px 14px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+/* Older global skins hid every SVG; the new artwork must remain visible. */
+.opening[data-opening-design] .art svg {
+  display: block;
+}

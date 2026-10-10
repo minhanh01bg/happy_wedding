@@ -272,3 +272,17 @@ Lượt đầy đủ `pnpm test:e2e`: **29/29 qua (4,5 phút)**. Rà soát Chrom
 Sau chỉnh ảnh: `pnpm check` 126/126 qua; `pnpm build` thành công; nhóm E2E liên quan **7/7 qua (1,3 phút)** gồm mười mẫu, intro mobile, letter/curtain, nhạc và QR. Manual Chromium cuối chạy đủ mười mẫu, 30/30 kiểm tra chiều rộng và không pageerror; ảnh đối chiếu được chụp lại. Dev preview port 3200 khởi động từ cache mới. Chưa kiểm tra Safari/iPhone thật; chưa deploy production.
 
 Rà soát mobile bổ sung phát hiện panorama vẫn cắt mép người ở 375px. Khung mobile Lời hẹn đổi sang tỷ lệ 3:2 và object-fit contain; ảnh chụp cuối giữ cả hai người. E2E mười mẫu thêm assertion object-fit contain ở 375px và chạy lại **1/1 qua (32 giây)**. Manual cuối đủ mười mẫu/30 viewport-case qua, không pageerror. Gate check/build được chạy lại sau chỉnh CSS.
+
+## Hoàn thiện lịch tiệc và mở đầu — 10/10/2026
+
+- Kiểm kê: catalog hiện có mười mẫu, không phải 29 mẫu. 29 là số bài E2E ở lượt trước. Đã hỏi người dùng bộ/danh sách 29 mẫu cần đối chiếu; chưa đủ dữ liệu để xác nhận 29 mẫu riêng biệt. Các thay đổi và bằng chứng dưới đây áp dụng cho mười mẫu hiện có.
+- Chromium mở trực tiếp bốn mẫu sang trọng/nhẹ nhàng/Korea/hiện đại của Thắng VN và thiệp Mạnh Hùng–Phạm Hằng; quan sát nội dung công khai và ảnh chụp. Zenlove bị redirect tới kiểm tra truy cập; Bac–Minh có metadata nhưng body chưa render trong thời gian quan sát. Không dùng hai lượt đó để khẳng định đã xem đầy đủ giao diện. RESEARCH ghi matrix áp dụng/khoảng trống.
+- `pnpm check`: 129/129 test, 18 file qua; lint không lỗi (còn cảnh báo ref Music có sẵn), TypeScript qua. Ba test mới xác minh giờ VN qua ranh giới tháng UTC, ngày nhuận và tháng sáu hàng bắt đầu Chủ nhật.
+- `pnpm build`: thành công.
+- Manual Chromium đủ mười mẫu: chụp mở đầu và lịch tiệc desktop/mobile; kiểm tra 320/375/844px, **30/30 không tràn ngang**, không pageerror. Lượt đầu timeout chờ load audio ở Thư tình; chuyển điều kiện chờ sang DOMContentLoaded, chạy lại đủ mười mẫu exit 0. Screenshot đặt caret initial để tránh công cụ chụp ảnh đổi style input trong khi hydration.
+- Đã sửa thêm độ tương phản nút skip trên màn giấy/thư/đêm, và nhịp trung gian của animation cửa. Thời gian/date/maps/calendar đọc dữ liệu thật; không lấy timeline/trang phục của thiệp tham khảo để điền cho khách.
+- Ảnh đối chiếu: `docs/previews/template-event-compositions.jpg` và `docs/previews/template-opening-compositions.jpg`. Bài E2E mười mẫu bổ sung so sánh mười cây DOM lịch tiệc, hai artwork mở đầu và ngày cưới/lịch tháng đúng dữ liệu demo.
+
+- Lượt đầy đủ `pnpm test:e2e`: **29/29 qua (5,3 phút)** trên DB/cổng E2E riêng. Sau đối chiếu CSS phát hiện global cũ ẩn mọi SVG của Song hỷ/Đêm sao: thêm rule scoped cho artwork mới và assertion SVG thực sự visible trong bài mười mẫu. Nhóm opening/mười mẫu và check/build được chạy lại sau sửa cuối này.
+
+- Gate cuối sau sửa SVG: `pnpm check` 129/129 qua, `pnpm build` thành công; `pnpm test:e2e --grep 'all ten catalog|letter and curtain|opening doors'` **3/3 qua (1,0 phút)**. Manual chụp lại đủ mười mẫu từ dev cache mới, 30/30 viewport-case qua, không pageerror; cập nhật cả hai ảnh đối chiếu. Preview port 3200 hoạt động. Chưa kiểm tra Safari/iPhone thật, không deploy production.

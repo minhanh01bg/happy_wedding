@@ -110,3 +110,9 @@ Hero chuyển từ một cây HTML chung sang mười cấu trúc server riêng 
 Count­down, story, events và album được sắp lại trong DOM theo từng design, giữ RSVP và hành động chính dễ tìm bằng điều hướng đầu trang. Không dùng CSS order để làm thứ tự đọc của trình đọc màn hình khác thứ tự hiển thị. Mở thiệp có thêm chuyển động theo design, giữ native dialog, bỏ qua/Escape, reduced motion và yêu cầu phát nhạc ngay trong thao tác người dùng.
 
 Bìa demo stock chọn ảnh từ chính album demo theo thiết kế, đặc biệt ảnh ngang cho Lời hẹn và Khoảnh khắc. Chỉ thay lựa chọn trình bày nếu isDemo, cover là stock mặc định và ảnh nằm trong photos đã đọc; không ghi DB hay thay cover khách tùy chỉnh.
+
+## Lịch tiệc và artwork mở đầu — 10/10/2026
+
+`InvitationEvents` dựng mười cấu trúc lịch tiệc bằng server components, giữ eventIndex/nội dung/sắp thứ tự eventsJson. Maps và calendar dùng địa điểm/thời gian thật, không suy diễn lịch trình lễ từ mẫu đối thủ. Khung ngày/giờ dùng múi giờ Asia/Ho_Chi_Minh. Lịch tháng của weddingDate là bảng Monday-first có caption/header và đánh dấu ngày cưới; không phải lịch chọn ngày hay lịch âm. Hàm pure trong wedding-date-calendar resolve ngày VN trước khi dựng tháng bằng UTC, tránh lệch ngày/múi giờ SSR.
+
+Opening giữ native dialog/skip/Escape/reduced motion/nhạc trong click. Artwork SVG/CSS gốc theo design thay hình hoa chung ở các phong cách báo/đêm/nhật ký/thư/phim/diptych. Các preset chuyển động nội suy từ trạng thái giữa đến trạng thái cuối thay vì dùng cùng endpoint ở 55% và 100%. CSS Modules giới hạn khung lịch và artwork, giữ những class semantic cần cho progressive enhancement và test. Nút skip dùng nền trong suốt và màu kế thừa để đọc được trên giấy/thư và màn tối.

@@ -1110,6 +1110,7 @@ test("all ten catalog templates have complete distinct invitations on desktop an
   ];
   const compositions = new Set<string>();
   const storyStructures = new Set<string>();
+  const eventStructures = new Set<string>();
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("console", (message) => {
@@ -1124,6 +1125,12 @@ test("all ten catalog templates have complete distinct invitations on desktop an
     );
     const opening = page.locator(".invitation-opening");
     await expect(opening).toBeVisible();
+    if (slug === "song-hy" || slug === "dem-sao") {
+      await expect(
+        opening.locator("[data-opening-art] svg").first(),
+      ).toBeVisible();
+    }
+
     await page
       .getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" })
       .click();
@@ -1150,6 +1157,24 @@ test("all ten catalog templates have complete distinct invitations on desktop an
     );
     await expect(page.locator(".family-grid > div")).toHaveCount(2);
     await expect(page.locator(".event-card")).toHaveCount(2);
+    await expect(page.locator("[data-opening-art]")).toHaveCount(2);
+    await expect(page.locator("[data-wedding-day]")).toHaveAttribute(
+      "data-wedding-day",
+      "14",
+    );
+    await expect(
+      page.getByRole("table", { name: "Tháng 2 · 2027" }),
+    ).toHaveCount(1);
+    eventStructures.add(
+      await page
+        .locator(".event-card")
+        .first()
+        .evaluate((el) => {
+          const tree = (node: Element): string =>
+            `${node.tagName}(${Array.from(node.children).map(tree).join(",")})`;
+          return tree(el);
+        }),
+    );
     await expect(page.locator(".wedding-album > button")).toHaveCount(6);
     await expect(
       page.getByRole("button", { name: "Gửi xác nhận & lời chúc" }),
@@ -1177,6 +1202,7 @@ test("all ten catalog templates have complete distinct invitations on desktop an
   }
   expect(compositions.size).toBe(10);
   expect(storyStructures.size).toBe(10);
+  expect(eventStructures.size).toBe(10);
   expect(errors).toEqual([]);
 });
 

@@ -137,3 +137,19 @@ Tham khảo URL người dùng gửi: https://zenlove.me/s/wedding-quochuy-thanh
 ### 07/10/2026 — Get Layers
 
 Tham khảo public preview [Cards Cascade](https://www.getlayers.ai/layer/cards-cascade) và [Carousel Spotlight](https://www.getlayers.ai/layer/carousel-spotlight): chiều sâu thẻ ảnh, chuyển động theo cuộn và cách nhấn ánh sáng quanh ảnh. Viết implementation riêng bằng CSS/WAAPI; không lấy source, prompt hoặc asset premium. Trang chủ có spotlight theo chuột, parallax ảnh và thẻ mẫu xuất hiện từ chiều sâu; photo chapter mở rộng thành bốn ảnh phụ gom vào khung. Giữ palette cưới, native scroll và reduced motion.
+
+## Rà soát lại mẫu tham khảo — 10/10/2026
+
+Mở lại bằng Chromium các trang công khai Thắng VN: [catalog](https://thangvn.vn/mau-thiep/), [sang trọng](https://thangvn.vn/mau-thiep/mau-thiep-sang-trong/), [nhẹ nhàng](https://thangvn.vn/mau-thiep/mau-thiep-nhe-nhang/), [Korea](https://thangvn.vn/mau-thiep/mau-thiep-korea/), [hiện đại](https://thangvn.vn/mau-thiep/mau-thiep-hien-dai/) và thiệp Mạnh Hùng–Phạm Hằng. Cả bốn trang mẫu render được; có audio, phần quà hai bên, album và các khối như trang phục/chương trình lễ. Đếm DOM ghi nhận lần lượt 29/34/31/35 thẻ img, không coi đây là số mẫu hoặc số ảnh album: có ảnh trang trí và thumbnail. Catalog có bốn link mẫu và mười link cặp đôi riêng biệt; một số link cặp đôi lặp trong carousel.
+
+| Quan sát / nguồn                                | Áp dụng hoặc khoảng trống được xác định                                                                                                          |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Các khối ngày/giờ/địa điểm rõ nét trên Thắng VN | Mười composition lịch tiệc riêng; stamp ngày, giờ VN, địa chỉ, maps và calendar vẫn đọc dữ liệu thật                                             |
+| Nhịp trình bày khác nhau giữa bốn mẫu           | Bìa/câu chuyện/album có composition riêng từ trước; bổ sung phần lịch tiệc và artwork màn mở đầu để phong cách không dừng ở hero                 |
+| OnePlus Tri-Chips và Layers Cards Cascade       | Giữ các chương ảnh/album có chiều sâu theo cuộn đã triển khai; không thêm một kiểu ghim ảnh vào mọi mẫu                                          |
+| Chương trình lễ, trang phục trên mẫu tham khảo  | Model hiện chưa có dữ liệu khách nhập cho các mục này; không chép các mốc 4:30 PM/first dance hay trang phục của thiệp tham khảo vào thiệp khách |
+| Nhạc / mở quà hai bên                           | Chức năng đã có; chạy regression cùng thay đổi bố cục/opening                                                                                    |
+
+Zenlove vẫn chuyển trình duyệt sang trang Google kiểm tra truy cập; không vượt qua chặn và không khẳng định đã xem đủ animation của thiệp. Bac–Minh có title thiệp nhưng body chưa render nội dung trong thời gian quan sát, nên không dùng lần này làm bằng chứng đối chiếu đầy đủ. OnePlus và public page Layers đọc được qua web; không lấy prompt/source premium hoặc ảnh của cặp đôi tham khảo.
+
+Catalog của dự án hiện có mười mẫu, còn số 29 trong báo cáo trước là số kịch bản E2E. Người dùng đề cập “29 mẫu”; đã hỏi danh sách/bộ tham khảo tương ứng, chưa có đủ dữ liệu để khẳng định đã rà 29 mẫu riêng biệt. Tạm hoàn thiện mười mẫu có thật và ghi rõ giới hạn kiểm kê.

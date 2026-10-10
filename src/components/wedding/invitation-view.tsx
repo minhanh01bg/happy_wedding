@@ -8,7 +8,7 @@ import type {
   WeddingTemplate,
   GuestResponse,
 } from "@prisma/client";
-import { MapPin, CalendarPlus } from "lucide-react";
+import { CalendarPlus } from "lucide-react";
 import { readEvents, readPhotos, dateLabel } from "@/lib/wedding";
 import { WEDDING_MUSIC } from "@/lib/wedding-music";
 import { Countdown } from "./countdown";
@@ -18,6 +18,7 @@ import { InvitationMotion } from "./invitation-motion";
 import { InvitationStory } from "./invitation-story";
 import { InvitationAlbum } from "./invitation-album";
 import { GiftAccounts, type GiftAccount } from "./gift-accounts";
+import { InvitationEvents, InvitationDateCalendar } from "./invitation-events";
 import { InvitationHero } from "./invitation-hero";
 import { InvitationOpening } from "./invitation-opening";
 
@@ -74,6 +75,7 @@ export function InvitationView({
       <section className="wedding-section wedding-countdown">
         <p className="eyebrow">CHÚNG MÌNH SẮP CHUNG MỘT NHÀ</p>
         <h2>Cùng đếm ngược ngày vui</h2>
+        <InvitationDateCalendar date={invitation.weddingDate} />
         <Countdown date={invitation.weddingDate.toISOString()} />
         <a
           className="text-link"
@@ -95,47 +97,11 @@ export function InvitationView({
       />
     ),
     events: (
-      <section className="wedding-section" id="lich-tiec">
-        <p className="eyebrow">TRÂN TRỌNG KÍNH MỜI</p>
-        <h2>Ngày vui, có bạn.</h2>
-        <div className="event-grid">
-          {events.map((event, i) => (
-            <article
-              className="event-card"
-              key={`${event.title}-${event.date}-${event.venue}`}
-            >
-              <span className="event-day-art" aria-hidden="true">
-                {dateLabel(event.date).split("/")[0]}
-              </span>
-              <p className="eyebrow">0{i + 1} / LỊCH TIỆC</p>
-              <h3 style={{ marginTop: 20 }}>{event.title}</h3>
-              <strong>{dateLabel(event.date, true)}</strong>
-              <p>{event.venue}</p>
-              <p>{event.address}</p>
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${event.venue}, ${event.address}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <MapPin size={16} />
-                Chỉ đường đến tiệc
-              </a>
-              <a
-                href={weddingCalendarUrl(
-                  event.date,
-                  `${event.title} — ${invitation.groom} & ${invitation.bride}`,
-                  `${event.venue}, ${event.address}`,
-                )}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <CalendarPlus size={16} aria-hidden="true" />
-                Thêm tiệc này vào lịch
-              </a>
-            </article>
-          ))}
-        </div>
-      </section>
+      <InvitationEvents
+        events={events}
+        design={design.key}
+        couple={`${invitation.groom} & ${invitation.bride}`}
+      />
     ),
     album: !!photos.length && (
       <section className="wedding-section" id="album">

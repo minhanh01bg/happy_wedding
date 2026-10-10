@@ -267,3 +267,7 @@ Album nhận diện ảnh ngang sau khi tải để dành khung rộng hoặc gi
 ### Bìa và nhịp đọc riêng — 08/10/2026
 
 Mười mẫu có cấu trúc hero khác nhau thật trong HTML, không chỉ màu hoặc CSS của một khung chung. Trình tự câu chuyện, countdown, lịch tiệc và album khác theo ý tưởng mẫu; các anchor lịch tiệc/album/RSVP/quà giữ nguyên. Opening bổ sung chuyển động theo thiết kế, và thiệp vẫn đọc được nếu không có JavaScript. Chi tiết lựa chọn tại ADR 0004. Không thay đổi nội dung khách, dữ liệu ngân hàng hay hợp đồng nghiệp vụ.
+
+### Hoàn thiện phần lịch và mở thiệp — 10/10/2026
+
+Mười mẫu hiện có được bổ sung composition lịch tiệc riêng và artwork mở thiệp theo ý tưởng. Lịch tháng đánh dấu weddingDate theo giờ Việt Nam, có thứ/ngày rõ ràng và vẫn hiện khi không có JS. Từng tiệc giữ giờ, ngày, địa điểm, chỉ đường và thêm lịch từ dữ liệu khách nhập. Không thay đổi schema hoặc giả lập chương trình cưới/trang phục khi chưa có dữ liệu. Native dialog, nhạc qua gesture, album và modal quà hai bên giữ nguyên chức năng. Chi tiết quan sát tham khảo/giới hạn bộ “29 mẫu” nằm trong RESEARCH.

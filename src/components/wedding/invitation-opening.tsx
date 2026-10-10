@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Heart } from "lucide-react";
+import styles from "./invitation-opening.module.css";
 
 export function InvitationOpening({
   variant = "doors",
@@ -54,15 +55,15 @@ export function InvitationOpening({
           .querySelectorAll<HTMLElement>(".invitation-door")
           .forEach((door, i) => {
             const sign = i ? 1 : -1;
-            const treatments: Record<string, string> = {
-              "vuon-thuong": `translateX(${sign * 110}%) rotate(${sign * 12}deg)`,
-              "song-hy": `translateY(${sign * 115}%) scaleY(.8)`,
-              "ngay-chung-doi": `perspective(1400px) rotateY(${sign * 100}deg) translateX(${sign * 30}%)`,
-              "dem-sao": "scale(.05) rotate(80deg)",
-              "nang-thu": `translateY(-115%) rotate(${sign * 28}deg)`,
-              "thu-tinh": `translateY(${sign * 110}%) rotateX(${sign * 75}deg)`,
-              "ben-nhau": `translateX(${sign * 115}%) rotate(${sign * 8}deg)`,
-            };
+            const treatments = (progress: number): Record<string, string> => ({
+              "vuon-thuong": `translateX(${sign * 110 * progress}%) rotate(${sign * 12 * progress}deg)`,
+              "song-hy": `translateY(${sign * 115 * progress}%) scaleY(${1 - 0.2 * progress})`,
+              "ngay-chung-doi": `perspective(1400px) rotateY(${sign * 100 * progress}deg) translateX(${sign * 30 * progress}%)`,
+              "dem-sao": `scale(${1 - 0.95 * progress}) rotate(${80 * progress}deg)`,
+              "nang-thu": `translateY(${-115 * progress}%) rotate(${sign * 28 * progress}deg)`,
+              "thu-tinh": `translateY(${sign * 110 * progress}%) rotateX(${sign * 75 * progress}deg)`,
+              "ben-nhau": `translateX(${sign * 115 * progress}%) rotate(${sign * 8 * progress}deg)`,
+            });
             animations.push(
               door.animate(
                 [
@@ -72,7 +73,7 @@ export function InvitationOpening({
                   },
                   {
                     transform:
-                      treatments[design] ||
+                      treatments(0.55)[design] ||
                       (variant === "curtain"
                         ? `translateX(${i ? 45 : -45}%) scaleX(.85)`
                         : variant === "letter"
@@ -83,7 +84,7 @@ export function InvitationOpening({
                   },
                   {
                     transform:
-                      treatments[design] ||
+                      treatments(1)[design] ||
                       (variant === "curtain"
                         ? `translateX(${i ? 110 : -110}%) scaleX(.5)`
                         : variant === "letter"
@@ -144,7 +145,8 @@ export function InvitationOpening({
   return (
     <dialog
       ref={dialog}
-      className={`invitation-opening opening-${variant}`}
+      className={`invitation-opening opening-${variant} ${styles.opening}`}
+      data-opening-design={design}
       aria-labelledby="opening-title"
       onCancel={(event) => {
         event.preventDefault();
@@ -153,11 +155,11 @@ export function InvitationOpening({
     >
       <div className="invitation-door door-left" aria-hidden="true">
         <span />
-        <DoorFloral />
+        <OpeningArt design={design} />
       </div>
       <div className="invitation-door door-right" aria-hidden="true">
         <span />
-        <DoorFloral />
+        <OpeningArt design={design} />
       </div>
       <div className="opening-glow" aria-hidden="true" />
       <div className="invitation-seal">
@@ -194,6 +196,99 @@ export function InvitationOpening({
         <p className="opening-hint">Chạm để mở ngày vui của chúng mình</p>
       </div>
     </dialog>
+  );
+}
+
+function OpeningArt({ design }: { design: string }) {
+  let art;
+  switch (design) {
+    case "song-hy":
+      art = (
+        <svg viewBox="0 0 200 600">
+          <path d="M20 20h160v560H20zM30 30h140v540H30zM20 100h160M20 500h160" />
+          <text
+            x="100"
+            y="150"
+            textAnchor="middle"
+            fill="currentColor"
+            stroke="none"
+            fontSize="64"
+          >
+            囍
+          </text>
+        </svg>
+      );
+      break;
+    case "ngay-chung-doi":
+      art = (
+        <>
+          <div className={styles.masthead}>NGÀY CHUNG ĐÔI</div>
+          <div className={styles.pageColumns}>
+            <div />
+            <div />
+          </div>
+        </>
+      );
+      break;
+    case "dem-sao":
+      art = (
+        <svg viewBox="0 0 300 700">
+          <circle cx="150" cy="350" r="120" />
+          <circle cx="150" cy="350" r="90" />
+          <path d="M40 80l12 24 24 12-24 12-12 24-12-24-24-12 24-12zM235 510l7 15 15 7-15 7-7 15-7-15-15-7 15-7zM50 620l120-110 80-140M170 100l-70 140 90 90" />
+          <circle cx="50" cy="620" r="3" />
+          <circle cx="170" cy="510" r="3" />
+          <circle cx="250" cy="370" r="3" />
+        </svg>
+      );
+      break;
+    case "nang-thu":
+      art = (
+        <>
+          <div className={styles.paperLines} />
+          <div className={styles.print} />
+        </>
+      );
+      break;
+    case "loi-hen":
+      art = (
+        <svg viewBox="0 0 200 600">
+          <path d="M30 100h140M30 125h100M30 150h120M30 500h140M30 525h90" />
+          <path d="M75 275c-35-35-65 25 25 80 90-55 60-115 25-80l-25 20z" />
+        </svg>
+      );
+      break;
+    case "thu-tinh":
+      art = (
+        <>
+          <div className={styles.fold} />
+          <div className={styles.postage}>♡</div>
+        </>
+      );
+      break;
+    case "khoanh-khac":
+      art = <div className={styles.cinema} />;
+      break;
+    case "ben-nhau":
+      art = <div className={styles.joined}>&amp;</div>;
+      break;
+    case "vuon-thuong":
+      art = (
+        <>
+          <DoorFloral />
+          <svg viewBox="0 0 200 600">
+            <path d="M20 580V160a80 80 0 01160 0v420M35 560V160a65 65 0 01130 0v400" />
+          </svg>
+        </>
+      );
+      break;
+    default:
+      art = <DoorFloral />;
+  }
+  return (
+    <div className={styles.art} data-opening-art={design} aria-hidden="true">
+      {art}
+    </div>
   );
 }
 

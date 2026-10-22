@@ -10,14 +10,14 @@ Thành công thường `{ "ok": true }`, có data khi cần. Lỗi domain `{ "ok
 
 ## Khách mua dịch vụ
 
-| POST operation | Payload                                                        | Kết quả / guard                                                            |
-| -------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `invitations`  | `{invitation: InvitationInput, id?: string, version?: number}` | Tạo/sửa thuộc owner; data `{id, version}`; sửa phải version hiện tại       |
-| `publish`      | `{id: string, publish: boolean}`                               | Publish/unpublish; đủ quyền lợi khi publish; suspended bị từ chối          |
-| `orders`       | `{invitationId: string, planId: string, clientId: UUID}`       | data `{id}`; ownership, plan active, snapshot và replay                    |
-| `payment-note` | `{id: string, note: string}`                                   | note 4–300 ký tự; pending thuộc account; không kích hoạt                   |
-| `guests`       | `{invitationId: string, name: string, group: string}`          | name 2–100, group 1–80; ownership; tối đa 2.000 khách; token do server tạo |
-| `moderate`     | `{id: responseId, status: "approved" \| "hidden"}`             | Chỉ response thuộc thiệp của account                                       |
+| POST operation | Payload                                                        | Kết quả / guard                                                                                                    |
+| -------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `invitations`  | `{invitation: InvitationInput, id?: string, version?: number}` | Tạo/sửa thuộc owner; data `{id, version}`; sửa phải version hiện tại                                               |
+| `publish`      | `{id: string, publish: boolean}`                               | Publish/unpublish; đủ quyền lợi khi publish; suspended bị từ chối                                                  |
+| `orders`       | `{invitationId: string, planId: string, clientId: UUID}`       | data `{id}`; ownership, plan active, snapshot và replay                                                            |
+| `payment-note` | `{id: string, note: string}`                                   | note 4–300 ký tự; pending thuộc account; không kích hoạt                                                           |
+| `guests`       | `{invitationId: string, name: string, group: string}`          | name 2–100, group 1–80; ownership; tối đa 2.000 khách (kiểm tra và tạo trong một transaction); token do server tạo |
+| `moderate`     | `{id: responseId, status: "approved" \| "hidden"}`             | Chỉ response thuộc thiệp của account                                                                               |
 
 InvitationInput chính xác tại `src/lib/wedding.ts`: templateId, slug, groom, bride, weddingDate, headline, story, groomParents, brideParents, events, photos, coverUrl, musicUrl, giftBank, giftAccount, giftName (nhà trai), brideGiftBank, brideGiftAccount, brideGiftName (nhà gái, mặc định rỗng để tương thích client cũ). Zod strict không chấp nhận field thừa. Date là ISO datetime có offset; image URL chỉ ảnh sample hoặc WebP upload local; mỗi bên ngân hàng điền đủ bộ hoặc bỏ trống toàn bộ. Tiền mừng không tạo ServiceOrder/WeddingPayment.
 
@@ -54,7 +54,7 @@ Trả data `{id: responseId}`. Thiệp phải công khai hợp lệ. Personal cl
 
 ## Admin
 
-Mọi operation dưới `admin/` cần phiên admin và role owner/manager.
+Mọi operation dưới `admin/` cần phiên admin và role owner/manager. Bản ghi không tồn tại (Prisma P2025) trả 404 `Không tìm thấy dữ liệu`, không ghi audit.
 
 | POST operation            | Payload                                                                                                        | Hành vi                                                                                                                                                                               |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

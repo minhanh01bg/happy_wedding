@@ -1,5 +1,4 @@
 import { merchantSchema } from "@/lib/wedding";
-import { randomBytes } from "node:crypto";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
@@ -14,6 +13,7 @@ import {
   safeOrigin,
 } from "@/server/wedding/guards";
 import {
+  addGuest,
   confirmPayment,
   createServiceOrder,
   ownedInvitation,
@@ -40,6 +40,11 @@ function failure(error: unknown) {
       },
       400,
     );
+  if (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2025"
+  )
+    return json({ ok: false, message: "Không tìm thấy dữ liệu" }, 404);
   if (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2002"
@@ -264,19 +269,7 @@ export async function POST(
           group: z.string().trim().min(1).max(80),
         })
         .parse(body.data);
-      await ownedInvitation(input.invitationId, session.accountId);
-      if (
-        (await prisma.weddingGuest.count({
-          where: { invitationId: input.invitationId },
-        })) >= 2000
-      )
-        throw new WeddingError(
-          400,
-          "Thiệp hỗ trợ tối đa 2.000 lời mời cá nhân",
-        );
-      await prisma.weddingGuest.create({
-        data: { ...input, token: randomBytes(24).toString("base64url") },
-      });
+      await addGuest(session.accountId, input);
       return json({ ok: true });
     }
     if (path[0] === "moderate") {

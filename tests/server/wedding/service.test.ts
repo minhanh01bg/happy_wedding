@@ -18,7 +18,9 @@ import {
   vietnamDay,
 } from "@/server/wedding/reporting";
 import {
+  addGuest,
   confirmPayment,
+  MAX_GUESTS_PER_INVITATION,
   createServiceOrder,
   entitlement,
   publicInvitation,
@@ -635,5 +637,44 @@ describe("Admin reporting", () => {
     expect(report.revenue).toBe(0);
     expect(report.previousRevenue).toBe(0);
     expect(report.sales).toEqual([]);
+  });
+});
+
+describe("Personal guest invitations", () => {
+  it("only the owner can add guests and tokens are opaque", async () => {
+    const i = await draft();
+    await expect(
+      addGuest(otherId, { invitationId: i.id, name: "Khách", group: "Bạn" }),
+    ).rejects.toMatchObject({ status: 404 });
+    const guest = await addGuest(accountId, {
+      invitationId: i.id,
+      name: "Khách",
+      group: "Bạn",
+    });
+    expect(Buffer.from(guest.token, "base64url")).toHaveLength(24);
+  });
+  it("concurrent adds cannot exceed the per-invitation cap", async () => {
+    const i = await draft();
+    await prisma.weddingGuest.createMany({
+      data: Array.from({ length: MAX_GUESTS_PER_INVITATION - 2 }, (_, n) => ({
+        invitationId: i.id,
+        name: `Khách ${n}`,
+        group: "Bạn",
+        token: `seed-token-${n}`,
+      })),
+    });
+    const results = await Promise.allSettled(
+      Array.from({ length: 6 }, (_, n) =>
+        addGuest(accountId, {
+          invitationId: i.id,
+          name: `Mới ${n}`,
+          group: "Bạn",
+        }),
+      ),
+    );
+    expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(2);
+    expect(
+      await prisma.weddingGuest.count({ where: { invitationId: i.id } }),
+    ).toBe(MAX_GUESTS_PER_INVITATION);
   });
 });

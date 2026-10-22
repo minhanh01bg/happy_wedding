@@ -26,6 +26,27 @@ export async function ownedInvitation(id: string, ownerId: string) {
   if (!invitation) throw new WeddingError(404, "Không tìm thấy thiệp");
   return invitation;
 }
+export const MAX_GUESTS_PER_INVITATION = 2000;
+/** Ownership, cap check and insert share one transaction so concurrent adds cannot exceed the cap. */
+export async function addGuest(
+  ownerId: string,
+  input: { invitationId: string; name: string; group: string },
+) {
+  return prisma.$transaction(async (tx) => {
+    const owned = await tx.invitation.count({
+      where: { id: input.invitationId, ownerId },
+    });
+    if (!owned) throw new WeddingError(404, "Không tìm thấy thiệp");
+    const guests = await tx.weddingGuest.count({
+      where: { invitationId: input.invitationId },
+    });
+    if (guests >= MAX_GUESTS_PER_INVITATION)
+      throw new WeddingError(400, "Thiệp hỗ trợ tối đa 2.000 lời mời cá nhân");
+    return tx.weddingGuest.create({
+      data: { ...input, token: randomBytes(24).toString("base64url") },
+    });
+  });
+}
 export async function entitlement(invitationId: string) {
   return prisma.serviceOrder.findFirst({
     where: { invitationId, status: "paid", expiresAt: { gt: new Date() } },

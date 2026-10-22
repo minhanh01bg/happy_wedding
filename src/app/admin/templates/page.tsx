@@ -1,7 +1,9 @@
+import { requireAdminPage } from "@/server/auth/require-admin-session";
 import { prisma } from "@/server/db/prisma";
 import { TemplateArtwork } from "@/components/wedding/template-card";
 import { AdminRecordForm } from "@/components/wedding/admin-form";
 export default async function AdminTemplates() {
+  await requireAdminPage();
   const templates = await prisma.weddingTemplate.findMany({
     orderBy: { sortOrder: "asc" },
   });

@@ -96,3 +96,20 @@ export async function requireAdminSession(
 
   return { authorized: true, identity: resolved.identity };
 }
+
+export type AdminRole = "owner" | "manager";
+
+/**
+ * Page-level guard for admin Server Components. Layouts are not re-rendered on
+ * client navigation and RSC requests can target a page segment directly, so
+ * every admin page must call this itself rather than relying on the layout.
+ */
+export async function requireAdminPage(
+  roles: readonly AdminRole[] = ["owner", "manager"],
+): Promise<AdminPrincipal> {
+  const session = await requireAdminSession({ redirectToLogin: true });
+  const identity = session.identity;
+  if (!identity || !(roles as readonly string[]).includes(identity.role))
+    redirect("/login");
+  return identity;
+}

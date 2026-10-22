@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/server/auth/require-admin-session";
 import Link from "next/link";
 import { DropdownField } from "@/components/kit/dropdown-field";
 import { prisma } from "@/server/db/prisma";
@@ -8,6 +9,7 @@ export default async function Customers({
 }: {
   searchParams: Promise<{ q?: string; page?: string; status?: string }>;
 }) {
+  await requireAdminPage();
   const query = await searchParams;
   const q = (query.q || "").slice(0, 100);
   const page = Math.max(1, Math.min(1000, Math.floor(Number(query.page) || 1)));

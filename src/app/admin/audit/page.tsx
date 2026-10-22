@@ -1,6 +1,8 @@
+import { requireAdminPage } from "@/server/auth/require-admin-session";
 import { prisma } from "@/server/db/prisma";
 import { dateLabel } from "@/lib/wedding";
 export default async function Audit() {
+  await requireAdminPage();
   const rows = await prisma.adminAuditEvent.findMany({
     orderBy: { createdAt: "desc" },
     take: 100,

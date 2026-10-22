@@ -1,7 +1,9 @@
+import { requireAdminPage } from "@/server/auth/require-admin-session";
 import { prisma } from "@/server/db/prisma";
 import { AdminRecordForm } from "@/components/wedding/admin-form";
 import { money } from "@/lib/wedding";
 export default async function Plans() {
+  await requireAdminPage();
   const plans = await prisma.servicePlan.findMany({
     orderBy: { sortOrder: "asc" },
   });

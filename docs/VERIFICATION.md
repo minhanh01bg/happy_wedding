@@ -286,3 +286,9 @@ Rà soát mobile bổ sung phát hiện panorama vẫn cắt mép người ở 3
 - Lượt đầy đủ `pnpm test:e2e`: **29/29 qua (5,3 phút)** trên DB/cổng E2E riêng. Sau đối chiếu CSS phát hiện global cũ ẩn mọi SVG của Song hỷ/Đêm sao: thêm rule scoped cho artwork mới và assertion SVG thực sự visible trong bài mười mẫu. Nhóm opening/mười mẫu và check/build được chạy lại sau sửa cuối này.
 
 - Gate cuối sau sửa SVG: `pnpm check` 129/129 qua, `pnpm build` thành công; `pnpm test:e2e --grep 'all ten catalog|letter and curtain|opening doors'` **3/3 qua (1,0 phút)**. Manual chụp lại đủ mười mẫu từ dev cache mới, 30/30 viewport-case qua, không pageerror; cập nhật cả hai ảnh đối chiếu. Preview port 3200 hoạt động. Chưa kiểm tra Safari/iPhone thật, không deploy production.
+
+## Gia cố bảo mật 22/10/2026
+
+Quyết định tại [ADR 0005](adr/0005-security-hardening-2026-10.md). Mỗi mục là một commit riêng.
+
+- **Bỏ qua xác thực trang admin qua RSC (nghiêm trọng).** Trước sửa: `curl -L -H 'RSC: 1' -H 'Next-Router-State-Tree: <cây admin/plans>' -H 'Cookie: pos_session=bogus' /admin/audit` trả 200 kèm các dòng `settings.save` thật; tương tự customers/orders/settings/invitations. Sau sửa: cookie giả nhận `NEXT_REDIRECT;replace;/login` và 0 dòng dữ liệu; phiên hợp lệ vẫn nhận 5 dòng. `tests/server/auth/require-admin-page.test.ts`: không cookie/token giả → redirect, owner/manager qua, role ngoài danh sách → redirect, và test tĩnh mọi admin page gọi `requireAdminPage` đầu tiên.

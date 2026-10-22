@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/server/auth/require-admin-session";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/server/db/prisma";
@@ -10,6 +11,7 @@ export default async function AdminOrder({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdminPage();
   const order = await prisma.serviceOrder.findUnique({
     where: { id: (await params).id },
     include: {

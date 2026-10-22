@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/server/auth/require-admin-session";
 import { merchantSettings, paymentReadiness } from "@/server/wedding/settings";
 import { AdminRecordForm } from "@/components/wedding/admin-form";
 import { PaymentQr } from "@/components/wedding/payment-qr";
@@ -5,6 +6,7 @@ import { SupportContacts } from "@/components/wedding/support-contacts";
 import { bankName } from "@/lib/banks";
 
 export default async function Settings() {
+  await requireAdminPage();
   const settings = await merchantSettings();
   const readiness = paymentReadiness(settings);
   return (

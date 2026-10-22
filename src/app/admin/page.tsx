@@ -1,7 +1,6 @@
 import { DropdownField } from "@/components/kit/dropdown-field";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { requireAdminSession } from "@/server/auth/require-admin-session";
+import { requireAdminPage } from "@/server/auth/require-admin-session";
 import {
   weddingReport,
   reportPeriod,
@@ -15,12 +14,7 @@ export default async function AdminDashboard({
 }: {
   searchParams: Promise<{ period?: string }>;
 }) {
-  const session = await requireAdminSession({ redirectToLogin: true });
-  if (
-    !session.identity ||
-    !["owner", "manager"].includes(session.identity.role)
-  )
-    redirect("/login");
+  await requireAdminPage();
   const period = reportPeriod((await searchParams).period);
   const report = await weddingReport(period);
   const { recentOrders: orders } = report;

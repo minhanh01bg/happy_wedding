@@ -123,7 +123,7 @@ flowchart LR
   Upload --> Disk[Persistent uploads]
 ```
 
-Pages đọc dữ liệu tại server; browser gọi API cho mutation. Một số thao tác admin/catalog nằm trực tiếp trong route handler, chưa tất cả được gom vào service. Session và middleware bảo vệ URL không thay thế kiểm tra quyền ở route/domain.
+Pages đọc dữ liệu tại server; browser gọi API cho mutation. Một số thao tác admin/catalog nằm trực tiếp trong route handler, chưa tất cả được gom vào service. Session và middleware bảo vệ URL không thay thế kiểm tra quyền ở route/domain. Mỗi page dưới `/admin` tự gọi `requireAdminPage()` trước khi đọc dữ liệu; layout không chạy lại khi điều hướng client và request RSC có thể render riêng segment page, nên guard ở layout không đủ (ADR 0005).
 
 | Entity                            | Trách nhiệm và liên kết                                         |
 | --------------------------------- | --------------------------------------------------------------- |

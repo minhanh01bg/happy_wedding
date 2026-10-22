@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/server/auth/require-admin-session";
 import Link from "next/link";
 import { DropdownField } from "@/components/kit/dropdown-field";
 import { prisma } from "@/server/db/prisma";
@@ -8,6 +9,7 @@ export default async function AdminOrders({
 }: {
   searchParams: Promise<{ status?: string; q?: string; page?: string }>;
 }) {
+  await requireAdminPage();
   const query = await searchParams;
   const status = ["pending", "paid", "cancelled"].includes(query.status || "")
     ? query.status

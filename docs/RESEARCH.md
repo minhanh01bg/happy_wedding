@@ -175,3 +175,52 @@ Lượt này không tự mở lại các trang trên. Không lấy mã, ảnh ha
 | Cánh hoa 6×10px một màu, gần như vô hình                                      | Cánh hoa ba sắc hồng phấn lớn hơn, lật 3D khi rơi; vẫn tạm dừng khi hero ra khỏi màn hình |
 
 Hai cánh cửa mở đầu giữ nguyên trong lượt này. Màn mở chỉ đổi chữ: tên viết tay trên con dấu. Các đề xuất khác của worker (cửa có chiều sâu, ảnh bìa lộ ra từ phong bì) chưa làm.
+
+## Mở lại trang tham khảo cho thiệp mẫu — 22/10/2026
+
+Người dùng vẫn thấy thiệp mẫu `/w/thiep-mau` “khá chán” và “bị giật khi scroll”. Mục trước chỉ dựa trên danh sách nguồn của worker. Lượt này mở lại từng trang bằng Playwright Chromium:
+
+- Viewport 390×844, cuộn đều từ đầu đến cuối trang.
+- Chụp mỗi trang thành một dải ảnh.
+- Đo khung hình bằng `requestAnimationFrame` trong lúc cuộn, không giới hạn CPU.
+- Liệt kê `document.getAnimations()`.
+- Quét script để tìm thư viện cuộn.
+
+Số đo chỉ dùng để so sánh tương đối giữa các trang trên cùng máy, không phải số đo trên điện thoại thật.
+
+| Trang đã mở                                                                               | Quan sát                                                                                                                                                                              | Khung > 33 ms / p95 |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| [CineLove — thiệp mẫu Thu Hà–Hữu Lợi](https://cinelove.me/s/weddingthuhahuuloi)           | Next.js, nét vẽ line-art, ảnh vòm, dải chữ LOVE, thanh “Bắn tim” cố định; cuộn native                                                                                                 | 1,3% / 16,8 ms      |
+| [MeHappy — Bắc–Minh](https://bac-minh-wedding.mehappy.info/)                              | Chữ viết tay cỡ lớn (“Fall in Love”) đè lên ảnh; marquee chữ chạy ngang; chữ chạy vòng quanh ảnh vòm                                                                                  | 0,7%                |
+| [CineLove — mẫu 44 (preview)](https://cinelove.me/template/thiep-cuoi-44/preview)         | Màn “Chạm để mở thiệp”: phong bì có dấu sáp. Chạm vào dấu thì nắp lật, lá thư trượt lên, tim bay. `getAnimations()` cho thấy transition `front flap`/`letter`, `float`, `shadowScale` | 0% / 16,7 ms        |
+| [Together](https://togetherwedding.framer.website/)                                       | Framer; cánh hoa rơi, nét vẽ tay                                                                                                                                                      | 0% / 16,7 ms        |
+| [Amorette](https://amorette.framer.website/)                                              | Framer + Lenis; cánh hoa, hiệu ứng appear                                                                                                                                             | 1,1% / 16,8 ms      |
+| [Sanctun](https://sanctun.framer.website/)                                                | Framer + Lenis; dòng thời gian có chấm tiến độ chạy theo cuộn                                                                                                                         | 8,0% / 50 ms        |
+| [New Chapter](https://newchapter.framer.website/)                                         | Hero dính, ảnh phóng từ 0,4 lên 3,4 theo cuộn                                                                                                                                         | 0,8% / 16,8 ms      |
+| [Michelle & Tonye](https://www.michelleandtonye.com/)                                     | Locomotive Scroll + Lottie; chữ viết tay chéo trang, tường ảnh xoay, huy hiệu chữ vòng                                                                                                | 6,9% / 33,4 ms      |
+| [Veleyross](https://veleyross.wedding/)                                                   | WebGL; trình duyệt headless chỉ chụp được một khung, không đánh giá được                                                                                                              | —                   |
+| [ZenLove](https://zenlove.me/guide/thiet-ke/hieu-ung-mo-man-phong-bi-dong) · CineLove C20 | ZenLove chuyển sang trang kiểm tra truy cập, không vượt qua. C20 trả về trang catalog, không có thiệp để xem                                                                          | —                   |
+
+Kết luận về độ mượt:
+
+- Các trang cuộn native (CineLove, MeHappy, Together) mượt nhất.
+- Hai trang dùng smooth-scroll JS bị rớt khung nhiều nhất: Sanctun (Lenis) và Michelle (Locomotive).
+- Vì vậy không thêm Lenis hay Locomotive.
+- Không thấy GSAP trên trang nào.
+
+Đo lại thiệp của dự án ở cùng điều kiện cho thấy chính hiệu ứng mới cũng có thể gây giật. Chi tiết nằm trong VERIFICATION. Với CPU giới hạn 4×, vòng chữ quay liên tục bằng `@keyframes` vô hạn trên `<svg>` làm 56–63% khung hình vượt 25 ms; main chỉ có 1,8–3%. Quy tắc rút ra:
+
+- Mọi chuyển động trang trí đều chạy theo cuộn.
+- Không có animation vô hạn.
+- Không xoay trực tiếp phần tử `<svg>`.
+
+| Học từ                                          | Áp dụng cho Lời yêu                                                                                                                             |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| CineLove mẫu 44: phong bì dấu sáp               | Màn mở là phong bì giấy ngà: dấu sáp vỡ, nắp lật 3D, lá thư trượt lên, tim bay, rồi phong bì mờ đi để lộ ảnh vòm. Chạm phong bì hoặc nút đều mở |
+| MeHappy: chữ chạy vòng; Michelle: huy hiệu      | Con dấu chữ vòng ghi tên cặp đôi và ngày cưới đặt trên ảnh vòm, xoay theo cuộn                                                                  |
+| MeHappy: marquee; Michelle: chữ chéo            | Hai dải ruy băng chéo dưới hero mang tên và ngày, trượt ngược chiều nhau theo cuộn                                                              |
+| MeHappy: chữ viết tay đè ảnh                    | Chữ “Thương” Ephesis được viết dần (clip-path) ngang ảnh câu chuyện                                                                             |
+| Sanctun: dòng thời gian có chấm tiến độ         | “Sợi tơ hồng” nối các thẻ tiệc: trên máy tính là dây cong có nút tim, trên điện thoại là sợi dọc giữa hai thẻ; dây vẽ theo cuộn                 |
+| Đo khung hình: native mượt hơn Lenis/Locomotive | Giữ cuộn native và CSS scroll timeline (ADR 0006); bỏ animation vô hạn                                                                          |
+
+Không lấy mã, ảnh, chữ hay thông tin cặp đôi của các trang tham khảo. Phong bì, con dấu, ruy băng và sợi tơ đều là CSS/SVG tự vẽ, đọc tên và ngày từ dữ liệu thiệp. Dải ảnh chụp và số đo thô nằm trong scratchpad của phiên, không commit vì có ảnh của người khác.

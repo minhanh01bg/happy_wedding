@@ -356,3 +356,65 @@ Quyết định tại [ADR 0004](adr/0004-template-configuration-and-edit-concur
 - **Gate.** `pnpm check` qua: lint không lỗi (còn cảnh báo ref Music có sẵn), TypeScript qua, 154/154 test. `pnpm build` thành công. Prettier sạch. `pnpm test:e2e` **30/30 qua (5,5 phút)**, gồm bài mới “Lời yêu signs the couple's names and circles the wedding day”. Bài này chạy với cả `no-preference` và `reduce`, kiểm tra font viết tay, hai tên, vòng khoanh hiện và tim bị ẩn, `signName`/`ringDraw` chạy hoặc không có `data-entrance` và animation.
 - **Sau khi merge.** `main` fast-forward và push lên origin; dev server 3200 trả 200 cho `/w/thiep-mau` với markup mới. Chụp lại từ 3200 ở 1440×900 và 390×844: không tràn ngang, không lỗi console. Ảnh đối chiếu: `docs/previews/loi-yeu-letter.jpg` (hàng trên là desktop: hero và lịch; hàng dưới là mobile: hero, lịch, lịch tiệc, lời cảm ơn).
 - Cảnh báo dev của next/image về ảnh `fill` cao 0 trên mobile đã có ở bản trước (đối chiếu trang 3200 cũ và các log E2E cũ), không do lượt này. Chưa kiểm tra Safari hay iPhone thật, không deploy production.
+
+## Phong bì, kỷ vật và độ mượt của thiệp mẫu — 22/10/2026
+
+Nguồn tham khảo được mở lại trong lượt này, xem [RESEARCH](RESEARCH.md) mục “Mở lại trang tham khảo cho thiệp mẫu”. Quyết định chuyển động ở [ADR 0006](adr/0006-css-scroll-driven-motion.md) mục 6, nội dung mẫu ở [ADR 0004](adr/0004-template-configuration-and-edit-concurrency.md). Phạm vi: Lời yêu (`/w/thiep-mau`, `/preview/loi-yeu`). Các mẫu khác giữ hai cánh cửa và không có phần tử mới.
+
+- **Ảnh chụp thủ công.** Dùng Chromium trên dev server của worktree. Chụp chuỗi khung hình khi mở thiệp ở 390×844, 1440×900, 320×568, 844×390 và ở 390×844 với reduced motion:
+  - Dấu sáp vỡ, nắp lật, lá thư trượt lên, tim bay, rồi phong bì mờ đi để lộ ảnh vòm.
+  - Ở 320×568, khối nút kết thúc tại 552px, vẫn trong màn hình.
+  - Khi xoay ngang, phong bì nằm bên trái chữ và lá thư không bị cắt khi trượt lên.
+  - Với reduced motion, thiệp mở ngay và focus vào tiêu đề.
+  - Cuộn qua hero, ruy băng, câu chuyện và lịch tiệc: con dấu, ruy băng, chữ “Thương” và sợi tơ hiện đúng chỗ. Với reduced motion, cả bốn đứng yên ở trạng thái hoàn chỉnh.
+  - Mọi viewport có `scrollWidth` bằng viewport và không lỗi console.
+  - Ảnh đối chiếu: `docs/previews/loi-yeu-keepsakes.jpg`. Hàng trên là màn mở thiệp trên mobile; hàng dưới là con dấu, ruy băng, chữ “Thương” và sợi tơ.
+- **Lỗi có sẵn đã sửa.** Trên mobile, cụm ảnh in của câu chuyện co về bề rộng 0 vì thiếu `width`. Giờ cụm ảnh rộng 100%, tối đa 450px. E2E kiểm tra ảnh chính rộng hơn 200px.
+- **Độ mượt.** Một script Playwright đo frame khi cuộn (390×844, CPU chậm 4×, cuộn tới đáy; script tạm, không commit). Script chạy trên cùng máy với main (3200) và với worktree. Bản nháp đầu làm trang giật hẳn, nên từng phần tử được tắt lần lượt (chèn CSS `display:none`) để tìm nguyên nhân:
+
+  | Bản đo                                     | Frame >25 ms | Layout |
+  | ------------------------------------------ | ------------ | ------ |
+  | main (trước lượt này)                      | 1,8–3,0%     | 12–13  |
+  | Bản nháp: con dấu quay vô hạn trên `<svg>` | 56–63%       | 213+   |
+  | Bọc SVG trong `span`, vẫn quay vô hạn      | 12%          | 35     |
+  | Chỉ quay vô hạn, không quay theo cuộn      | 11,9%        | —      |
+  | Chỉ quay theo cuộn                         | 4,6%         | 13     |
+  | Bản cuối (mọi trang trí chạy theo cuộn)    | 3,0% / 3,7%  | 15–17  |
+
+  Ruy băng chạy marquee vô hạn làm thêm khoảng 2–3% frame dài, nên cũng được chuyển sang chạy theo cuộn. Bản cuối có p95 16,8 ms, ngang main.
+
+  Sau các sửa lỗi review bên dưới, chữ “Thương” thực sự chạy theo cuộn, nên phép đo được chạy lại, xen kẽ hai trang:
+  - Bản mới: 3,9 / 4,0 / 4,9 / 7,8%. Main: 2,4 / 3,0 / 3,3 / 4,6%.
+  - Cả hai có p95 16,8 ms (riêng lần 7,8% là 33,3 ms) và 0–3 long animation frame.
+  - Khi tắt riêng hiệu ứng chữ “Thương”, bản mới đo được 4,0% và 9,2%, tức không tốt hơn. Phần chênh còn lại nằm trong độ dao động của máy, không do hiệu ứng này.
+
+  Ở desktop 1440×900 với CPU chậm 4×, số đo dao động quá rộng để kết luận: main 21–37%, bản mới 29–34%. Mọi số đo là dev server trên máy chung đang thiếu RAM (swap đầy), không phải production hay điện thoại thật.
+
+- **Review độc lập.** Một subagent đọc diff và CSS đã biên dịch mà không nhận kết luận của tôi. Mỗi phát hiện được kiểm lại trên trình duyệt trước khi sửa:
+  - **Lỗi thật: chữ “Thương” không chạy theo cuộn.** `.story-composition` có `overflow: hidden`, nên section trở thành scroll container và `view()` bám vào section, vốn không bao giờ cuộn. Đo trước khi sửa:
+    - Desktop 1440×900 kẹt ở tiến độ 0,49, chữ bị cắt mất nửa phải ở mọi vị trí cuộn.
+    - Mobile kẹt ở 1, không có hiệu ứng viết.
+
+    Đã đổi section Lời yêu sang `overflow: clip`. Sau khi sửa, nguồn timeline là `html` và tiến độ chạy 0 → 0,53 → 1 khi chữ đi vào màn hình, trên cả hai viewport. E2E giờ kiểm tra `timeline.source === document.scrollingElement`.
+
+  - **Ruy băng bị cắt đầu.** Ở 600–760px và từ khoảng 1425px trở lên, góc phải của dải sẫm nghiêng bị cắt phẳng. Đã đổi sang `overflow-x: clip; overflow-y: visible`. Chụp lại ở 320, 390, 600, 760 và 1500px: hai đầu đủ, không đè lên nút, không tràn ngang.
+  - **Test có thể flaky.** Trong bài reduced motion, Escape được bấm trước khi dialog chắc chắn mở. Đã thêm bước chờ dialog hiện.
+  - **Id SVG cố định.** Đã đổi sang `useId()`. `href` của `textPath` trỏ đúng path và vòng chữ vẫn hiện.
+  - **Comment cũ** của ruy băng đã được sửa.
+  - Ba điểm không đổi gì, vì đo lại không thấy lỗi:
+    - Nghi nét chữ “Thương” bị cắt ở trạng thái cuối. So ảnh có và không có `clip-path` ở 390 và 1440 thì trùng nhau từng pixel.
+    - Tên khách cộng tên cặp đôi rất dài ở 320×568. Nút “Mở thiệp” ban đầu thấp hơn mép màn hình 22px, nhưng khối phong bì cuộn được và chạm vào phong bì cũng mở thiệp. Ghi nhận là giới hạn nhỏ.
+    - Tên rất dài làm chữ trên vòng nhỏ đi. Đây chỉ là trang trí (`aria-hidden`).
+
+- **Gate.** Kết quả trên mã cuối, đã gồm các sửa lỗi review:
+  - `pnpm check` qua: lint không lỗi (còn cảnh báo ref Music có sẵn), TypeScript qua, 154/154 test. Prettier sạch.
+  - `pnpm build` thành công, không cảnh báo.
+  - `pnpm test:e2e` **31/31 qua (5,4 phút)**, gồm bài mới “Lời yêu opens a sealed envelope and keeps its keepsakes still when motion is reduced”. Bài này kiểm tra:
+    - Không còn cánh cửa; phong bì `aria-hidden`. Bấm nút thì nắp chạy `rotateX` và lá thư trượt tới `-58%`. Chạm phong bì cũng mở thiệp. Focus về tiêu đề.
+    - Vòng chữ có tên cặp đôi; ruy băng `aria-hidden`.
+    - `sealTurn`, `ribbonRun`, `scriptWrite` và `threadDrop` được gắn đúng chỗ, và timeline của chữ “Thương” là trang.
+    - Ảnh in mobile rộng hơn 200px.
+    - Với reduced motion, Escape mở thiệp và cả bốn chi tiết không có animation hay `clip-path`.
+  - Hai lần chạy trước đó bị môi trường cản:
+    - Trước các sửa lỗi review: 30/31. Bài mua, kích hoạt, xuất bản và kiểm duyệt hết 120 giây khi dev server biên dịch nguội lúc máy thiếu RAM. Chạy lại `--last-failed` thì 1/1 qua.
+    - Một lần chạy sau sửa lỗi review bị dừng giữa chừng khi load máy lên 136, rồi chạy lại khi máy bớt tải và cho kết quả 31/31 ở trên.

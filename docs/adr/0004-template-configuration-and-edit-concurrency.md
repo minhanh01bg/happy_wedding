@@ -129,5 +129,9 @@ Lời yêu (editorial/rose, thiệp mẫu `/w/thiep-mau`) vẫn đơn sắc và 
   - Khi phần tương ứng nhận `data-reveal="in"`, vòng mực SVG (`pathLength=1`, `stroke-dashoffset`) khoanh ngày cưới, hairline dưới tiêu đề mở ra từ giữa và chữ ký hiện như được viết.
   - Mọi animation nằm trong `prefers-reduced-motion: no-preference`. Reduced motion, bỏ qua hiệu ứng hoặc không JavaScript đều thấy trạng thái cuối.
 - **Màu tối.** Palette tối (wine, midnight) giữ cùng quy tắc vì màu lấy từ token palette. Dải countdown đảo thành nền sáng, lịch đảo thành nền sẫm.
+- **Phong bì và kỷ vật (bổ sung cùng ngày).**
+  - Màn mở của Lời yêu là phong bì thay cho hai cánh cửa. WAAPI chạy một lần lúc mở: dấu sáp vỡ, nắp lật `rotateX`, lá thư trượt lên, tim bay. Animation dùng `fill: forwards` và được hủy khi dialog đóng.
+  - Hero thêm con dấu chữ vòng (SVG `textPath`), dưới hero có hai ruy băng chữ. Câu chuyện có chữ “Thương”, lịch tiệc có sợi tơ hồng.
+  - Mọi chi tiết đọc tên/ngày từ thiệp, `aria-hidden`, không thêm trường dữ liệu. Chuyển động của chúng theo ADR 0006, mục 6.
 
 Không đổi schema, API, giá, quyền lợi hay dữ liệu khách. Lý do và nguồn tham khảo nằm trong RESEARCH, bằng chứng nằm trong VERIFICATION.

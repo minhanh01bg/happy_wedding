@@ -190,6 +190,12 @@ export async function POST(
         return json({ ok: true });
       }
       if (path[1] === "settings") {
+        // The merchant account receives every customer payment.
+        if (principal.role !== "owner")
+          throw new WeddingError(
+            403,
+            "Chỉ chủ cửa hàng được thay đổi tài khoản nhận tiền",
+          );
         const input = merchantSchema.parse(body.data);
         await prisma.setting.upsert({
           where: { key: "wedding.merchant" },

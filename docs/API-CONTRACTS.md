@@ -54,7 +54,7 @@ Trả data `{id: responseId}`. Thiệp phải công khai hợp lệ. Personal cl
 
 ## Admin
 
-Mọi operation dưới `admin/` cần phiên admin và role owner/manager. Bản ghi không tồn tại (Prisma P2025) trả 404 `Không tìm thấy dữ liệu`, không ghi audit.
+Mọi operation dưới `admin/` cần phiên admin và role owner/manager. Riêng `admin/settings` chỉ dành cho owner; manager nhận 403. Bản ghi không tồn tại (Prisma P2025) trả 404 `Không tìm thấy dữ liệu`, không ghi audit.
 
 | POST operation            | Payload                                                                                                        | Hành vi                                                                                                                                                                               |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

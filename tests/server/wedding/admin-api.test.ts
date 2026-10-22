@@ -5,6 +5,7 @@ import { createAdminSession, SESSION_COOKIE } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
 
 async function clean() {
+  await prisma.setting.deleteMany();
   await prisma.adminSession.deleteMany();
   await prisma.adminAuditEvent.deleteMany();
   await prisma.adminIdentity.deleteMany();
@@ -50,5 +51,30 @@ describe("admin wedding API", () => {
       expect(await response.json()).not.toHaveProperty("correlationId");
     }
     expect(await prisma.adminAuditEvent.count()).toBe(0);
+  });
+
+  it("only the owner can change the merchant bank account", async () => {
+    const settings = {
+      bank: "970436",
+      account: "0123456789",
+      name: "HY STUDIO",
+      support: "",
+    };
+    const manager = await call(
+      ["admin", "settings"],
+      settings,
+      await sessionFor("manager"),
+    );
+    expect(manager.status).toBe(403);
+    expect(
+      await prisma.setting.findUnique({ where: { key: "wedding.merchant" } }),
+    ).toBeNull();
+    const owner = await call(
+      ["admin", "settings"],
+      settings,
+      await sessionFor("owner"),
+    );
+    expect(owner.status).toBe(200);
+    expect(await prisma.adminAuditEvent.count()).toBe(1);
   });
 });

@@ -6,7 +6,7 @@ import { SupportContacts } from "@/components/wedding/support-contacts";
 import { bankName } from "@/lib/banks";
 
 export default async function Settings() {
-  await requireAdminPage();
+  const principal = await requireAdminPage();
   const settings = await merchantSettings();
   const readiness = paymentReadiness(settings);
   return (
@@ -43,7 +43,14 @@ export default async function Settings() {
       <div className="admin-report-grid">
         <section className="panel">
           <h2>Thông tin nhận tiền</h2>
-          <AdminRecordForm kind="settings" initial={settings} />
+          {principal.role === "owner" ? (
+            <AdminRecordForm kind="settings" initial={settings} />
+          ) : (
+            <p className="fine">
+              Chỉ chủ cửa hàng được thay đổi tài khoản nhận tiền và liên hệ hỗ
+              trợ.
+            </p>
+          )}
         </section>
         <section className="panel">
           <h2>Thông tin khách sẽ nhìn thấy</h2>

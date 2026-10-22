@@ -17,7 +17,7 @@ Mục tiêu: làm thiệp cưới cho anh trai chủ dự án, đồng thời b�
 | Khách dự cưới       | Đọc thông tin, chọn tiệc, RSVP và gửi lời chúc                    | Thiệp công khai hợp lệ; token riêng chỉ xác định lời mời đó |
 | Admin owner/manager | Quản lý catalog, xác nhận tiền, khóa thiệp/tài khoản, xem nhật ký | Cần phiên admin hợp lệ tại server                           |
 
-Role `staff` tồn tại trong schema kế thừa nhưng không được quyền thực hiện mutation quản trị wedding. Không có hệ thống phân quyền tùy chỉnh hoặc giao diện tạo nhiều quản trị viên trong bản đầu.
+Chỉ role `owner` được đổi cấu hình nhận tiền/hỗ trợ (`admin/settings`); manager xem trang cấu hình ở chế độ chỉ đọc và vẫn xác nhận/hủy đơn. Role `staff` tồn tại trong schema kế thừa nhưng không được quyền thực hiện mutation quản trị wedding. Không có hệ thống phân quyền tùy chỉnh hoặc giao diện tạo nhiều quản trị viên trong bản đầu.
 
 ## 3. Phạm vi và ràng buộc toàn dự án
 

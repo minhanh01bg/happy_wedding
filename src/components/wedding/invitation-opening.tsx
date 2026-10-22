@@ -25,6 +25,8 @@ export function InvitationOpening({
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const opening = useRef(false);
+  // Lời yêu arrives as a sealed envelope instead of a pair of doors.
+  const envelope = design === "loi-yeu";
   useEffect(() => {
     const element = dialog.current;
     element?.showModal();
@@ -54,6 +56,16 @@ export function InvitationOpening({
     reduce.addEventListener("change", finishImmediately);
     try {
       if (
+        !skipMotion &&
+        !reduce.matches &&
+        typeof element.animate === "function" &&
+        envelope
+      ) {
+        animations.push(...openEnvelope(element));
+        await Promise.all(
+          animations.map((animation) => animation.finished.catch(() => {})),
+        );
+      } else if (
         !skipMotion &&
         !reduce.matches &&
         typeof element.animate === "function"
@@ -149,6 +161,38 @@ export function InvitationOpening({
     }
   }
 
+  const address = (
+    <>
+      <p className="eyebrow">TRÂN TRỌNG KÍNH MỜI</p>
+      {guestName && <p className="opening-guest">{guestName}</p>}
+      <h2 id="opening-title">
+        {groom}
+        <em>&</em>
+        {bride}
+      </h2>
+    </>
+  );
+  const actions = (
+    <>
+      <p className="opening-date">{date}</p>
+      <button
+        type="button"
+        className="button opening-button"
+        autoFocus
+        onClick={() => void open()}
+      >
+        <Heart size={20} /> {hasMusic ? "Mở thiệp kèm nhạc" : "Mở thiệp"}
+      </button>
+      <button
+        type="button"
+        className="opening-skip"
+        onClick={() => void open(true)}
+      >
+        Xem ngay, bỏ qua hiệu ứng
+      </button>
+      <p className="opening-hint">Chạm để mở ngày vui của chúng mình</p>
+    </>
+  );
   return (
     <dialog
       ref={dialog}
@@ -160,49 +204,199 @@ export function InvitationOpening({
         void open(true);
       }}
     >
-      <div className="invitation-door door-left" aria-hidden="true">
-        <span />
-        <OpeningArt design={design} />
-      </div>
-      <div className="invitation-door door-right" aria-hidden="true">
-        <span />
-        <OpeningArt design={design} />
-      </div>
-      <div className="opening-glow" aria-hidden="true" />
-      <div className="invitation-seal">
-        <div className="opening-wax" aria-hidden="true">
-          {motif === "♡" ? (
-            <Heart size={24} strokeWidth={1.2} />
-          ) : (
-            <span>{motif}</span>
-          )}
+      {envelope ? (
+        <div className="opening-paper" aria-hidden="true">
+          <div className="paper-side side-left">
+            <OpeningArt design={design} />
+          </div>
+          <div className="paper-side side-right">
+            <OpeningArt design={design} />
+          </div>
         </div>
-        <p className="eyebrow">TRÂN TRỌNG KÍNH MỜI</p>
-        {guestName && <p className="opening-guest">{guestName}</p>}
-        <h2 id="opening-title">
-          {groom}
-          <em>&</em>
-          {bride}
-        </h2>
-        <p className="opening-date">{date}</p>
-        <button
-          type="button"
-          className="button opening-button"
-          autoFocus
-          onClick={() => void open()}
-        >
-          <Heart size={20} /> {hasMusic ? "Mở thiệp kèm nhạc" : "Mở thiệp"}
-        </button>
-        <button
-          type="button"
-          className="opening-skip"
-          onClick={() => void open(true)}
-        >
-          Xem ngay, bỏ qua hiệu ứng
-        </button>
-        <p className="opening-hint">Chạm để mở ngày vui của chúng mình</p>
+      ) : (
+        <>
+          <div className="invitation-door door-left" aria-hidden="true">
+            <span />
+            <OpeningArt design={design} />
+          </div>
+          <div className="invitation-door door-right" aria-hidden="true">
+            <span />
+            <OpeningArt design={design} />
+          </div>
+          <div className="opening-glow" aria-hidden="true" />
+        </>
+      )}
+      <div className="invitation-seal">
+        {envelope ? (
+          <>
+            <div className="opening-address">{address}</div>
+            <Envelope date={date} onOpen={() => void open()} />
+            <div className="opening-actions">{actions}</div>
+          </>
+        ) : (
+          <>
+            <div className="opening-wax" aria-hidden="true">
+              {motif === "♡" ? (
+                <Heart size={24} strokeWidth={1.2} />
+              ) : (
+                <span>{motif}</span>
+              )}
+            </div>
+            {address}
+            {actions}
+          </>
+        )}
       </div>
     </dialog>
+  );
+}
+
+/** Hearts drift up from the broken seal: [x drift px, rise px, turn deg]. */
+const hearts = [
+  [-74, 150, -24],
+  [-38, 210, -8],
+  [-6, 180, 6],
+  [30, 230, 14],
+  [64, 160, 26],
+  [-52, 120, -30],
+  [48, 120, 30],
+] as const;
+
+/**
+ * The seal breaks, the flap lifts, the letter rises, then the paper falls away
+ * to the invitation; every step is a WAAPI animation the caller can finish.
+ */
+function openEnvelope(element: HTMLElement): Animation[] {
+  const animations: Animation[] = [];
+  const play = (
+    selector: string,
+    keyframes: Keyframe[] | ((index: number) => Keyframe[]),
+    options: KeyframeAnimationOptions,
+  ) =>
+    element
+      .querySelectorAll<HTMLElement>(selector)
+      .forEach((node, index) =>
+        animations.push(
+          node.animate(
+            typeof keyframes === "function" ? keyframes(index) : keyframes,
+            { fill: "forwards", ...options },
+          ),
+        ),
+      );
+  play(
+    ".envelope-wax",
+    [
+      { scale: "1", rotate: "0deg", opacity: 1 },
+      { scale: "1.16", rotate: "-6deg", opacity: 1, offset: 0.3 },
+      { scale: "0.3", rotate: "28deg", opacity: 0 },
+    ],
+    { duration: 480, easing: "cubic-bezier(.5,0,.75,0)" },
+  );
+  play(
+    ".envelope-hearts > i",
+    (index) => {
+      const [x, rise, turn] = hearts[index % hearts.length];
+      return [
+        { opacity: 0, translate: "0 0", scale: "0.4", rotate: "0deg" },
+        { opacity: 1, offset: 0.12 },
+        { opacity: 1, offset: 0.6 },
+        {
+          opacity: 0,
+          translate: `${x}px ${-rise}px`,
+          scale: "1.1",
+          rotate: `${turn}deg`,
+        },
+      ];
+    },
+    { duration: 1300, delay: 60, easing: "cubic-bezier(.22,1,.36,1)" },
+  );
+  play(
+    ".opening-address",
+    [{ opacity: 1 }, { opacity: 0, translate: "0 -22px" }],
+    { duration: 460, easing: "ease-in" },
+  );
+  play(
+    ".opening-actions",
+    [{ opacity: 1 }, { opacity: 0, translate: "0 22px" }],
+    {
+      duration: 460,
+      easing: "ease-in",
+    },
+  );
+  // The flap swings up past the letter; halfway it drops behind it.
+  play(
+    ".envelope-flap",
+    [
+      { transform: "perspective(900px) rotateX(0deg)", zIndex: 4 },
+      {
+        transform: "perspective(900px) rotateX(90deg)",
+        zIndex: 4,
+        offset: 0.5,
+      },
+      {
+        transform: "perspective(900px) rotateX(90deg)",
+        zIndex: 1,
+        offset: 0.5,
+      },
+      { transform: "perspective(900px) rotateX(180deg)", zIndex: 1 },
+    ],
+    { duration: 600, delay: 160, easing: "cubic-bezier(.45,0,.25,1)" },
+  );
+  play(".envelope-letter", [{ translate: "0 0" }, { translate: "0 -58%" }], {
+    duration: 720,
+    delay: 560,
+    easing: "cubic-bezier(.22,1,.36,1)",
+  });
+  play(
+    ".envelope",
+    [
+      { opacity: 1, scale: "1" },
+      { opacity: 0, scale: "1.14" },
+    ],
+    { duration: 560, delay: 1080, easing: "cubic-bezier(.55,0,.8,.4)" },
+  );
+  play(".opening-paper", [{ opacity: 1 }, { opacity: 0 }], {
+    duration: 620,
+    delay: 1040,
+    easing: "ease-in-out",
+  });
+  return animations;
+}
+
+/** A sealed envelope; tapping it opens the invitation like the button does. */
+function Envelope({ date, onOpen }: { date: string; onOpen: () => void }) {
+  return (
+    <div className="envelope" aria-hidden="true" onClick={onOpen}>
+      <div className="envelope-back" />
+      <div className="envelope-letter">
+        <span>♡</span>
+        <small>{date.replaceAll("/", " . ")}</small>
+      </div>
+      <svg
+        className="envelope-pocket"
+        viewBox="0 0 300 200"
+        preserveAspectRatio="none"
+      >
+        <path d="M0 0 150 112 0 200Z" />
+        <path d="M300 0 150 112 300 200Z" />
+        <path d="M0 200 150 96 300 200Z" />
+      </svg>
+      <svg
+        className="envelope-flap"
+        viewBox="0 0 300 200"
+        preserveAspectRatio="none"
+      >
+        <path d="M0 0h300L150 116Z" />
+      </svg>
+      <div className="envelope-wax">
+        <Heart size={22} strokeWidth={1.3} />
+      </div>
+      <div className="envelope-hearts">
+        {hearts.map((_, i) => (
+          <i key={i}>♥</i>
+        ))}
+      </div>
+    </div>
   );
 }
 

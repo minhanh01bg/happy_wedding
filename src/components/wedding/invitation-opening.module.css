@@ -274,3 +274,257 @@
 .opening[data-opening-design] .art svg {
   display: block;
 }
+
+/* Lời yêu arrives as a sealed envelope on letter paper (after CineLove's
+   tap-to-open sample): the address sits above it, the actions below. */
+.opening[data-opening-design="loi-yeu"] {
+  --envelope-ink: var(--letter-ink, var(--tone));
+  --envelope-paper: var(--letter-paper, var(--card));
+  --envelope-gold: var(--accent, var(--tone));
+}
+.opening[data-opening-design="loi-yeu"] :global(.opening-paper) {
+  position: absolute;
+  inset: 0;
+  color: var(--envelope-ink);
+  background:
+    radial-gradient(
+      ellipse at 50% 42%,
+      transparent 45%,
+      color-mix(in srgb, var(--envelope-ink) 9%, transparent)
+    ),
+    var(--envelope-paper);
+}
+.opening[data-opening-design="loi-yeu"] :global(.opening-paper)::before {
+  content: "";
+  position: absolute;
+  inset: max(14px, env(safe-area-inset-top)) 14px;
+  border: 1px solid color-mix(in srgb, var(--envelope-gold) 45%, transparent);
+  pointer-events: none;
+}
+.opening[data-opening-design="loi-yeu"] :global(.paper-side) {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+}
+.opening[data-opening-design="loi-yeu"] :global(.side-left) {
+  left: 0;
+}
+.opening[data-opening-design="loi-yeu"] :global(.side-right) {
+  right: 0;
+  scale: -1 1;
+}
+.opening[data-opening-design="loi-yeu"] .art :global(.door-floral) {
+  position: absolute;
+  top: auto;
+  bottom: 4%;
+  left: 2%;
+  width: min(34%, 190px);
+  height: 52%;
+  opacity: 0.22;
+  transform: none;
+}
+.opening[data-opening-design="loi-yeu"] :global(.invitation-seal) {
+  display: grid;
+  grid-template: "address" 1fr "envelope" auto "actions" 1fr / minmax(0, 1fr);
+  gap: clamp(12px, 3dvh, 30px);
+  width: min(460px, 100%);
+  height: 100%;
+  max-height: none;
+  padding: 0;
+  color: var(--envelope-ink);
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.opening[data-opening-design="loi-yeu"] :global(.opening-address) {
+  grid-area: address;
+  align-self: end;
+}
+.opening[data-opening-design="loi-yeu"] :global(.opening-actions) {
+  grid-area: actions;
+  align-self: start;
+}
+.opening[data-opening-design="loi-yeu"] :global(.invitation-seal h2) {
+  font-size: clamp(38px, min(11vw, 7.4dvh), 76px);
+  margin: clamp(6px, 1.6dvh, 18px) 0 0;
+}
+.opening[data-opening-design="loi-yeu"] :global(.opening-button) {
+  margin-top: clamp(10px, 2.2dvh, 24px);
+}
+.opening[data-opening-design="loi-yeu"] :global(.opening-skip) {
+  margin-top: 2px;
+}
+.opening[data-opening-design="loi-yeu"] :global(.opening-hint) {
+  margin-top: 4px;
+}
+.opening[data-opening-design="loi-yeu"] :global(.envelope) {
+  grid-area: envelope;
+  justify-self: center;
+  position: relative;
+  width: min(400px, 78vw, 44dvh);
+  aspect-ratio: 3 / 2;
+  cursor: pointer;
+}
+.opening[data-opening-design="loi-yeu"] :global(.envelope-back) {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  background: color-mix(
+    in srgb,
+    var(--envelope-ink) 16%,
+    var(--envelope-paper)
+  );
+  box-shadow:
+    0 24px 50px -18px color-mix(in srgb, var(--envelope-ink) 45%, transparent),
+    0 4px 10px color-mix(in srgb, var(--envelope-ink) 12%, transparent);
+}
+.opening[data-opening-design="loi-yeu"] :global(.envelope-letter) {
+  position: absolute;
+  z-index: 2;
+  inset: 5% 7% 7%;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 4px;
+  padding-top: 12%;
+  border: 1px solid color-mix(in srgb, var(--envelope-gold) 60%, transparent);
+  border-radius: 3px;
+  background: var(--envelope-paper);
+  font-family: var(--serif);
+}
+.opening[data-opening-design="loi-yeu"] :global(.envelope-letter)::before {
+  content: "";
+  position: absolute;
+  inset: 7% 32% 30%;
+  border: 1px solid color-mix(in srgb, var(--envelope-gold) 70%, transparent);
+  border-bottom: 0;
+  border-radius: 999px 999px 0 0;
+}
+.opening[data-opening-design="loi-yeu"] :global(.envelope-letter span) {
+  color: var(--envelope-gold);
+  font-size: clamp(22px, 2.4vw, 30px);
+  line-height: 1;
+}
+.opening[data-opening-design="loi-yeu"] :global(.envelope-letter small) {
+  font-size: clamp(11px, 1.1vw, 13px);
+  letter-spacing: 0.22em;
+}
+.opening[data-opening-design="loi-yeu"] :global(.envelope-pocket),
+.opening[data-opening-design="loi-yeu"] :global(.envelope-flap) {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  stroke: color-mix(in srgb, var(--envelope-gold) 75%, transparent);
+  stroke-width: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+.opening[data-opening-design="loi-yeu"] :global(.envelope-pocket) {
+  z-index: 3;
+  fill: color-mix(in srgb, var(--envelope-ink) 5%, var(--envelope-paper));
+}
+.opening[data-opening-design="loi-yeu"] :global(.envelope-pocket path) {
+  vector-effect: non-scaling-stroke;
+}
+.opening[data-opening-design="loi-yeu"]
+  :global(.envelope-pocket path:last-child) {
+  fill: color-mix(in srgb, var(--envelope-ink) 2%, var(--envelope-paper));
+}
+.opening[data-opening-design="loi-yeu"] :global(.envelope-flap) {
+  z-index: 4;
+  fill: color-mix(in srgb, var(--envelope-ink) 9%, var(--envelope-paper));
+  transform-origin: 50% 0;
+  filter: drop-shadow(
+    0 3px 3px color-mix(in srgb, var(--envelope-ink) 14%, transparent)
+  );
+}
+.opening[data-opening-design="loi-yeu"] :global(.envelope-flap path) {
+  vector-effect: non-scaling-stroke;
+}
+.opening[data-opening-design="loi-yeu"] :global(.envelope-wax) {
+  position: absolute;
+  z-index: 5;
+  top: 58%;
+  left: 50%;
+  width: clamp(48px, 17%, 66px);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  border-radius: 47% 53% 50% 50% / 52% 46% 54% 48%;
+  color: var(--envelope-paper);
+  background: radial-gradient(
+    circle at 36% 30%,
+    color-mix(in srgb, var(--envelope-ink) 72%, white),
+    var(--envelope-ink) 52%,
+    color-mix(in srgb, var(--envelope-ink) 78%, black)
+  );
+  box-shadow:
+    inset 0 0 0 4px color-mix(in srgb, var(--envelope-paper) 14%, transparent),
+    inset 0 0 0 5px color-mix(in srgb, black 18%, transparent),
+    0 4px 9px color-mix(in srgb, var(--envelope-ink) 40%, transparent);
+}
+.opening[data-opening-design="loi-yeu"] :global(.envelope-hearts) {
+  position: absolute;
+  z-index: 6;
+  top: 58%;
+  left: 50%;
+  pointer-events: none;
+}
+.opening[data-opening-design="loi-yeu"] :global(.envelope-hearts i) {
+  position: absolute;
+  top: -0.5em;
+  left: -0.5em;
+  font-style: normal;
+  line-height: 1;
+  font-size: 22px;
+  color: var(--envelope-ink);
+  opacity: 0;
+}
+.opening[data-opening-design="loi-yeu"]
+  :global(.envelope-hearts i:nth-child(odd)) {
+  font-size: 16px;
+  color: var(--envelope-gold);
+}
+.opening[data-opening-design="loi-yeu"]
+  :global(.envelope-hearts i:nth-child(3n)) {
+  font-size: 30px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .opening[data-opening-design="loi-yeu"] :global(.envelope) {
+    animation: envelopeFloat 4.2s ease-in-out infinite;
+  }
+}
+@keyframes envelopeFloat {
+  50% {
+    translate: 0 -7px;
+  }
+}
+/* On a short landscape screen the envelope moves beside the address. */
+@media (max-height: 600px) and (orientation: landscape) {
+  .opening[data-opening-design="loi-yeu"] :global(.invitation-seal) {
+    grid-template:
+      "envelope address" 1fr
+      "envelope actions" 1fr / auto minmax(0, 1fr);
+    column-gap: clamp(20px, 5vw, 56px);
+    row-gap: 0;
+    width: min(860px, 100%);
+    align-items: center;
+    /* Leaves room for the letter to rise past the top of the card. */
+    overflow: visible;
+  }
+  .opening[data-opening-design="loi-yeu"] :global(.envelope) {
+    align-self: center;
+    width: min(300px, 38vw, 64dvh);
+  }
+  .opening[data-opening-design="loi-yeu"] :global(.invitation-seal h2) {
+    font-size: 40px;
+    margin: 4px 0 0;
+  }
+  .opening[data-opening-design="loi-yeu"] :global(.opening-button) {
+    margin-top: 8px;
+  }
+}

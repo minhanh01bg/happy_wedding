@@ -462,6 +462,124 @@
   height: 1px;
   background: var(--accent);
 }
+/* A paper seal rests on the arch's shoulder; its ring of names turns slowly. */
+.seal {
+  position: absolute;
+  z-index: 2;
+  top: 5%;
+  right: -11%;
+  width: clamp(96px, 10vw, 140px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  filter: drop-shadow(
+    0 14px 18px color-mix(in srgb, var(--letter-ink) 22%, transparent)
+  );
+}
+.seal > * {
+  grid-area: 1 / 1;
+}
+.sealDial {
+  width: 100%;
+  height: 100%;
+}
+.sealRing {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.sealRing circle {
+  fill: var(--letter-paper);
+  stroke: var(--accent);
+  stroke-width: 0.8;
+}
+.sealRing circle + circle {
+  fill: none;
+  stroke-dasharray: 1 3;
+}
+.sealRing text {
+  fill: var(--letter-ink);
+  font-family: var(--serif);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+/* Positioned so it paints above the turning ring. */
+.sealHeart {
+  position: relative;
+  width: 26%;
+  fill: color-mix(in srgb, var(--letter-ink) 82%, var(--accent));
+}
+/* Two ribbons cross the seam between the cover and the countdown band. */
+.ribbons {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  height: clamp(118px, 13vw, 168px);
+  margin-bottom: calc(clamp(118px, 13vw, 168px) * -0.42);
+  /* Tilted ends may rise past the strip; only the sides are trimmed. */
+  overflow-x: clip;
+  overflow-y: visible;
+  pointer-events: none;
+}
+.ribbon {
+  grid-area: 1 / 1;
+  width: 112%;
+  margin-inline: -6%;
+  padding-block: clamp(9px, 1vw, 14px);
+  overflow: clip;
+  white-space: nowrap;
+}
+.ribbonDeep {
+  rotate: -3.5deg;
+  background: var(--letter-ink);
+  color: var(--letter-paper);
+  border-block: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.ribbonLight {
+  rotate: 2deg;
+  background: color-mix(in srgb, var(--accent) 20%, var(--letter-paper));
+  color: var(--letter-ink);
+  border-block: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow: 0 18px 30px -22px
+    color-mix(in srgb, var(--letter-ink) 60%, transparent);
+}
+.ribbonTrack {
+  display: flex;
+  width: max-content;
+}
+.ribbonPhrase {
+  display: flex;
+  align-items: center;
+  gap: clamp(18px, 2.4vw, 34px);
+  padding-right: clamp(18px, 2.4vw, 34px);
+  font-family: var(--serif);
+  font-size: clamp(15px, 1.5vw, 19px);
+  letter-spacing: 0.24em;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.ribbonPhrase > span:last-child {
+  font-family: inherit;
+  font-size: 0.72em;
+  letter-spacing: 0.34em;
+}
+.ribbonPhrase::after {
+  content: "✦";
+  font-size: 0.7em;
+  color: var(--accent);
+}
+.ribbonNames {
+  font: 400 clamp(30px, 3.4vw, 46px) / 1.1 var(--script);
+  letter-spacing: 0;
+}
+.ribbonNames i {
+  font-family: var(--serif);
+  font-style: normal;
+  font-size: 0.5em;
+  color: var(--accent);
+}
 /* As the doors part, the portrait settles into its frame and the couple
    signs their names, one after the other. */
 @media (prefers-reduced-motion: no-preference) {
@@ -476,6 +594,55 @@
   }
   :global([data-entrance="opening"]) .loveLetter h1 > em {
     animation: ampersand 0.9s 1.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  /* …then presses the seal. */
+  :global([data-entrance="opening"]) .seal {
+    animation: sealPress 0.9s 2.5s cubic-bezier(0.34, 1.4, 0.64, 1) backwards;
+  }
+}
+/* Scrolling past the cover turns the seal like a dial. It turns only with the
+   scroll: a perpetual spin kept main-thread frames busy and doubled jank. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .sealDial {
+      animation: sealTurn linear both;
+      animation-timeline: --hero;
+      animation-range: exit 0% exit 100%;
+    }
+  }
+}
+/* The ribbons run past each other only as the page scrolls; a perpetual
+   marquee kept main-thread frames busy, like the seal's spin did. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .ribbonTrack {
+      animation: ribbonRun linear both;
+      animation-timeline: view();
+      animation-range: cover;
+    }
+    .ribbonLight .ribbonTrack {
+      animation-direction: reverse;
+    }
+  }
+}
+@keyframes sealTurn {
+  to {
+    rotate: -240deg;
+  }
+}
+@keyframes ribbonRun {
+  from {
+    translate: -4% 0;
+  }
+  to {
+    translate: -20% 0;
+  }
+}
+@keyframes sealPress {
+  from {
+    opacity: 0;
+    scale: 1.7;
+    rotate: -25deg;
   }
 }
 @keyframes frameSettle {
@@ -625,6 +792,18 @@
   .letterArch::before {
     inset: -6px -6px 12px 12px;
     translate: 8px 10px;
+  }
+  .seal {
+    top: 2%;
+    right: -5%;
+    width: 88px;
+  }
+  /* A narrow screen flattens the cross, so the ribbons lean further. */
+  .ribbonDeep {
+    rotate: -7deg;
+  }
+  .ribbonLight {
+    rotate: 4deg;
   }
   .letterArch .photo {
     height: 100%;

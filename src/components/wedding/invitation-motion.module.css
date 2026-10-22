@@ -343,6 +343,14 @@
       animation-timeline: --hero;
       animation-range: exit 0% exit 100%;
     }
+    /* …and the handwritten word writes itself across the story print. */
+    .root :global(.design-loi-yeu .story-script) {
+      animation-name: scriptWrite;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: view();
+      animation-range: entry 30% cover 55%;
+    }
 
     @media (max-width: 800px) {
       .root :global(.wedding-photo-story) {
@@ -509,6 +517,16 @@
   to {
     translate: 0 3.5%;
     scale: 1.08;
+  }
+}
+@keyframes scriptWrite {
+  from {
+    clip-path: inset(-40% 100% -40% -10%);
+    translate: -0.2em 0;
+  }
+  to {
+    clip-path: inset(-40% -10% -40% -10%);
+    translate: 0 0;
   }
 }
 @keyframes heroDepth {

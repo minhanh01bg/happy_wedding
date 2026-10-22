@@ -240,6 +240,11 @@ export function InvitationStory({
               <div className="story-romance-prints">
                 {main}
                 {detail}
+                {design === "loi-yeu" && (
+                  <span className="story-script" aria-hidden="true">
+                    Thương
+                  </span>
+                )}
               </div>
               {words}
             </div>

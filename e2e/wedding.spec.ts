@@ -1257,6 +1257,86 @@ test("Lời yêu signs the couple's names and circles the wedding day", async ({
   }
 });
 
+test("Lời yêu opens a sealed envelope and keeps its keepsakes still when motion is reduced", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const opening = page.getByRole("dialog", { name: /Minh Anh.*Ngọc Hà/ });
+  const keyframes = (selector: string) =>
+    page
+      .locator(selector)
+      .evaluate((el) =>
+        JSON.stringify(
+          el
+            .getAnimations()
+            .map((a) => (a.effect as KeyframeEffect).getKeyframes()),
+        ),
+      );
+  await page.goto("/preview/loi-yeu");
+  await expect(opening).toBeVisible();
+  await expect(opening.locator(".invitation-door")).toHaveCount(0);
+  await expect(opening.locator("[data-opening-art]")).toHaveCount(2);
+  await expect(opening.locator(".envelope")).toBeVisible();
+  await expect(opening.locator(".envelope")).toHaveAttribute(
+    "aria-hidden",
+    "true",
+  );
+  await page.getByRole("button", { name: /^Mở thiệp/ }).click();
+  await expect.poll(() => keyframes(".envelope-flap")).toContain("rotateX");
+  await expect.poll(() => keyframes(".envelope-letter")).toContain("-58%");
+  await expect(opening).not.toBeVisible();
+  await expect(page.locator(".wedding-hero h1")).toBeFocused();
+
+  // Tapping the envelope opens the invitation just like the button; it
+  // floats gently, so it never settles for Playwright's stability check.
+  await page.reload();
+  await expect(opening).toBeVisible();
+  await opening.locator(".envelope").click({ force: true });
+  await expect(opening).not.toBeVisible();
+
+  const dial = page.locator(".wedding-hero span:has(> svg textPath)");
+  const track = page.locator(".letter-ribbons > div > div").first();
+  const word = page.locator(".story-script");
+  const thread = page.locator(".event-card + .event-card");
+  const threadAnimation = () =>
+    thread.evaluate((el) => getComputedStyle(el, "::after").animationName);
+  await expect(dial.locator("textPath")).toContainText("MINH ANH & NGỌC HÀ");
+  await expect(page.locator(".letter-ribbons")).toHaveAttribute(
+    "aria-hidden",
+    "true",
+  );
+  await expect(dial).toHaveCSS("animation-name", /sealTurn/);
+  await expect(track).toHaveCSS("animation-name", /ribbonRun/);
+  await expect(word).toHaveText("Thương");
+  await expect(word).toHaveCSS("animation-name", /scriptWrite/);
+  // The word follows the page scroll, not a clipped section that never scrolls.
+  expect(
+    await word.evaluate(
+      (element) =>
+        (element.getAnimations()[0]?.timeline as { source?: Element } | null)
+          ?.source === document.scrollingElement,
+    ),
+  ).toBe(true);
+  expect(await threadAnimation()).toMatch(/threadDrop/);
+  // Mobile story prints keep their size instead of collapsing to a sliver.
+  const print = await page
+    .locator(".story-romance-prints .story-primary")
+    .boundingBox();
+  expect(print!.width).toBeGreaterThan(200);
+
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.reload();
+  await expect(opening).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(opening).not.toBeVisible();
+  await expect(page.locator(".wedding-hero h1")).toBeFocused();
+  await expect(dial).toHaveCSS("animation-name", "none");
+  await expect(track).toHaveCSS("animation-name", "none");
+  await expect(word).toHaveCSS("animation-name", "none");
+  await expect(word).toHaveCSS("clip-path", "none");
+  expect(await threadAnimation()).toBe("none");
+});
+
 test("distinct album compositions support pages, spotlight and filmstrip", async ({
   page,
 }) => {

@@ -5492,6 +5492,30 @@ body:has(.admin-drawer[open]) {
     margin-inline: 12px;
   }
 }
+/* One handwritten word crosses the edge of the story print, like ink on a photo. */
+.story-script {
+  position: absolute;
+  z-index: 2;
+  left: -6%;
+  bottom: 2%;
+  rotate: -9deg;
+  font: 400 clamp(84px, 12vw, 156px) / 1 var(--script);
+  color: var(--letter-ink);
+  text-shadow:
+    0 0 18px var(--letter-paper),
+    0 0 4px var(--letter-paper);
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* Clip rather than hide: a hidden box is a scroll container, and the word's
+   view() timeline would follow this unscrolled section instead of the page. */
+.wedding-page .story-composition.story-loi-yeu {
+  overflow: clip;
+}
+/* The word signs the first print, so its printed caption steps aside. */
+.story-loi-yeu .story-romance-prints .story-primary figcaption {
+  display: none;
+}
 .design-loi-yeu.template-art .art-border {
   border-radius: 130px 130px 4px 4px;
   border-width: 2px;

@@ -19,7 +19,7 @@ import { InvitationStory } from "./invitation-story";
 import { InvitationAlbum } from "./invitation-album";
 import { GiftAccounts, type GiftAccount } from "./gift-accounts";
 import { InvitationEvents, InvitationDateCalendar } from "./invitation-events";
-import { InvitationHero } from "./invitation-hero";
+import { InvitationHero, LetterRibbons } from "./invitation-hero";
 import { InvitationOpening } from "./invitation-opening";
 import { displayFont, scriptFont } from "./invitation-fonts";
 
@@ -171,6 +171,13 @@ export function InvitationView({
           photos={photos}
           guestName={guestName}
         />
+        {design.key === "loi-yeu" && (
+          <LetterRibbons
+            groom={invitation.groom}
+            bride={invitation.bride}
+            date={invitation.weddingDate}
+          />
+        )}
         {sectionOrder.map((section) => (
           <Fragment key={section}>{sections[section]}</Fragment>
         ))}

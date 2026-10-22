@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   hashCustomerPassword,
+  verifyCustomerCredential,
   verifyCustomerPassword,
 } from "@/server/customer-auth/password";
 import {
@@ -29,5 +30,27 @@ describe("customer credentials", () => {
     expect(CUSTOMER_SESSION_COOKIE).toBe("customer_session");
     expect(SESSION_COOKIE).toBe("pos_session");
     expect(CUSTOMER_SESSION_COOKIE).not.toBe(SESSION_COOKIE);
+  });
+});
+
+describe("verifyCustomerCredential", () => {
+  it("chạy scrypt đầy đủ kể cả khi không có tài khoản", async () => {
+    const hash = await hashCustomerPassword("correct horse battery");
+    expect(await verifyCustomerCredential("correct horse battery", hash)).toBe(
+      true,
+    );
+    expect(await verifyCustomerCredential("wrong password", hash)).toBe(false);
+    // Warm the dummy hash so the timed runs measure verification only.
+    expect(await verifyCustomerCredential("x", undefined)).toBe(false);
+
+    const time = async (encoded: string | undefined) => {
+      const start = performance.now();
+      for (let i = 0; i < 3; i++)
+        await verifyCustomerCredential("wrong password", encoded);
+      return performance.now() - start;
+    };
+    const existing = await time(hash);
+    const missing = await time(undefined);
+    expect(missing).toBeGreaterThan(existing * 0.4);
   });
 });

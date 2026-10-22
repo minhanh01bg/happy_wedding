@@ -51,3 +51,19 @@ export async function verifyCustomerPassword(
     return false;
   }
 }
+
+let dummyHash: Promise<string> | undefined;
+
+/**
+ * Verifies a login attempt with the same scrypt cost whether or not an account
+ * exists, so response time does not reveal which phone numbers are registered.
+ */
+export async function verifyCustomerCredential(
+  password: string,
+  encoded: string | null | undefined,
+): Promise<boolean> {
+  if (encoded) return verifyCustomerPassword(password, encoded);
+  dummyHash ??= hashCustomerPassword(randomBytes(32).toString("base64url"));
+  await verifyCustomerPassword(password, await dummyHash);
+  return false;
+}

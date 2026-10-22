@@ -9,6 +9,7 @@ Rà soát toàn bộ chức năng ngày 22/10/2026 phát hiện các lỗ hổng
 ## Decision
 
 1. **Guard trang quản trị.** `requireAdminPage(roles)` trong `src/server/auth/require-admin-session.ts` xác thực phiên DB và role; mọi `src/app/admin/**/page.tsx` gọi hàm này là câu lệnh `await` đầu tiên. Layout vẫn gọi để không render shell, nhưng không còn là ranh giới tin cậy duy nhất. Test tĩnh trong `tests/server/auth/require-admin-page.test.ts` bắt buộc quy tắc cho page mới.
+2. **Đăng nhập khách không lộ số điện thoại đã đăng ký.** `verifyCustomerCredential` luôn chạy scrypt, dùng hash giả khi không có tài khoản; phản hồi lỗi chung và thời gian xử lý tương đương cho số chưa đăng ký, tài khoản bị khóa và sai mật khẩu.
 
 ## Alternatives
 

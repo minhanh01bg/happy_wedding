@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { hasSafeMutationOrigin } from "@/server/http/origin";
 
 import { readJsonBody } from "@/server/http/read-json-body";
-import { verifyCustomerPassword } from "@/server/customer-auth/password";
+import { verifyCustomerCredential } from "@/server/customer-auth/password";
 import {
   checkCustomerAuthAccount,
   checkCustomerAuthPreCheck,
@@ -85,10 +85,12 @@ export async function POST(request: Request) {
     },
   });
 
-  const valid =
-    account &&
-    !account.disabledAt &&
-    (await verifyCustomerPassword(parsed.data.password, account.passwordHash));
+  // Always pay the scrypt cost so timing does not reveal registered phones.
+  const passwordMatches = await verifyCustomerCredential(
+    parsed.data.password,
+    account?.passwordHash,
+  );
+  const valid = account && !account.disabledAt && passwordMatches;
 
   if (!valid || !account) {
     return NextResponse.json(GENERIC_ERROR, {

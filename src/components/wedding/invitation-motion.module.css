@@ -9,6 +9,47 @@
   .root [data-reveal="wait"] {
     opacity: 0;
   }
+  /* Lời yêu: one-shot ink as each part arrives; the ring circles the day,
+     a hairline draws under each heading, the couple signs off. */
+  .root
+    :global(.design-loi-yeu [data-wedding-calendar][data-reveal="in"])
+    svg[data-ring]
+    path {
+    animation: ringDraw 1.6s 0.55s cubic-bezier(0.65, 0, 0.35, 1) backwards;
+  }
+  .root
+    :global(
+      .design-loi-yeu
+        :is(.wedding-section, .wedding-thanks)
+        > h2[data-reveal="in"]
+    )::after {
+    animation: hairline 1.2s 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  .root
+    :global(
+      .design-loi-yeu .wedding-thanks > p[data-reveal="in"]:nth-of-type(2)
+    ) {
+    animation: signOff 1.8s 0.35s cubic-bezier(0.65, 0, 0.35, 1) backwards;
+  }
+}
+@keyframes ringDraw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+@keyframes hairline {
+  from {
+    scale: 0 1;
+    opacity: 0;
+  }
+}
+@keyframes signOff {
+  from {
+    clip-path: inset(-30% 100% -30% -10%);
+  }
+  to {
+    clip-path: inset(-30% -10% -30% -10%);
+  }
 }
 .root :global(.wedding-petals)[data-paused] i {
   animation-play-state: paused;

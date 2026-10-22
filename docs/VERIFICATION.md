@@ -326,3 +326,32 @@ Quyết định tại [ADR 0006](adr/0006-css-scroll-driven-motion.md). Phạm v
 - **Hành vi chương ảnh.** Script Playwright đọc style tính toán và chụp ảnh ở tiến trình 0 → 1 tại 390×844 và 1440×900: khung chân dung scale 0,72 → 1 (mobile) và 0,44 → 1 (desktop), bốn ảnh in tản ra rồi mờ, cảnh hai quét ngang trong khoảng 50–85%, nhãn/caption đổi theo cảnh; mọi animation gắn `ViewTimeline`/`ScrollTimeline`. Không phần tử nào kẹt `data-reveal="wait"`, `scrollWidth` bằng viewport, không lỗi console.
 - **E2E viết lại.** Hai bài chương ảnh dùng helper `scrollChapter` cuộn tới một tỉ lệ của quãng ghim: frame scale <0,8 ở 2% và >0,99 ở 50%; stage `sticky`; cảnh hai translate <5% ở 95% và >95% ở 2%; orbit hiện ở 2%, mờ hẳn ở 50%; hover album đặt `--tilt-x`; reduced motion đổi stage về `relative`, bỏ scale/transform và ẩn orbit, cảnh hai.
 - **Cổng e2e.** `pnpm test:e2e` (29 bài, chromium, dev server 3201) trên máy chung đang thiếu RAM: lần đầu 17 qua, 12 lỗi đều do môi trường (renderer bị kill "Target crashed"/"Page crashed", server 3201 chết sau đó nên `ERR_CONNECTION_REFUSED`); lần thứ hai server treo ngay ở request đăng nhập admin. Chạy lại `pnpm test:e2e --last-failed` khi máy bớt tải: 12/12 qua (4,2 phút), gồm hai bài chương ảnh và bài hiệu ứng ảnh trên mobile. Tổng cộng 29/29 qua trên cùng mã.
+
+## Lá thư tình cho Lời yêu — 22/10/2026
+
+Quyết định tại [ADR 0004](adr/0004-template-configuration-and-edit-concurrency.md) (mục “Lá thư tình cho Lời yêu”), nguồn tham khảo tại RESEARCH. Phạm vi: Lời yêu (`/w/thiep-mau`, `/preview/loi-yeu`); các mẫu khác chỉ nhận lại hiệu ứng ảnh mặc định như trước.
+
+- **Ảnh chụp thủ công.** Chromium trên dev server của worktree, mở thiệp rồi cuộn qua hero, countdown, lịch, lịch tiệc, RSVP, lời cảm ơn ở 1440×900, 390×844, 320×568 và 844×390. Mọi viewport `scrollWidth` bằng viewport, không lỗi console. Chuỗi khung hình khi mở thiệp cho thấy ảnh vòm lộ từ dưới lên trong đúng khung vòm, rồi hai tên được ký lần lượt. Đổi class palette sang wine (desktop) và midnight (mobile): chữ vẫn đọc được, dải countdown đảo nền sáng.
+- **Trường hợp hẹp.** Ở 320/360/390px, dòng “CHÚNG MÌNH KẾT HÔN” cao 19px, ngày “14 . 02 . 2027” cao 35px (một dòng). Tên giả dài bảy dòng trên 390px vẫn nằm trong ảnh vì ảnh cao theo khối tên. Nút CTA 320px và chữ ký lời cảm ơn không còn chữ mồ côi.
+- **Font.** `font-family` tính toán của tên là `scriptFont`. Hai font chỉ tải khi trang có rule Lời yêu đọc biến font. Không có request font ngoài origin.
+- **Độ mượt.** Script Playwright đo frame khi cuộn (390×844, CPU chậm 4×, cuộn tới đáy; script tạm, không commit), chạy trên main trước lượt này (3200) và bản mới (worktree):
+
+  | Chỉ số          | Trước   | Sau     |
+  | --------------- | ------- | ------- |
+  | p50 / p95 frame | 16,7 ms | 16,7 ms |
+  | Frame dài nhất  | 33,4 ms | 33,3 ms |
+  | Frame rớt       | 0,6%    | 0,6%    |
+  | Long animation  | 0       | 0       |
+  | Recalc Style    | 384 ms  | 454 ms  |
+  | Layout (số lần) | 8       | 12      |
+
+  Không có hồi quy về độ mượt. Recalc/layout tăng nhẹ do có thêm phần tử trang trí và animation một lần; số đo là dev server trên máy chung đang thiếu RAM, không phải production hay điện thoại thật.
+
+- **Review độc lập.** Một subagent đọc diff mà không nhận kết luận của tôi, tìm ra bốn lỗi giao diện. Cả bốn đã sửa và kiểm tra lại trong trình duyệt:
+  - Hiệu ứng vòm áp nhầm cho ảnh câu chuyện/album. Đã tách `heroEntrances`; ghi lại `Element.animate` thì thấy chỉ ảnh hero dùng `clip-path` vòm, ảnh câu chuyện và album dùng keyframe mặc định.
+  - Rule tiêu đề trúng cả `h2` của hộp quà. Đã giới hạn bằng `> h2`; `h2` của hộp quà giữ 36px.
+  - Link ở dải countdown không đổi màu khi hover (hồng trên nền mận). Màu hover giờ là champagne sáng, tương phản khoảng 4,75:1.
+  - Cánh hoa bay đè lên chữ trên hero mobile. `z-index` của cánh hoa là 1, chữ là 2.
+  - Ngoài ra dòng eyebrow 11px được nâng lên 12px.
+- **Gate.** `pnpm check` qua: lint không lỗi (còn cảnh báo ref Music có sẵn), TypeScript qua, 154/154 test. `pnpm build` thành công. Prettier sạch. `pnpm test:e2e` **30/30 qua (5,5 phút)**, gồm bài mới “Lời yêu signs the couple's names and circles the wedding day”. Bài này chạy với cả `no-preference` và `reduce`, kiểm tra font viết tay, hai tên, vòng khoanh hiện và tim bị ẩn, `signName`/`ringDraw` chạy hoặc không có `data-entrance` và animation.
+- Cảnh báo dev của next/image về ảnh `fill` cao 0 trên mobile đã có ở bản trước (đối chiếu trang 3200 cũ và các log E2E cũ), không do lượt này. Chưa kiểm tra Safari hay iPhone thật, không deploy production.

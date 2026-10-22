@@ -348,6 +348,159 @@
   justify-content: center;
   gap: 15px;
 }
+/* Lời yêu — a love letter on ivory paper: an arched portrait, script names. */
+:global(.wedding-page)
+  .hero[data-hero-composition="loi-yeu"][data-invitation-hero] {
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 7%;
+  min-height: min(840px, 94svh);
+  padding-block: 56px;
+  background:
+    radial-gradient(
+      closest-side at 28% 50%,
+      color-mix(in srgb, var(--tint) 75%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      closest-side at 74% 62%,
+      color-mix(in srgb, var(--accent) 14%, transparent),
+      transparent
+    );
+}
+.letterArch {
+  position: relative;
+  justify-self: center;
+  width: min(100%, 470px);
+  border-radius: 999px 999px 6px 6px;
+  box-shadow: 0 40px 80px -40px
+    color-mix(in srgb, var(--letter-ink) 55%, transparent);
+}
+.letterArch::before,
+.letterArch::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px 999px 6px 6px;
+  pointer-events: none;
+}
+/* An engraved champagne frame offset behind, a fine ivory line within. */
+.letterArch::before {
+  inset: -18px -18px 26px 26px;
+  border: 1px solid var(--accent);
+  translate: 30px 26px;
+  opacity: 0.8;
+  z-index: -1;
+}
+.letterArch::after {
+  inset: 10px;
+  border: 1px solid color-mix(in srgb, white 70%, transparent);
+  z-index: 1;
+}
+.letterArch .photo {
+  height: min(660px, 76svh);
+  border-radius: inherit;
+}
+.loveLetter .copy {
+  padding: 0;
+}
+.loveLetter .copy > :global(.eyebrow) {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 100%;
+  letter-spacing: 0.3em;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.loveLetter :global(.eyebrow)::before,
+.loveLetter :global(.eyebrow)::after {
+  content: "";
+  flex: 0 1 34px;
+  min-width: 12px;
+  height: 1px;
+  background: var(--accent);
+}
+.loveLetter .copy h1 {
+  font-family: var(--script);
+  font-weight: 400;
+  font-size: clamp(60px, 6.8vw, 108px);
+  line-height: 1.02;
+  letter-spacing: 0;
+  margin: 14px 0 4px;
+}
+.loveLetter .copy h1 > span {
+  padding-inline: 0.12em;
+}
+.loveLetter .copy h1 em {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.42em;
+  color: var(--accent-ink);
+  margin: -0.1em 0 0;
+}
+.loveLetter .copy > p:not(:global(.eyebrow)) {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 21px;
+  line-height: 1.6;
+}
+.loveLetter .copy > p.date {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  font-style: normal;
+  font-size: 26px;
+  letter-spacing: 0.24em;
+  font-variant-numeric: lining-nums tabular-nums;
+  white-space: nowrap;
+}
+.loveLetter .date::before,
+.loveLetter .date::after {
+  content: "";
+  flex: 0 1 60px;
+  min-width: 12px;
+  height: 1px;
+  background: var(--accent);
+}
+/* As the doors part, the portrait settles into its frame and the couple
+   signs their names, one after the other. */
+@media (prefers-reduced-motion: no-preference) {
+  :global([data-entrance="opening"]) .letterArch::before {
+    animation: frameSettle 1.8s 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  :global([data-entrance="opening"]) .loveLetter h1 > span {
+    animation: signName 1.15s 0.8s cubic-bezier(0.55, 0.1, 0.35, 1) backwards;
+  }
+  :global([data-entrance="opening"]) .loveLetter h1 > span:last-of-type {
+    animation-delay: 1.75s;
+  }
+  :global([data-entrance="opening"]) .loveLetter h1 > em {
+    animation: ampersand 0.9s 1.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+}
+@keyframes frameSettle {
+  from {
+    translate: 0 0;
+    opacity: 0;
+  }
+}
+@keyframes signName {
+  from {
+    clip-path: inset(-40% 100% -40% -12%);
+    translate: -0.04em 0;
+  }
+  to {
+    clip-path: inset(-40% -12% -40% -12%);
+    translate: 0 0;
+  }
+}
+@keyframes ampersand {
+  from {
+    opacity: 0;
+    scale: 0.6;
+    rotate: -12deg;
+  }
+}
 @media (max-width: 760px) {
   :global(.wedding-page) .hero[data-hero-composition][data-invitation-hero] {
     grid-template-columns: 1fr;
@@ -439,5 +592,84 @@
   .panorama .photo img {
     object-fit: contain;
     object-position: center;
+  }
+}
+
+/* Phones: the names rest on the portrait like a caption on a keepsake print. */
+@media (max-width: 760px) {
+  :global(.wedding-page)
+    .hero[data-hero-composition="loi-yeu"][data-invitation-hero] {
+    gap: 0;
+    padding: 24px 6% 50px;
+  }
+  .loveLetter,
+  .loveLetter .copy {
+    display: contents;
+  }
+  /* The copy box is gone, so each line keeps itself above the petals. */
+  .loveLetter .copy > * {
+    z-index: 2;
+  }
+  .loveLetter .copy > :global(.eyebrow) {
+    grid-row: 1;
+    justify-self: center;
+    margin: 0 0 20px;
+  }
+  /* The portrait grows with the caption, so long names never leave it. */
+  .letterArch {
+    grid-row: 2;
+    grid-column: 1;
+    align-self: stretch;
+    width: min(100%, 400px);
+  }
+  .letterArch::before {
+    inset: -6px -6px 12px 12px;
+    translate: 8px 10px;
+  }
+  .letterArch .photo {
+    height: 100%;
+    min-height: min(520px, 62svh);
+  }
+  .letterArch .photo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      transparent 42%,
+      rgb(30 14 20 / 0.28) 62%,
+      rgb(30 14 20 / 0.72)
+    );
+  }
+  .loveLetter .copy h1 {
+    grid-row: 2;
+    grid-column: 1;
+    align-self: end;
+    justify-self: center;
+    z-index: 2;
+    width: min(100%, 400px);
+    margin: 0;
+    padding: 0 8% 13%;
+    color: #fffaf2;
+    font-size: clamp(48px, 15vw, 70px);
+    text-shadow:
+      0 1px 3px rgb(20 8 12 / 0.35),
+      0 2px 22px rgb(20 8 12 / 0.45);
+  }
+  .loveLetter .copy h1 em {
+    color: #ecd7b0;
+  }
+  .loveLetter .copy > p:not(:global(.eyebrow)) {
+    font-size: 19px;
+  }
+  .loveLetter .copy > p:first-of-type + h1 + p {
+    margin-top: 30px;
+  }
+  .loveLetter .copy > p.date {
+    font-size: 22px;
+    letter-spacing: 0.18em;
+  }
+  .loveLetter .copy > a {
+    justify-self: center;
+    text-wrap: balance;
   }
 }

@@ -51,6 +51,17 @@ export function InvitationDateCalendar({ date }: { date: Date }) {
                           aria-label={`Ngày cưới: ${day}/${month}/${year}`}
                         >
                           <Heart aria-hidden="true" />
+                          <svg
+                            className={styles.ring}
+                            data-ring
+                            viewBox="0 0 64 54"
+                            aria-hidden="true"
+                          >
+                            <path
+                              pathLength={1}
+                              d="M52 13C43 3 17 3 8 16 0 29 10 47 32 48 53 49 62 34 57 21 53 11 41 6 27 8"
+                            />
+                          </svg>
                           {value}
                         </span>
                       ) : (

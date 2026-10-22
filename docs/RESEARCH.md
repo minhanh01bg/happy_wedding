@@ -153,3 +153,25 @@ Mở lại bằng Chromium các trang công khai Thắng VN: [catalog](https://t
 Zenlove vẫn chuyển trình duyệt sang trang Google kiểm tra truy cập; không vượt qua chặn và không khẳng định đã xem đủ animation của thiệp. Bac–Minh có title thiệp nhưng body chưa render nội dung trong thời gian quan sát, nên không dùng lần này làm bằng chứng đối chiếu đầy đủ. OnePlus và public page Layers đọc được qua web; không lấy prompt/source premium hoặc ảnh của cặp đôi tham khảo.
 
 Catalog của dự án hiện có mười mẫu, còn số 29 trong báo cáo trước là số kịch bản E2E. Người dùng đề cập “29 mẫu”; đã hỏi danh sách/bộ tham khảo tương ứng, chưa có đủ dữ liệu để khẳng định đã rà 29 mẫu riêng biệt. Tạm hoàn thiện mười mẫu có thật và ghi rõ giới hạn kiểm kê.
+
+## Lá thư tình cho Lời yêu — 22/10/2026
+
+Người dùng nhận xét thiệp mẫu `/w/thiep-mau` “vẫn khá chán”, dù trước đó đã được yêu cầu học hỏi từ các web khác. Một worker ccgram được giao hai việc: đọc mã của mẫu và đọc các trang tham khảo. Worker không chạy ứng dụng. Nguồn worker liệt kê:
+
+- CineLove: [trang chủ](https://cinelove.me/), [kho mẫu](https://cinelove.me/templates), [thiệp mẫu](https://cinelove.me/s/weddingthuhahuuloi), [mẫu C20](https://cinelove.me/template/thiep-cuoi-20).
+- [ZenLove: hiệu ứng mở màn phong bì động](https://zenlove.me/guide/thiet-ke/hieu-ung-mo-man-phong-bi-dong).
+- [BiiHappy iWedding](https://biihappy.com/iwedding).
+- Greenvelope (phong bì động); link trong báo cáo bị cắt.
+
+Lượt này không tự mở lại các trang trên. Không lấy mã, ảnh hay nội dung cặp đôi của các trang đó.
+
+| Khoảng trống worker ghi nhận ở Lời yêu                                        | Áp dụng                                                                                   |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Eyebrow ghi “Khoanh tròn một ngày đặc biệt” nhưng không có khoảnh khắc khoanh | Vòng mực SVG vẽ quanh ngày cưới khi lịch hiện ra; tim cũ ẩn ở mẫu này                     |
+| Đơn sắc, không có màu nhấn kim loại                                           | Màu nhấn champagne cho hairline, khung vòm, ruy băng, vòng khoanh và đường chia countdown |
+| Mọi section cùng bề rộng và căn giữa, nhịp đọc đều đều                        | Dải countdown sẫm tràn ngang, lịch ngà nghiêng; thẻ tiệc có vòm bên trong                 |
+| Hiệu ứng vào cảnh dùng chung, không có “chữ ký” riêng của mẫu                 | Ảnh vòm lộ từ dưới lên, tên được ký lần lượt sau khi mở thiệp                             |
+| Lời kết thiếu cảm xúc, không có chữ ký                                        | Tên cặp đôi viết tay ở lời cảm ơn, hiện như đang viết                                     |
+| Cánh hoa 6×10px một màu, gần như vô hình                                      | Cánh hoa ba sắc hồng phấn lớn hơn, lật 3D khi rơi; vẫn tạm dừng khi hero ra khỏi màn hình |
+
+Hai cánh cửa mở đầu giữ nguyên trong lượt này. Màn mở chỉ đổi chữ: tên viết tay trên con dấu. Các đề xuất khác của worker (cửa có chiều sâu, ảnh bìa lộ ra từ phong bì) chưa làm.

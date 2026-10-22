@@ -1218,6 +1218,45 @@ test("letter and curtain openings animate and release focus", async ({
   }
 });
 
+test("Lời yêu signs the couple's names and circles the wedding day", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const names = page.locator(".wedding-hero h1");
+  const calendar = page.locator("[data-wedding-calendar]");
+  const day = calendar.locator("[data-wedding-day]");
+  const ring = day.locator("svg[data-ring]");
+  for (const reducedMotion of ["no-preference", "reduce"] as const) {
+    await page.emulateMedia({ reducedMotion });
+    await page.goto("/preview/loi-yeu");
+    await page.getByRole("button", { name: /^Mở thiệp/ }).click();
+    await expect(page.locator(".invitation-opening")).not.toBeVisible();
+    await expect(names).toBeFocused();
+    await expect(names).toHaveCSS("font-family", /scriptFont/);
+    await expect(names.locator("span")).toHaveCount(2);
+    await calendar.scrollIntoViewIfNeeded();
+    await expect(ring).toBeVisible();
+    await expect(day.locator("svg:not([data-ring])")).toBeHidden();
+    if (reducedMotion === "no-preference") {
+      await expect(names.locator("span").first()).toHaveCSS(
+        "animation-name",
+        /signName/,
+      );
+      await expect(ring.locator("path")).toHaveCSS(
+        "animation-name",
+        /ringDraw/,
+      );
+    } else {
+      await expect(page.locator("[data-entrance]")).toHaveCount(0);
+      await expect(names.locator("span").first()).toHaveCSS(
+        "animation-name",
+        "none",
+      );
+      await expect(ring.locator("path")).toHaveCSS("animation-name", "none");
+    }
+  }
+});
+
 test("distinct album compositions support pages, spotlight and filmstrip", async ({
   page,
 }) => {

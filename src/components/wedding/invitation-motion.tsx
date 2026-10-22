@@ -46,6 +46,13 @@ const entrances: Record<string, Keyframe[]> = {
     { clipPath: "inset(0 0% 0 0%)" },
   ],
 };
+/** Cover entrances that follow the portrait's own frame, so they stay on it. */
+const heroEntrances: Record<string, Keyframe[]> = {
+  "loi-yeu": [
+    { clipPath: "inset(100% 0 0 0 round 999px 999px 6px 6px)" },
+    { clipPath: "inset(0% 0 0 0 round 999px 999px 6px 6px)" },
+  ],
+};
 
 /**
  * Progressive enhancement: server-rendered content always remains readable.
@@ -140,6 +147,8 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
             offset: 0,
           },
         ];
+      if (element.matches("[data-hero-photo]") && heroEntrances[design])
+        return heroEntrances[design];
       if (element.matches(photoSelector))
         return (
           entrances[design] || [
@@ -213,10 +222,14 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
         .forEach((element) => observer.observe(element));
     };
     // Behind the opening doors everything waits; the hero reveals as they part.
-    const onOpeningStart = (event: Event) =>
-      start(
-        (event as CustomEvent<{ instant?: boolean }>).detail?.instant ? 0 : 650,
-      );
+    // Designs that stage their own hero key it on data-entrance.
+    const onOpeningStart = (event: Event) => {
+      const instant = (event as CustomEvent<{ instant?: boolean }>).detail
+        ?.instant;
+      if (!instant && !preference.matches)
+        container.dataset.entrance = "opening";
+      start(instant ? 0 : 650);
+    };
     const onOpened = () => start(0);
     const opening = container.querySelector<HTMLDialogElement>(
       ".invitation-opening",
@@ -261,6 +274,7 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
       animations.forEach((animation) => animation.cancel());
       targets.forEach((element) => delete element.dataset.reveal);
       container.classList.remove("invitation-motion-active");
+      delete container.dataset.entrance;
     };
   }, []);
   return (

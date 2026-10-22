@@ -31,7 +31,15 @@ export function InvitationHero({
     photos.includes(demoCovers[design])
       ? demoCovers[design]
       : invitation.coverUrl;
-  const names = (
+  // Lời yêu writes each name by hand, so its heading plays its own entrance.
+  const signed = design === "loi-yeu";
+  const names = signed ? (
+    <h1 tabIndex={-1} data-motion="own">
+      <span>{invitation.groom}</span>
+      <em>&</em>
+      <span>{invitation.bride}</span>
+    </h1>
+  ) : (
     <h1 tabIndex={-1}>
       {invitation.groom}
       <em>&</em>
@@ -190,6 +198,14 @@ export function InvitationHero({
             {photo(true)}
           </div>
           <div className={styles.bridge}>{copy}</div>
+        </>
+      );
+      break;
+    case "loi-yeu":
+      content = (
+        <>
+          <div className={styles.letterArch}>{photo()}</div>
+          <div className={styles.loveLetter}>{copy}</div>
         </>
       );
       break;

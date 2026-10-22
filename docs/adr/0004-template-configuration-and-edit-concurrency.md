@@ -116,3 +116,18 @@ Bìa demo stock chọn ảnh từ chính album demo theo thiết kế, đặc bi
 `InvitationEvents` dựng mười cấu trúc lịch tiệc bằng server components, giữ eventIndex/nội dung/sắp thứ tự eventsJson. Maps và calendar dùng địa điểm/thời gian thật, không suy diễn lịch trình lễ từ mẫu đối thủ. Khung ngày/giờ dùng múi giờ Asia/Ho_Chi_Minh. Lịch tháng của weddingDate là bảng Monday-first có caption/header và đánh dấu ngày cưới; không phải lịch chọn ngày hay lịch âm. Hàm pure trong wedding-date-calendar resolve ngày VN trước khi dựng tháng bằng UTC, tránh lệch ngày/múi giờ SSR.
 
 Opening giữ native dialog/skip/Escape/reduced motion/nhạc trong click. Artwork SVG/CSS gốc theo design thay hình hoa chung ở các phong cách báo/đêm/nhật ký/thư/phim/diptych. Các preset chuyển động nội suy từ trạng thái giữa đến trạng thái cuối thay vì dùng cùng endpoint ở 55% và 100%. CSS Modules giới hạn khung lịch và artwork, giữ những class semantic cần cho progressive enhancement và test. Nút skip dùng nền trong suốt và màu kế thừa để đọc được trên giấy/thư và màn tối.
+
+## Lá thư tình cho Lời yêu — 22/10/2026
+
+Lời yêu (editorial/rose, thiệp mẫu `/w/thiep-mau`) vẫn đơn sắc và nhịp đều: mọi section rộng 940px, căn giữa, tiêu đề Lora. Mẫu được dựng lại thành một lá thư tình:
+
+- **Chữ.** Tên cặp đôi viết tay bằng Ephesis. Tiêu đề và chữ số dùng Cormorant Garamond với số lining. Hai font tự host qua `next/font/local` trong `invitation-fonts.ts`, subset Latin + tiếng Việt, OFL. Không dùng CDN vì CSP chỉ cho `font-src 'self' data:`. `preload: false` vì chỉ rule của Lời yêu đọc `--font-script`/`--font-display`; các mẫu khác không tải hai font này.
+- **Token riêng.** Lời yêu dùng `--letter-ink`/`--letter-paper` thay vì ghi đè `--ink`/`--paper`, vì hai token này là token toàn cục (`body` và 26 rule khác). Mẫu chỉ ghi đè `--serif`, `--accent` (champagne `#b8925a`), `--accent-ink` và `--script` trong `.design-loi-yeu.wedding-page`.
+- **Bố cục.** Hero là ảnh vòm với khung champagne lệch phía sau và đường viền ngà bên trong. Trên điện thoại, tên đè lên chân ảnh như chú thích trên ảnh in, và ảnh cao theo khối tên dài. Countdown là dải sẫm tràn ngang, lịch như tấm thiệp ngà nghiêng −1,5°. Thẻ tiệc có vòm champagne bên trong, ruy băng chữ viết tay. Lời cảm ơn kết bằng chữ ký tên cặp đôi.
+- **Chuyển động.** Chỉ chạy một lần và bằng CSS:
+  - Khi mở thiệp có hiệu ứng, `InvitationMotion` đặt `data-entrance="opening"`. Khi đó ảnh vòm lộ từ dưới lên (`clip-path` bo theo vòm), hai tên lần lượt được “ký” bằng `clip-path`, và khung champagne trượt vào chỗ.
+  - Khi phần tương ứng nhận `data-reveal="in"`, vòng mực SVG (`pathLength=1`, `stroke-dashoffset`) khoanh ngày cưới, hairline dưới tiêu đề mở ra từ giữa và chữ ký hiện như được viết.
+  - Mọi animation nằm trong `prefers-reduced-motion: no-preference`. Reduced motion, bỏ qua hiệu ứng hoặc không JavaScript đều thấy trạng thái cuối.
+- **Màu tối.** Palette tối (wine, midnight) giữ cùng quy tắc vì màu lấy từ token palette. Dải countdown đảo thành nền sáng, lịch đảo thành nền sẫm.
+
+Không đổi schema, API, giá, quyền lợi hay dữ liệu khách. Lý do và nguồn tham khảo nằm trong RESEARCH, bằng chứng nằm trong VERIFICATION.

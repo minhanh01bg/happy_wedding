@@ -5336,19 +5336,161 @@ body:has(.admin-drawer[open]) {
   opacity: 0.15;
 }
 
-/* Lời yêu — an intimate rose portrait with fine oval lines. */
-.design-loi-yeu.wedding-page .wedding-hero-image {
-  border: 8px solid var(--card);
-  outline: 1px solid color-mix(in srgb, var(--tone) 35%, transparent);
-  outline-offset: 8px;
-  border-radius: 230px 230px 12px 12px;
+/* Lời yêu — a love letter on ivory paper: script names, champagne hairlines.
+   Colours derive from the palette; champagne is only ever a decorative line. */
+.design-loi-yeu.wedding-page {
+  --letter-ink: var(--tone);
+  --letter-paper: var(--card);
+  --accent: #b8925a;
+  --accent-ink: color-mix(in srgb, var(--tone) 45%, #8a6a35);
+  --script: var(--font-script), "Segoe Script", cursive;
+  --serif: var(--font-display), var(--font-heading), Georgia, serif;
 }
+.design-loi-yeu .wedding-section > h2,
+.design-loi-yeu .wedding-thanks > h2 {
+  font-weight: 500;
+  font-size: clamp(38px, 5vw, 54px);
+  letter-spacing: -0.01em;
+}
+/* A champagne hairline parted by a small dot under each heading. */
+.design-loi-yeu .wedding-section > h2::after,
+.design-loi-yeu .wedding-thanks > h2::after {
+  content: "";
+  display: block;
+  width: 150px;
+  height: 14px;
+  margin: 14px auto 0;
+  background:
+    linear-gradient(var(--accent), var(--accent)) left center / 56px 1px
+      no-repeat,
+    linear-gradient(var(--accent), var(--accent)) right center / 56px 1px
+      no-repeat,
+    radial-gradient(circle, var(--accent) 2.5px, transparent 3px) center / 14px
+      14px no-repeat;
+}
+
+/* Countdown: a deep band where the calendar rests like an ivory card. */
 .design-loi-yeu.wedding-page .wedding-countdown {
-  border-bottom: 1px solid color-mix(in srgb, var(--tone) 25%, transparent);
+  --tone: var(--letter-paper);
+  --card: var(--letter-ink);
+  max-width: none;
+  padding: 100px max(24px, calc((100% - 880px) / 2));
+  background:
+    radial-gradient(
+      ellipse 70% 60% at 50% 0%,
+      color-mix(in srgb, var(--letter-paper) 12%, transparent),
+      transparent 70%
+    ),
+    color-mix(in srgb, var(--letter-ink) 92%, black);
+  color: var(--letter-paper);
+  border: 0;
 }
-.design-loi-yeu.wedding-page .event-card {
-  border-radius: 160px 160px 8px 8px;
-  padding-top: 65px;
+.design-loi-yeu .wedding-countdown .text-link:hover {
+  color: color-mix(in srgb, var(--accent) 55%, white);
+}
+.design-loi-yeu .wedding-countdown [data-wedding-calendar] {
+  --tone: var(--letter-ink);
+  --card: var(--letter-paper);
+  color: var(--letter-ink);
+  rotate: -1.5deg;
+  box-shadow: 0 34px 60px -28px rgb(0 0 0 / 0.55);
+}
+.design-loi-yeu .countdown {
+  gap: 0;
+}
+.design-loi-yeu .countdown > div {
+  flex: 0 1 120px;
+  max-width: none;
+}
+.design-loi-yeu .countdown > div + div {
+  border-left: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.design-loi-yeu .countdown strong {
+  font-size: clamp(40px, 7vw, 68px);
+  line-height: 1.1;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Petals: blush rose petals in three shades that flutter as they fall. */
+/* Petals drift between the portrait and the words, never across the names. */
+.design-loi-yeu .wedding-petals {
+  z-index: 1;
+}
+.design-loi-yeu .wedding-petals i {
+  --petal: color-mix(in srgb, var(--tone) 30%, var(--tint));
+  width: calc(var(--leaf-size, 10px) + 7px);
+  height: calc(var(--leaf-size, 10px) + 4px);
+  border-radius: 80% 10% 70% 30% / 70% 20% 80% 30%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    color-mix(in srgb, white 40%, var(--petal)),
+    var(--petal) 70%
+  );
+  animation-name: loi-yeu-petal;
+}
+.design-loi-yeu .wedding-petals i:nth-child(3n + 1) {
+  --petal: color-mix(in srgb, var(--tone) 48%, var(--tint));
+}
+.design-loi-yeu .wedding-petals i:nth-child(3n + 2) {
+  --petal: color-mix(in srgb, var(--tone) 14%, var(--tint));
+}
+@keyframes loi-yeu-petal {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate3d(1, 0.4, 0.2, 0deg);
+  }
+  10% {
+    opacity: 0.7;
+  }
+  35% {
+    transform: translate3d(34px, 280px, 0) rotate3d(1, 0.4, 0.2, 200deg);
+  }
+  65% {
+    transform: translate3d(-22px, 560px, 0) rotate3d(1, 0.4, 0.2, 420deg);
+  }
+  85% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(18px, 880px, 0) rotate3d(1, 0.4, 0.2, 620deg);
+  }
+}
+
+/* The opening card and the closing line are signed by hand. */
+.design-loi-yeu .invitation-seal h2 {
+  font-family: var(--script);
+  font-weight: 400;
+  font-size: clamp(44px, 11vw, 76px);
+  line-height: 1.08;
+  letter-spacing: 0;
+}
+.design-loi-yeu .invitation-seal h2 em {
+  font-family: var(--serif);
+  font-size: 26px;
+  color: var(--accent-ink);
+  margin: 4px;
+}
+.design-loi-yeu .opening-date {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.design-loi-yeu .wedding-thanks p:nth-of-type(2) {
+  margin: 26px 0 30px;
+  font: 400 clamp(46px, 7vw, 72px) / 1.2 var(--script);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+@media (max-height: 600px) and (orientation: landscape) {
+  .design-loi-yeu .invitation-seal h2 {
+    font-size: 40px;
+    line-height: 1.05;
+  }
+  .design-loi-yeu .invitation-seal h2 em {
+    font-size: 22px;
+    margin-inline: 12px;
+  }
 }
 .design-loi-yeu.template-art .art-border {
   border-radius: 130px 130px 4px 4px;

@@ -84,6 +84,31 @@
   border-radius: 120px 120px 10px 10px !important;
   padding-top: 55px !important;
 }
+/* Lời yêu: a champagne arch traced inside each card, the ribbon in script. */
+.loi-yeu .card::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border: 1px solid
+    color-mix(in srgb, var(--accent, currentColor) 60%, transparent);
+  border-radius: 112px 112px 4px 4px;
+  pointer-events: none;
+}
+.loi-yeu .ribbon {
+  border-block-color: color-mix(
+    in srgb,
+    var(--accent, currentColor) 55%,
+    transparent
+  );
+  padding: 4px 12px 8px;
+  font: 400 34px / 1.25 var(--script, inherit);
+  font-style: normal;
+}
+.loi-yeu .stamp > span {
+  font-weight: 500;
+  font-size: 88px;
+  font-variant-numeric: lining-nums;
+}
 .gardenMark {
   font-size: 50px;
   line-height: 1;
@@ -405,6 +430,31 @@
   height: 44px;
   stroke-width: 1.2;
   transform: rotate(-12deg);
+}
+.ring {
+  display: none;
+}
+/* Lời yêu: the day is circled by hand instead of marked with a heart. */
+:global(.design-loi-yeu) .selected svg:not([data-ring]) {
+  display: none;
+}
+:global(.design-loi-yeu) .selected svg.ring {
+  display: block;
+  inset: -12px -14px;
+  width: calc(100% + 28px);
+  height: calc(100% + 24px);
+  transform: rotate(-8deg);
+  fill: none;
+  stroke: var(--accent, currentColor);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  overflow: visible;
+}
+:global(.design-loi-yeu) .calendar caption {
+  font-weight: 500;
+  font-size: 32px;
+  font-variant-numeric: lining-nums;
 }
 .calendarNote {
   font-size: 12px;

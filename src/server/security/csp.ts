@@ -76,7 +76,7 @@ export function buildCspHeader(options?: CspOptions): CspHeaderResult {
   };
 
   // 1. Script sources
-  const scriptSrc: string[] = ["'self'", "https://va.vercel-scripts.com"];
+  const scriptSrc: string[] = ["'self'"];
   if (options?.nonce) {
     scriptSrc.push(`'nonce-${options.nonce}'`);
   }
@@ -108,12 +108,8 @@ export function buildCspHeader(options?: CspOptions): CspHeaderResult {
   directives["font-src"] = ["'self'", "data:"];
   directives["media-src"] = ["'self'", "https:"];
 
-  // 5. Connect sources (telemetry, Vercel insights, allowlisted Sentry origin)
-  const connectSrc: string[] = [
-    "'self'",
-    "https://vitals.vercel-insights.com",
-    "https://va.vercel-scripts.com",
-  ];
+  // 5. Connect sources (same origin plus the allowlisted Sentry origin)
+  const connectSrc: string[] = ["'self'"];
 
   const dsn = options?.sentryDsn ?? process.env.NEXT_PUBLIC_SENTRY_DSN;
   if (dsn) {

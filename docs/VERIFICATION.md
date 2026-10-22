@@ -301,3 +301,4 @@ Quyết định tại [ADR 0005](adr/0005-security-hardening-2026-10.md). Mỗi 
 - **Host nhạc.** `tests/lib/wedding-music.test.ts` từ chối `https://192.168.1.1/…`, `https://localhost/…`, `https://[::1]/…`; vẫn nhận `https://example.com/song.mp3`. Dữ liệu dev hiện có: 0 thiệp bị ảnh hưởng.
 - **PBKDF2 admin.** `tests/server/auth/session.test.ts`: hash mới có tiền tố `600000:`, hash cũ 100k vẫn đúng/sai đúng mật khẩu, số vòng 1.000/không phải số/quá nhiều phần bị từ chối, và `validateEnv` production nhận cả hai định dạng, từ chối giá trị khác.
 - E2E `customer buys…` và `admin sidebar…` 2/2 qua với hash định dạng mới (lần đầu lỗi do cấu hình E2E vẫn dùng 100k với tiền tố 600000; đã sửa).
+- **CSP.** `tests/server/security/csp.test.ts`: `script-src` production chỉ còn `'self' 'unsafe-inline'`, có nonce thì bỏ `unsafe-inline`; `connect-src` chỉ là `'self'`, thêm origin Sentry khi có DSN. Enforce/nonce chưa bật (xem ADR 0005 mục 10).

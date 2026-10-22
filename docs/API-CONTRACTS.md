@@ -97,6 +97,10 @@ Extra provider fields được Zod bỏ qua. Regex tìm HY + 12 hex trong code (
 
 Customer `/api/customer-auth/register`, `/login`, `/logout`; admin `/api/auth/login`, `/logout` thuộc nền giữ lại, có validation/session guards riêng. Xem `src/server/customer-auth/`, `src/server/auth/` và các route tương ứng. Tài liệu này không hứa compatibility cho mobile SDK/external API; khi cần, định nghĩa version và schema độc lập trước khi mở quyền bên ngoài.
 
+## Báo cáo CSP
+
+POST `/api/csp-report` nhận `application/csp-report`, `application/reports+json` hoặc `application/json`, body tối đa 8 KB, rate-limit theo IP. Luôn trả 204; báo cáo sai định dạng, quá lớn hoặc vượt giới hạn bị bỏ, không ghi log. Trường được log đã lược query/fragment và cắt còn 300 ký tự.
+
 ## Trang thống kê quản trị
 
 GET `/admin?period=7|30|90` yêu cầu phiên owner/manager ở server; query không hợp lệ dùng 30. Khoảng ngày VN gồm hôm nay; tiền lấy giao dịch thực receivedAt/amount và loại thiệp demo. Biểu đồ có dữ liệu theo ngày và bảng đọc bằng bàn phím. GET `/admin/customers?q=...&status=all|active|disabled&page=...` giữ bộ lọc khi phân trang, không đưa số điện thoại hoặc tài khoản ngân hàng vào biểu đồ. Không có API báo cáo công khai.

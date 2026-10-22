@@ -11,6 +11,7 @@ Rà soát toàn bộ chức năng ngày 22/10/2026 phát hiện các lỗ hổng
 1. **Guard trang quản trị.** `requireAdminPage(roles)` trong `src/server/auth/require-admin-session.ts` xác thực phiên DB và role; mọi `src/app/admin/**/page.tsx` gọi hàm này là câu lệnh `await` đầu tiên. Layout vẫn gọi để không render shell, nhưng không còn là ranh giới tin cậy duy nhất. Test tĩnh trong `tests/server/auth/require-admin-page.test.ts` bắt buộc quy tắc cho page mới.
 2. **Đăng nhập khách không lộ số điện thoại đã đăng ký.** `verifyCustomerCredential` luôn chạy scrypt, dùng hash giả khi không có tài khoản; phản hồi lỗi chung và thời gian xử lý tương đương cho số chưa đăng ký, tài khoản bị khóa và sai mật khẩu.
 3. **Cookie khách nhất quán.** Login và logout `customer_session` dùng `customerCookieOptionsForRequest`, cùng chính sách Secure với cookie admin (HTTPS/`x-forwarded-proto`, hoặc production trừ khi Origin khớp CANONICAL_ORIGIN HTTP đã cấu hình). Trước đây login có thể phát cookie không Secure ở production nếu proxy không gửi `x-forwarded-proto`, còn logout luôn Secure ở production nên có thể không xóa được cookie đó.
+4. **`/api/csp-report` có giới hạn.** Chỉ nhận content-type báo cáo CSP/JSON, đọc stream tối đa 8 KB bằng `readJsonBody`, rate-limit theo IP qua `mutationLimit("csp-report")`, và cắt mỗi trường log còn 300 ký tự. Báo cáo bị từ chối vẫn trả 204, không ghi log.
 
 ## Alternatives
 

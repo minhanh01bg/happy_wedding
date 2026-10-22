@@ -1,16 +1,43 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { logger } from "@/lib/logger";
+import { readJsonBody } from "@/server/http/read-json-body";
 import { sanitizeCspReport } from "@/server/security/csp";
+import { mutationLimit } from "@/server/wedding/guards";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: NextRequest) {
-  try {
-    const rawBody = await request.json().catch(() => ({}));
-    const sanitized = sanitizeCspReport(rawBody);
+const REPORT_CONTENT_TYPES = [
+  "application/csp-report",
+  "application/reports+json",
+  "application/json",
+];
+const MAX_REPORT_BYTES = 8_000;
+const MAX_FIELD_LENGTH = 300;
 
-    const disposition = sanitized["disposition"] as string | undefined;
+function clip(value: unknown): string | undefined {
+  return typeof value === "string"
+    ? value.slice(0, MAX_FIELD_LENGTH)
+    : undefined;
+}
+
+export async function POST(request: NextRequest) {
+  const noContent = new NextResponse(null, { status: 204 });
+  try {
+    const contentType = request.headers.get("content-type")?.toLowerCase();
+    const requiredContentType = REPORT_CONTENT_TYPES.find((type) =>
+      contentType?.includes(type),
+    );
+    if (!requiredContentType) return noContent;
+    await mutationLimit(request, "csp-report");
+    const body = await readJsonBody(request, {
+      maxBytes: MAX_REPORT_BYTES,
+      requiredContentType,
+    });
+    if (!body.ok) return noContent;
+    const sanitized = sanitizeCspReport(body.data);
+
+    const disposition = clip(sanitized["disposition"]);
     const isEnforce =
       disposition === "enforce" ||
       (!disposition && process.env.CSP_MODE === "enforce");
@@ -18,10 +45,10 @@ export async function POST(request: NextRequest) {
     const payload = {
       category: "csp.violation",
       directive:
-        (sanitized["violated-directive"] as string | undefined) ||
-        (sanitized["effective-directive"] as string | undefined),
-      blockedUri: sanitized["blocked-uri"] as string | undefined,
-      documentUri: sanitized["document-uri"] as string | undefined,
+        clip(sanitized["violated-directive"]) ||
+        clip(sanitized["effective-directive"]),
+      blockedUri: clip(sanitized["blocked-uri"]),
+      documentUri: clip(sanitized["document-uri"]),
       disposition: disposition || (isEnforce ? "enforce" : "report"),
     };
 
@@ -31,8 +58,9 @@ export async function POST(request: NextRequest) {
       logger.info("CSP Violation reported", payload);
     }
 
-    return new NextResponse(null, { status: 204 });
+    return noContent;
   } catch {
-    return new NextResponse(null, { status: 204 });
+    // Reports are best-effort; rate-limited or malformed reports are dropped.
+    return noContent;
   }
 }

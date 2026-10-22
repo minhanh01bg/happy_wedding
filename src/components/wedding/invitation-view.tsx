@@ -21,6 +21,7 @@ import { GiftAccounts, type GiftAccount } from "./gift-accounts";
 import { InvitationEvents, InvitationDateCalendar } from "./invitation-events";
 import { InvitationHero } from "./invitation-hero";
 import { InvitationOpening } from "./invitation-opening";
+import { displayFont, scriptFont } from "./invitation-fonts";
 
 export function InvitationView({
   invitation,
@@ -131,7 +132,7 @@ export function InvitationView({
   return (
     <InvitationMotion>
       <article
-        className={`wedding-page palette-${invitation.template.palette} layout-${invitation.template.layout} design-${design.key}`}
+        className={`wedding-page palette-${invitation.template.palette} layout-${invitation.template.layout} design-${design.key} ${scriptFont.variable} ${displayFont.variable}`}
       >
         <InvitationOpening
           variant={design.opening}

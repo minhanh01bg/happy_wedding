@@ -14,7 +14,7 @@ Không dùng bản demo cho thiệp thật. Bản demo có nhãn minh họa và 
 
 ## Admin
 
-Mật khẩu local nằm trong `.local-admin-password`, chỉ đọc tại máy. Đăng nhập ở `/login`. Đổi mật khẩu bằng cách tạo PBKDF2 hash mới theo `scripts/setup.ts`, cập nhật STORE_PASSWORD_HASH và khởi động lại. Khi xoay mật khẩu production, thu hồi AdminSession và tăng AdminIdentity.version để vô hiệu phiên cũ.
+Mật khẩu local nằm trong `.local-admin-password`, chỉ đọc tại máy. Đăng nhập ở `/login`. Đổi mật khẩu bằng cách tạo PBKDF2-SHA256 hash mới theo `scripts/setup.ts` (600.000 vòng, định dạng `600000:<salt hex 32>:<hash hex 64>`), cập nhật STORE_PASSWORD_HASH và khởi động lại. Giá trị cũ `<salt>:<hash>` vẫn được hiểu là 100.000 vòng; nên tạo lại hash mới khi xoay mật khẩu. Khi xoay mật khẩu production, thu hồi AdminSession và tăng AdminIdentity.version để vô hiệu phiên cũ.
 
 Mẫu được tạo từ năm bố cục/phối màu đã hỗ trợ. Chạy `pnpm db:seed` trên DB wedding để thêm bốn mẫu mới (Lời hẹn, Thư tình, Khoảnh khắc, Bên nhau); seed không ghi đè catalog hiện có. Ngừng cung cấp mẫu không làm hỏng thiệp đã xuất bản; thiệp đang dùng vẫn hiển thị. Không đổi thuộc tính cao cấp của mẫu khi còn thiệp đã xuất bản. Ngừng bán gói không ảnh hưởng quyền đã mua.
 

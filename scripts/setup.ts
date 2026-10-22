@@ -9,13 +9,13 @@ if (!existsSync(".env")) {
   const hash = pbkdf2Sync(
     password,
     Buffer.from(salt, "hex"),
-    100000,
+    600000,
     32,
     "sha256",
   ).toString("hex");
   writeFileSync(
     ".env",
-    `DATABASE_URL="file:./dev.db"\nNEXT_PUBLIC_APP_NAME="Hỷ Studio"\nNEXT_PUBLIC_APP_URL="http://localhost:3200"\nSESSION_SECRET="${randomBytes(32).toString("hex")}"\nSTORE_PASSWORD_HASH="${salt}:${hash}"\nCSP_MODE="report-only"\n`,
+    `DATABASE_URL="file:./dev.db"\nNEXT_PUBLIC_APP_NAME="Hỷ Studio"\nNEXT_PUBLIC_APP_URL="http://localhost:3200"\nSESSION_SECRET="${randomBytes(32).toString("hex")}"\nSTORE_PASSWORD_HASH="600000:${salt}:${hash}"\nCSP_MODE="report-only"\n`,
     { mode: 0o600 },
   );
   writeFileSync(".local-admin-password", password + "\n", { mode: 0o600 });

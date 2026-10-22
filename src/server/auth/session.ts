@@ -38,7 +38,10 @@ export function adminCookieOptionsForRequest(request: Request) {
   };
 }
 
-const PBKDF2_ITERATIONS = 100_000;
+/** OWASP 2023 minimum for PBKDF2-HMAC-SHA256; stored as `iterations:salt:hash`. */
+export const PBKDF2_ITERATIONS = 600_000;
+/** Hashes written as `salt:hash` before the iteration count was stored. */
+const LEGACY_PBKDF2_ITERATIONS = 100_000;
 const encoder = new TextEncoder();
 
 function toHex(buffer: ArrayBuffer): string {
@@ -67,6 +70,7 @@ function safeEqual(a: string, b: string): boolean {
 async function derive(
   password: string,
   salt: Uint8Array<ArrayBuffer>,
+  iterations = PBKDF2_ITERATIONS,
 ): Promise<string> {
   const key = await crypto.subtle.importKey(
     "raw",
@@ -76,7 +80,7 @@ async function derive(
     ["deriveBits"],
   );
   const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
+    { name: "PBKDF2", salt, iterations, hash: "SHA-256" },
     key,
     256,
   );
@@ -86,16 +90,26 @@ async function derive(
 export async function hashPassword(password: string): Promise<string> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const derived = await derive(password, salt);
-  return `${toHex(salt.buffer)}:${derived}`;
+  return `${PBKDF2_ITERATIONS}:${toHex(salt.buffer)}:${derived}`;
 }
 
 export async function verifyPassword(
   password: string,
   hash: string,
 ): Promise<boolean> {
-  const [saltHex, expected] = hash.split(":");
-  if (!saltHex || !expected) return false;
-  const derived = await derive(password, fromHex(saltHex));
+  const parts = hash.split(":");
+  const [iterationText, saltHex, expected] =
+    parts.length === 2 ? [String(LEGACY_PBKDF2_ITERATIONS), ...parts] : parts;
+  const iterations = Number(iterationText);
+  if (
+    parts.length > 3 ||
+    !saltHex ||
+    !expected ||
+    !Number.isSafeInteger(iterations) ||
+    iterations < LEGACY_PBKDF2_ITERATIONS
+  )
+    return false;
+  const derived = await derive(password, fromHex(saltHex), iterations);
   return safeEqual(derived, expected);
 }
 

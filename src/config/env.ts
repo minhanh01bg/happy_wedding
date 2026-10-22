@@ -140,12 +140,14 @@ export const envSchema = z
       }
       if (
         !data.STORE_PASSWORD_HASH ||
-        !/^[0-9a-fA-F]{32}:[0-9a-fA-F]{64}$/.test(data.STORE_PASSWORD_HASH)
+        !/^(?:\d{6,8}:)?[0-9a-fA-F]{32}:[0-9a-fA-F]{64}$/.test(
+          data.STORE_PASSWORD_HASH,
+        )
       ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message:
-            "STORE_PASSWORD_HASH must be a valid salt:derived PBKDF2 hash in production",
+            "STORE_PASSWORD_HASH must be a valid [iterations:]salt:derived PBKDF2 hash in production",
           path: ["STORE_PASSWORD_HASH"],
         });
       }

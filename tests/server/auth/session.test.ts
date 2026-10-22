@@ -1,15 +1,18 @@
+import { pbkdf2Sync } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import {
   createAdminSession,
   ensureDefaultAdminIdentity,
   hashPassword,
+  PBKDF2_ITERATIONS,
   resolveAdminSession,
   revokeAdminSession,
   revokeAllAdminSessions,
   verifyPassword,
   verifySession,
 } from "@/server/auth/session";
+import { validateEnv } from "@/config/env";
 import { prisma } from "@/server/db/prisma";
 
 describe("Admin Password Hashing", () => {
@@ -31,6 +34,54 @@ describe("Admin Password Hashing", () => {
 
   it("rejects empty hash", async () => {
     expect(await verifyPassword("bat ky", "")).toBe(false);
+  });
+
+  it("stores the iteration count with new hashes", async () => {
+    expect(PBKDF2_ITERATIONS).toBeGreaterThanOrEqual(600_000);
+    expect(await hashPassword("x")).toMatch(
+      new RegExp(`^${PBKDF2_ITERATIONS}:[0-9a-f]{32}:[0-9a-f]{64}$`),
+    );
+  });
+
+  it("still verifies legacy salt:hash values at 100k iterations", async () => {
+    const salt = "22222222222222222222222222222222";
+    const legacy = `${salt}:${pbkdf2Sync("matkhau-cu", Buffer.from(salt, "hex"), 100_000, 32, "sha256").toString("hex")}`;
+    expect(await verifyPassword("matkhau-cu", legacy)).toBe(true);
+    expect(await verifyPassword("sai", legacy)).toBe(false);
+  });
+
+  it("rejects downgraded or malformed iteration counts", async () => {
+    const salt = "33333333333333333333333333333333";
+    const weak = pbkdf2Sync("x", Buffer.from(salt, "hex"), 1000, 32, "sha256");
+    expect(
+      await verifyPassword("x", `1000:${salt}:${weak.toString("hex")}`),
+    ).toBe(false);
+    expect(await verifyPassword("x", `abc:${salt}:${"0".repeat(64)}`)).toBe(
+      false,
+    );
+    expect(await verifyPassword("x", `1:2:3:4`)).toBe(false);
+  });
+
+  it("production env accepts both hash formats and rejects others", () => {
+    const base = {
+      NODE_ENV: "production",
+      UPSTASH_REDIS_REST_URL: "https://redis.example.com",
+      UPSTASH_REDIS_REST_TOKEN: "token",
+      RATE_LIMIT_KEY_SECRET: "r".repeat(32),
+      TRUSTED_PROXY_MODE: "vercel",
+      CANONICAL_ORIGIN: "https://shop.example.com",
+      NEXT_PUBLIC_APP_URL: "https://shop.example.com",
+    };
+    const salt = "4".repeat(32);
+    const digest = "5".repeat(64);
+    const hashIssue = (STORE_PASSWORD_HASH: string) =>
+      validateEnv({ ...base, STORE_PASSWORD_HASH }).error?.issues.some(
+        (issue) => issue.path[0] === "STORE_PASSWORD_HASH",
+      ) ?? false;
+    expect(hashIssue(`${salt}:${digest}`)).toBe(false);
+    expect(hashIssue(`600000:${salt}:${digest}`)).toBe(false);
+    expect(hashIssue(`x:${salt}:${digest}`)).toBe(true);
+    expect(hashIssue("")).toBe(true);
   });
 });
 

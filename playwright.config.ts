@@ -5,7 +5,7 @@ const salt = "11111111111111111111111111111111";
 const hash = pbkdf2Sync(
   "e2e-admin-password",
   Buffer.from(salt, "hex"),
-  100000,
+  600000,
   32,
   "sha256",
 ).toString("hex");
@@ -31,7 +31,7 @@ export default defineConfig({
     env: {
       DATABASE_URL: "file:./e2e.db",
       NEXT_DIST_DIR: ".next-e2e",
-      STORE_PASSWORD_HASH: `${salt}:${hash}`,
+      STORE_PASSWORD_HASH: `600000:${salt}:${hash}`,
       NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3201",
       CANONICAL_ORIGIN: "http://127.0.0.1:3201",
       CSP_MODE: "report-only",

@@ -299,3 +299,5 @@ Quyết định tại [ADR 0005](adr/0005-security-hardening-2026-10.md). Mỗi 
 - **Manager đổi tài khoản nhận tiền.** `tests/server/wedding/admin-api.test.ts`: manager gửi `admin/settings` nhận 403, không ghi Setting; owner nhận 200 và có một audit.
 - **Quota upload.** `tests/server/wedding/service.test.ts` “Upload quotas”: account khác nhận 404, thiệp đủ 120 ảnh nhận 409, account đủ 150 ảnh trong 24 giờ nhận 429 và được tải lại khi các bản ghi quá 24 giờ. Migration `20261022000000_wedding_upload_quota` sinh bằng `prisma migrate diff` từ schema trước đó.
 - **Host nhạc.** `tests/lib/wedding-music.test.ts` từ chối `https://192.168.1.1/…`, `https://localhost/…`, `https://[::1]/…`; vẫn nhận `https://example.com/song.mp3`. Dữ liệu dev hiện có: 0 thiệp bị ảnh hưởng.
+- **PBKDF2 admin.** `tests/server/auth/session.test.ts`: hash mới có tiền tố `600000:`, hash cũ 100k vẫn đúng/sai đúng mật khẩu, số vòng 1.000/không phải số/quá nhiều phần bị từ chối, và `validateEnv` production nhận cả hai định dạng, từ chối giá trị khác.
+- E2E `customer buys…` và `admin sidebar…` 2/2 qua với hash định dạng mới (lần đầu lỗi do cấu hình E2E vẫn dùng 100k với tiền tố 600000; đã sửa).

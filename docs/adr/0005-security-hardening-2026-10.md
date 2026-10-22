@@ -16,6 +16,7 @@ Rà soát toàn bộ chức năng ngày 22/10/2026 phát hiện các lỗ hổng
 6. **Tài khoản nhận tiền chỉ owner được đổi.** `admin/settings` quyết định mọi khoản thanh toán dịch vụ đi đâu; manager bị 403 và trang cấu hình hiện chỉ đọc. Manager vẫn xác nhận/hủy đơn theo spec, vì mỗi xác nhận đã bắt buộc transaction ID duy nhất, số tiền khớp đơn và audit.
 7. **Quota upload.** Trước đây chỉ có rate-limit 60 ảnh/giờ/account, nên một tài khoản có thể ghi khoảng 1.400 file/ngày vô thời hạn. Model `WeddingUpload` ghi từng file; `reserveUpload` kiểm tra ownership và quota (120/thiệp, 150/account/24 giờ) trong một transaction trước khi ghi đĩa.
 8. **Nhạc HTTPS bên ngoài.** Giữ tính năng đường dẫn MP3/OGG tùy chọn, vì `<audio preload="none">` và `Referrer-Policy: no-referrer` khiến trình duyệt khách chỉ gọi host ngoài sau khi họ bấm phát. Host phải là tên miền có TLD chữ; IP literal và `localhost` bị từ chối để thiệp không hướng trình duyệt khách vào mạng nội bộ của họ. Không có SSRF vì server không tải URL.
+9. **PBKDF2 admin 600.000 vòng.** Hash mới lưu số vòng: `iterations:salt:hash`; `salt:hash` cũ được xác minh ở 100.000 vòng để không khóa môi trường đang chạy. Số vòng dưới 100.000 hoặc sai định dạng bị từ chối, nên không thể hạ cấp qua env. `scripts/setup.ts` và cấu hình E2E sinh định dạng mới.
 
 ## Alternatives
 

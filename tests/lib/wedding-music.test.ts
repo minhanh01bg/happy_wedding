@@ -21,6 +21,9 @@ describe("invitation music sources", () => {
       "/audio/../secret.mp3",
       "http://example.com/song.mp3",
       "javascript:alert(1)",
+      "https://192.168.1.1/song.mp3",
+      "https://localhost/song.mp3",
+      "https://[::1]/song.mp3",
     ]) {
       expect(invitationSchema.safeParse({ ...content, musicUrl }).success).toBe(
         false,

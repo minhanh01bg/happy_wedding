@@ -74,7 +74,7 @@ export const invitationSchema = z
         (v) =>
           !v ||
           v === WEDDING_MUSIC.url ||
-          /^https:\/\/[a-zA-Z0-9.-]+\/[\w./%?=&+-]+\.(?:mp3|ogg)(?:\?[\w=&%-]+)?$/.test(
+          /^https:\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\/[\w./%?=&+-]+\.(?:mp3|ogg)(?:\?[\w=&%-]+)?$/.test(
             v,
           ),
         "Hãy chọn nhạc có sẵn hoặc dùng đường dẫn HTTPS đến tệp MP3/OGG",

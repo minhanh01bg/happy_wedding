@@ -594,49 +594,57 @@ test("guests can skip motion and reach Vietnamese event information", async ({
   ).toBe(true);
 });
 
+/** Scrolls the pinned photo chapter to a fraction of its travel. */
+async function scrollChapter(page: Page, progress: number) {
+  await page.locator(".wedding-photo-story").evaluate((story, progress) => {
+    const stage = story.firstElementChild as HTMLElement;
+    const travel = (story as HTMLElement).offsetHeight - stage.offsetHeight;
+    const pin = (innerHeight - stage.offsetHeight) / 2;
+    const top = story.getBoundingClientRect().top + scrollY;
+    scrollTo(0, top - pin + travel * progress);
+  }, progress);
+}
+
+/** First number of a computed individual transform, e.g. `scale` or `translate`. */
+function computed(
+  page: Page,
+  selector: string,
+  property: "scale" | "translate",
+) {
+  return () =>
+    page
+      .locator(selector)
+      .first()
+      .evaluate(
+        (element, property) =>
+          getComputedStyle(element).getPropertyValue(property),
+        property,
+      )
+      .then((value) => (value === "none" ? 1 : parseFloat(value)));
+}
+
 test("photo storytelling follows scroll and becomes static when motion is reduced", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/preview/loi-yeu");
   await page.getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" }).click();
-  const story = page.locator(".wedding-photo-story");
-  await expect(story).toBeAttached();
-  const start = await story.evaluate(
-    (el) => el.getBoundingClientRect().top + window.scrollY,
-  );
-  await page.evaluate((y) => window.scrollTo(0, y + 30), start);
-  await expect
-    .poll(() =>
-      story.evaluate((el) =>
-        parseFloat(el.style.getPropertyValue("--story-inset")),
-      ),
-    )
-    .toBeLessThan(12);
-  const before = await story.evaluate((el) =>
-    parseFloat(el.style.getPropertyValue("--story-inset")),
-  );
-  await page.evaluate((y) => window.scrollTo(0, y + 300), start);
-  await expect
-    .poll(() =>
-      story.evaluate((el) =>
-        parseFloat(el.style.getPropertyValue("--story-inset")),
-      ),
-    )
-    .toBeLessThan(before);
+  await expect(page.locator(".wedding-photo-story")).toBeAttached();
+  const frameScale = computed(page, ".wedding-photo-frame", "scale");
+  await scrollChapter(page, 0.02);
+  await expect.poll(frameScale).toBeLessThan(0.8);
+  await scrollChapter(page, 0.5);
+  await expect.poll(frameScale).toBeGreaterThan(0.99);
+  const stage = page.locator(".wedding-photo-stage");
+  await expect(stage).toHaveCSS("position", "sticky");
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await expect(page.locator(".wedding-photo-stage")).toHaveCSS(
-    "position",
-    "relative",
-  );
-  for (const image of await page.locator(".wedding-photo-frame img").all()) {
-    await expect(image).toHaveCSS("transform", "none");
+  await expect(stage).toHaveCSS("position", "relative");
+  for (const element of await page
+    .locator(".wedding-photo-frame, .wedding-photo-frame img")
+    .all()) {
+    await expect(element).toHaveCSS("scale", "none");
+    await expect(element).toHaveCSS("transform", "none");
   }
-  await expect
-    .poll(() =>
-      story.evaluate((el) => el.style.getPropertyValue("--story-inset")),
-    )
-    .toBe("");
 });
 
 test("photo scenes reverse with scrolling and hover depth clears on reduced motion", async ({
@@ -645,48 +653,23 @@ test("photo scenes reverse with scrolling and hover depth clears on reduced moti
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/preview/loi-yeu");
   await page.getByRole("button", { name: "Xem ngay, bỏ qua hiệu ứng" }).click();
-  const story = page.locator(".wedding-photo-story");
-  const { start, travel } = await story.evaluate((el) => ({
-    start: el.getBoundingClientRect().top + scrollY,
-    travel:
-      (el as HTMLElement).offsetHeight -
-      (el.firstElementChild as HTMLElement).offsetHeight,
-  }));
-  await page.evaluate((y) => scrollTo(0, y), start + travel * 0.95);
-  await expect
-    .poll(() =>
-      story.evaluate((el) =>
-        parseFloat(el.style.getPropertyValue("--scene-wipe")),
-      ),
-    )
-    .toBeLessThan(5);
-  await page.evaluate((y) => scrollTo(0, y), start + 10);
-  await expect
-    .poll(() =>
-      story.evaluate((el) =>
-        parseFloat(el.style.getPropertyValue("--scene-wipe")),
-      ),
-    )
-    .toBeGreaterThan(95);
+  await expect(page.locator(".wedding-photo-story")).toBeAttached();
+  const wipe = computed(page, ".wedding-photo-second", "translate");
+  const orbit = () =>
+    page
+      .locator(".wedding-photo-orbit")
+      .evaluate((el) => Number(getComputedStyle(el).opacity));
+  await scrollChapter(page, 0.95);
+  await expect.poll(wipe).toBeLessThan(5);
+  await scrollChapter(page, 0.02);
+  await expect.poll(wipe).toBeGreaterThan(95);
   await expect(page.locator(".wedding-photo-orbit")).toHaveCSS(
     "display",
     "block",
   );
-  await expect
-    .poll(() =>
-      page
-        .locator(".wedding-photo-orbit")
-        .evaluate((el) => Number(getComputedStyle(el).opacity)),
-    )
-    .toBeGreaterThan(0.9);
-  await page.evaluate((y) => scrollTo(0, y), start + travel * 0.5);
-  await expect
-    .poll(() =>
-      page
-        .locator(".wedding-photo-orbit")
-        .evaluate((el) => Number(getComputedStyle(el).opacity)),
-    )
-    .toBeLessThan(0.01);
+  await expect.poll(orbit).toBeGreaterThan(0.9);
+  await scrollChapter(page, 0.5);
+  await expect.poll(orbit).toBeLessThan(0.01);
   const photo = page.locator(".wedding-album > button").first();
   await photo.hover({ position: { x: 30, y: 30 } });
   await expect(photo).toHaveClass(/photo-hovered/);

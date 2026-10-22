@@ -1,0 +1,600 @@
+/*
+ * Scroll motion runs on the compositor: CSS scroll-driven animations drive the
+ * photo chapter, album prints and hero depth, and JS only schedules one-shot
+ * reveals. Without support, or with reduced motion, the page stays static.
+ */
+
+/* Reveal targets wait off-screen until JS plays their entrance. */
+@media screen and (prefers-reduced-motion: no-preference) {
+  .root [data-reveal="wait"] {
+    opacity: 0;
+  }
+}
+.root :global(.wedding-petals)[data-paused] i {
+  animation-play-state: paused;
+}
+/* Half the petals on phones: each one is a running animation. */
+@media (max-width: 800px) {
+  .root :global(.wedding-petals) i:nth-child(2n) {
+    display: none;
+  }
+}
+
+/* Photo chapter, static: the first scene with its caption. */
+.root :global(.wedding-photo-story) {
+  --stage-h: min(72vh, 620px);
+  position: relative;
+  margin: 40px 0 20px;
+}
+.root :global(.wedding-photo-stage) {
+  position: relative;
+  height: var(--stage-h);
+}
+.root :global(.wedding-photo-frame) {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.root :global(.wedding-photo-frame) img {
+  object-fit: cover;
+  object-position: 50% 30%;
+}
+.root :global(.wedding-photo-orbit),
+.root :global(.wedding-photo-second),
+.root :global(.wedding-photo-progress),
+.root :global(.wedding-photo-scene-label) span:last-child {
+  display: none;
+}
+.root :global(.wedding-photo-scene-label) {
+  position: absolute;
+  z-index: 3;
+  top: 22px;
+  left: 24px;
+  right: 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+.root :global(.wedding-photo-scene-label) span {
+  background: var(--card);
+  color: var(--tone);
+  padding: 8px 12px;
+  border-radius: 3px;
+  font-size: 12px;
+  letter-spacing: 2px;
+}
+.root :global(.wedding-photo-caption) {
+  position: absolute;
+  z-index: 3;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100% - 40px);
+  margin: 0;
+  padding: 12px 20px;
+  background: var(--card);
+  color: var(--tone);
+  border-radius: 3px;
+  font-family: var(--serif);
+  line-height: 1.6;
+}
+@media (max-width: 800px) {
+  .root :global(.wedding-photo-story) {
+    --stage-h: 58svh;
+  }
+  .root :global(.wedding-photo-scene-label) {
+    top: 16px;
+    left: 12px;
+    right: 12px;
+  }
+  .root :global(.wedding-photo-scene-label) span {
+    padding: 7px 9px;
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+  .root :global(.wedding-photo-caption) {
+    bottom: 18px;
+    padding: 10px 14px;
+    font-size: 16px;
+  }
+}
+
+/* Thin reading progress for the whole invitation. */
+.root :global(.wedding-progress) {
+  display: none;
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .root :global(.wedding-progress) {
+      display: block;
+      position: fixed;
+      z-index: 40;
+      inset: 0 0 auto;
+      height: 3px;
+      background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--tone) 35%, transparent),
+        var(--tone)
+      );
+      transform-origin: 0 50%;
+      pointer-events: none;
+      animation-name: grow;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: scroll(root block);
+    }
+
+    /*
+     * Photo chapter: the stage pins at the centre of the screen. A portrait
+     * window opens to the full stage and pushes the scattered prints away
+     * before they cross a face, then the second scene wipes across.
+     */
+    .root :global(.wedding-photo-story) {
+      --stage-h: min(78svh, 680px);
+      --pin: calc((100svh - var(--stage-h)) / 2);
+      --travel: 120svh;
+      height: calc(var(--stage-h) + var(--travel));
+      overflow-x: clip;
+      view-timeline: --chapter block;
+      view-timeline-inset: var(--pin);
+    }
+    .root :global(.wedding-photo-stage) {
+      position: sticky;
+      top: var(--pin);
+      isolation: isolate;
+    }
+    .root :global(.wedding-photo-frame),
+    .root :global(.wedding-photo-frame) > img,
+    .root :global(.wedding-photo-second),
+    .root :global(.wedding-photo-second) img,
+    .root :global(.wedding-photo-orbit),
+    .root :global(.wedding-photo-card),
+    .root :global(.wedding-photo-scene-label) span,
+    .root :global(.wedding-photo-caption),
+    .root :global(.wedding-photo-progress),
+    .root :global(.wedding-photo-progress) span {
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: --chapter;
+      animation-range: contain 0% contain 100%;
+    }
+    .root :global(.wedding-photo-frame) {
+      z-index: 1;
+      border-radius: 18px;
+      box-shadow: 0 34px 60px -30px rgb(60 20 30 / 0.5);
+      animation-name: wideFrame;
+    }
+    .root :global(.wedding-photo-frame) > img {
+      animation-name: wideImage;
+    }
+    .root :global(.wedding-photo-second) {
+      display: block;
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      box-shadow: -28px 0 48px rgb(30 10 16 / 0.28);
+      animation-name: sceneWipe;
+    }
+    .root :global(.wedding-photo-second) img {
+      animation-name: sceneDrift;
+    }
+    .root :global(.wedding-photo-orbit) {
+      display: block;
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      animation-name: orbitFade;
+    }
+    .root :global(.wedding-photo-card) {
+      position: absolute;
+      left: var(--x);
+      top: var(--y);
+      width: 20%;
+      height: 36%;
+      overflow: hidden;
+      border: 7px solid #fffdf8;
+      border-bottom-width: 26px;
+      border-radius: 3px;
+      background: #fffdf8;
+      box-shadow: 0 20px 40px -16px rgb(40 18 24 / 0.5);
+      animation-name: scatter;
+    }
+    .root :global(.wedding-photo-card) img {
+      object-fit: cover;
+    }
+    .root :global(.photo-card-0) {
+      --x: 3%;
+      --y: 6%;
+      --r: -8deg;
+      --gx: -10%;
+      --gy: -70%;
+    }
+    .root :global(.photo-card-1) {
+      --x: 7%;
+      --y: 54%;
+      --r: 5deg;
+      --gx: -10%;
+      --gy: 70%;
+    }
+    .root :global(.photo-card-2) {
+      --x: 77%;
+      --y: 8%;
+      --r: 7deg;
+      --gx: 10%;
+      --gy: -70%;
+    }
+    .root :global(.photo-card-3) {
+      --x: 73%;
+      --y: 52%;
+      --r: -6deg;
+      --gx: 10%;
+      --gy: 70%;
+    }
+    .root :global(.wedding-photo-scene-label) span:first-child {
+      animation-name: firstLabel;
+    }
+    .root :global(.wedding-photo-scene-label) span:last-child {
+      display: block;
+      animation-name: secondLabel;
+    }
+    .root :global(.wedding-photo-caption) {
+      animation-name: captionIn;
+    }
+    .root :global(.wedding-photo-progress) {
+      display: block;
+      position: absolute;
+      z-index: 3;
+      bottom: 10px;
+      left: 30%;
+      width: 40%;
+      height: 2px;
+      border-radius: 2px;
+      background: rgb(255 255 255 / 0.35);
+      overflow: hidden;
+      animation-name: overlayIn;
+    }
+    .root :global(.wedding-photo-progress) span {
+      display: block;
+      height: 100%;
+      background: #fff;
+      transform-origin: 0 50%;
+      animation-name: grow;
+    }
+
+    /* Album prints drift a little slower than the page. */
+    .root :global(.wedding-album) > button {
+      view-timeline: --print block;
+    }
+    .root :global(.wedding-album) > button img {
+      animation-name: printDrift;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: --print;
+      animation-range: cover 0% cover 100%;
+    }
+    .root
+      :global(
+        :is(
+            .album-thu-tinh,
+            .album-dem-sao,
+            .album-khoanh-khac,
+            .album-ben-nhau
+          )
+          .is-landscape
+      )
+      img {
+      animation-name: none;
+    }
+
+    /* Lời yêu: the cover photo sinks back as the hero leaves. */
+    .root :global(.design-loi-yeu .wedding-hero) {
+      view-timeline: --hero block;
+    }
+    .root :global(.design-loi-yeu [data-hero-photo]) img {
+      animation-name: heroDepth;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-timeline: --hero;
+      animation-range: exit 0% exit 100%;
+    }
+
+    @media (max-width: 800px) {
+      .root :global(.wedding-photo-story) {
+        --stage-h: 68svh;
+        --travel: 110svh;
+      }
+      .root :global(.wedding-photo-frame) {
+        border-radius: 14px;
+        animation-name: narrowFrame;
+      }
+      .root :global(.wedding-photo-frame) > img {
+        animation-name: narrowImage;
+      }
+      .root :global(.wedding-photo-card) {
+        width: 30%;
+        height: 26%;
+        border-width: 4px 4px 15px;
+      }
+      .root :global(.photo-card-0) {
+        --x: 0%;
+        --y: 2%;
+        --r: -9deg;
+        --gx: -6%;
+        --gy: -80%;
+      }
+      .root :global(.photo-card-1) {
+        --x: 2%;
+        --y: 68%;
+        --r: 6deg;
+        --gx: -6%;
+        --gy: 80%;
+      }
+      .root :global(.photo-card-2) {
+        --x: 70%;
+        --y: 4%;
+        --r: 8deg;
+        --gx: 6%;
+        --gy: -80%;
+      }
+      .root :global(.photo-card-3) {
+        --x: 68%;
+        --y: 66%;
+        --r: -7deg;
+        --gx: 6%;
+        --gy: 80%;
+      }
+    }
+  }
+}
+
+@keyframes grow {
+  from {
+    scale: 0 1;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+@keyframes scatter {
+  0%,
+  6% {
+    translate: 0 0;
+    rotate: var(--r);
+    scale: 1;
+    animation-timing-function: cubic-bezier(0.55, 0, 0.45, 1);
+  }
+  36%,
+  100% {
+    translate: var(--gx) var(--gy);
+    rotate: calc(var(--r) * 2.2);
+    scale: 0.9;
+  }
+}
+@keyframes orbitFade {
+  0%,
+  12% {
+    opacity: 1;
+  }
+  32%,
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes sceneWipe {
+  0%,
+  50% {
+    translate: 100% 0;
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  85%,
+  100% {
+    translate: 0 0;
+  }
+}
+@keyframes sceneDrift {
+  0%,
+  50% {
+    translate: -70% 0;
+    scale: 1.12;
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  85%,
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+}
+@keyframes overlayIn {
+  0%,
+  30% {
+    opacity: 0;
+  }
+  45%,
+  100% {
+    opacity: 1;
+  }
+}
+@keyframes captionIn {
+  0%,
+  30% {
+    opacity: 0;
+    translate: 0 18px;
+  }
+  45%,
+  100% {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes firstLabel {
+  0%,
+  30% {
+    opacity: 0;
+    translate: 0 8px;
+  }
+  45%,
+  60% {
+    opacity: 1;
+    translate: 0 0;
+  }
+  72%,
+  100% {
+    opacity: 0;
+    translate: 0 -8px;
+  }
+}
+@keyframes secondLabel {
+  0%,
+  60% {
+    opacity: 0;
+    translate: 0 8px;
+  }
+  72%,
+  100% {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes printDrift {
+  from {
+    translate: 0 -3.5%;
+    scale: 1.12;
+  }
+  to {
+    translate: 0 3.5%;
+    scale: 1.08;
+  }
+}
+@keyframes heroDepth {
+  from {
+    translate: 0 0;
+    scale: 1.04;
+  }
+  to {
+    translate: 0 5%;
+    scale: 1.12;
+  }
+}
+
+/* Generated by sampling a smoothstep: frame scale × image scale = gentle zoom. */
+@keyframes wideFrame {
+  0% {
+    scale: 0.44 0.88;
+  }
+  6% {
+    scale: 0.471 0.8866;
+  }
+  12% {
+    scale: 0.551 0.9038;
+  }
+  18% {
+    scale: 0.6604 0.9272;
+  }
+  24% {
+    scale: 0.7796 0.9528;
+  }
+  30% {
+    scale: 0.889 0.9762;
+  }
+  36% {
+    scale: 0.969 0.9934;
+  }
+  42% {
+    scale: 1 1;
+  }
+  100% {
+    scale: 1 1;
+  }
+}
+@keyframes wideImage {
+  0% {
+    scale: 2.6136 1.3068;
+  }
+  6% {
+    scale: 2.4286 1.2901;
+  }
+  12% {
+    scale: 2.0475 1.2483;
+  }
+  18% {
+    scale: 1.6758 1.1936;
+  }
+  24% {
+    scale: 1.3896 1.137;
+  }
+  30% {
+    scale: 1.1944 1.0877;
+  }
+  36% {
+    scale: 1.0796 1.0531;
+  }
+  42% {
+    scale: 1.04 1.04;
+  }
+  100% {
+    scale: 1 1;
+  }
+}
+@keyframes narrowFrame {
+  0% {
+    scale: 0.72 0.78;
+  }
+  6% {
+    scale: 0.7355 0.7922;
+  }
+  12% {
+    scale: 0.7755 0.8236;
+  }
+  18% {
+    scale: 0.8302 0.8666;
+  }
+  24% {
+    scale: 0.8898 0.9134;
+  }
+  30% {
+    scale: 0.9445 0.9564;
+  }
+  36% {
+    scale: 0.9845 0.9878;
+  }
+  42% {
+    scale: 1 1;
+  }
+  100% {
+    scale: 1 1;
+  }
+}
+@keyframes narrowImage {
+  0% {
+    scale: 1.5972 1.4744;
+  }
+  6% {
+    scale: 1.5553 1.444;
+  }
+  12% {
+    scale: 1.4548 1.3698;
+  }
+  18% {
+    scale: 1.3331 1.2771;
+  }
+  24% {
+    scale: 1.2175 1.186;
+  }
+  30% {
+    scale: 1.1242 1.1102;
+  }
+  36% {
+    scale: 1.0626 1.059;
+  }
+  42% {
+    scale: 1.04 1.04;
+  }
+  100% {
+    scale: 1 1;
+  }
+}

@@ -3450,123 +3450,11 @@ a.stat-card:focus-visible {
   font-size: 16px;
 }
 
-/* Scroll-linked photo depth, inspired by product storytelling. */
-.wedding-hero-image img,
-.wedding-album img {
-  translate: 0 var(--photo-drift, 0px);
-  scale: var(--photo-scale, 1);
-}
-@media (prefers-reduced-motion: reduce) {
-  .wedding-hero-image img,
-  .wedding-album img {
-    translate: none;
-    scale: none;
-  }
-}
-
-.wedding-photo-story {
-  position: relative;
-  margin: 40px 0 20px;
-}
-.wedding-photo-stage {
-  position: relative;
-  height: min(72vh, 620px);
-}
-.wedding-photo-frame {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  clip-path: inset(var(--story-inset, 0%) round var(--story-radius, 12px));
-}
-.wedding-photo-frame img {
-  object-fit: cover;
-  transform: scale(var(--story-scale, 1));
-}
-.wedding-photo-caption {
-  position: absolute;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: max-content;
-  max-width: calc(100% - 40px);
-  margin: 0;
-  padding: 12px 20px;
-  background: var(--card);
-  color: var(--tone);
-  border-radius: 3px;
-  font-family: var(--serif);
-}
-@media (prefers-reduced-motion: no-preference) {
-  .invitation-motion-active .wedding-photo-story {
-    height: 145vh;
-  }
-  .invitation-motion-active .wedding-photo-stage {
-    position: sticky;
-    top: 72px;
-  }
-}
-@media (max-width: 800px) {
-  .wedding-photo-stage {
-    height: 58svh;
-  }
-  .wedding-photo-caption {
-    bottom: 16px;
-    padding: 10px 14px;
-    font-size: 16px;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .wedding-photo-frame {
-    clip-path: none;
-    border-radius: 12px;
-  }
-  .wedding-photo-frame img {
-    transform: none;
-  }
-}
-
-/* Two photo scenes share a stage; the second wipes in with ordinary scrolling. */
-.wedding-photo-second {
-  display: none;
-}
-.wedding-photo-scene-label {
-  position: absolute;
-  top: 22px;
-  left: 24px;
-  right: 24px;
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  pointer-events: none;
-}
-.wedding-photo-scene-label span {
-  background: var(--card);
-  color: var(--tone);
-  padding: 8px 12px;
-  border-radius: 3px;
-  font-size: 12px;
-  letter-spacing: 2px;
-}
-.wedding-photo-scene-label span:first-child {
-  opacity: var(--scene-first-label, 1);
-}
-.wedding-photo-scene-label span:last-child {
-  opacity: var(--scene-second-label, 0);
-}
 .lightbox-image {
   overflow: hidden;
   touch-action: pan-y pinch-zoom;
 }
 @media (prefers-reduced-motion: no-preference) {
-  .invitation-motion-active .wedding-photo-second {
-    display: block;
-    clip-path: inset(
-      0 var(--scene-wipe, 100%) 0 0 round var(--story-radius, 12px)
-    );
-  }
-  .wedding-photo-second img {
-    transform: translateX(var(--scene-shift, 0%)) scale(var(--scene-scale, 1));
-  }
   .lightbox-image.photo-next,
   .lightbox-image.photo-previous {
     animation: none;
@@ -3624,25 +3512,6 @@ a.stat-card:focus-visible {
     opacity: 1;
   }
 }
-@media (max-width: 800px) {
-  .wedding-photo-scene-label {
-    top: 16px;
-    left: 12px;
-    right: 12px;
-  }
-  .wedding-photo-scene-label span {
-    padding: 7px 9px;
-    font-size: 10px;
-    letter-spacing: 1px;
-  }
-}
-
-@media (max-width: 800px) and (prefers-reduced-motion: no-preference) {
-  .invitation-motion-active .wedding-photo-story {
-    height: 125svh;
-  }
-}
-
 /* Give the couple a visible photo area above the invitation on small screens. */
 @media (max-width: 800px) {
   .layout-cinematic.wedding-page .wedding-hero {
@@ -3667,95 +3536,6 @@ a.stat-card:focus-visible {
   }
 }
 
-/* A photo chapter gathers from depth, fills the stage and hands off to the album. */
-.wedding-photo-card {
-  position: absolute;
-}
-.wedding-photo-orbit,
-.wedding-photo-progress {
-  display: none;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .invitation-motion-active .wedding-photo-stage {
-    isolation: isolate;
-    perspective: 1200px;
-    transform: translateY(var(--stage-lift, 0px));
-  }
-  .invitation-motion-active .wedding-photo-frame:not(.wedding-photo-second) {
-    transform: rotateY(var(--stage-turn, 0deg));
-  }
-  .invitation-motion-active .wedding-photo-orbit {
-    display: block;
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 2;
-    overflow: clip;
-    opacity: var(--orbit-opacity, 1);
-  }
-  .wedding-photo-card {
-    position: absolute;
-    width: 25%;
-    height: 58%;
-    top: 16%;
-    overflow: hidden;
-    border: 6px solid var(--card);
-    border-radius: 4px;
-    box-shadow: 0 24px 48px rgb(0 0 0 / 0.22);
-  }
-  .wedding-photo-card img {
-    object-fit: cover;
-  }
-  .photo-card-0 {
-    left: 2%;
-    transform: translateX(calc(-1 * var(--orbit-travel, 0px)))
-      rotateY(var(--orbit-turn, 18deg)) rotate(-8deg)
-      scale(var(--orbit-scale, 0.8));
-  }
-  .photo-card-1 {
-    right: 2%;
-    top: 24%;
-    transform: translateX(var(--orbit-travel, 0px))
-      rotateY(calc(-1 * var(--orbit-turn, 18deg))) rotate(8deg)
-      scale(var(--orbit-scale, 0.8));
-  }
-  .invitation-motion-active .wedding-photo-caption {
-    translate: 0 var(--caption-lift, 0px);
-    z-index: 3;
-  }
-  .invitation-motion-active .wedding-photo-progress {
-    display: block;
-    position: absolute;
-    z-index: 3;
-    bottom: 8px;
-    left: 25%;
-    width: 50%;
-    height: 2px;
-    background: rgb(255 255 255 / 0.3);
-    overflow: hidden;
-  }
-  .wedding-photo-progress span {
-    display: block;
-    height: 100%;
-    background: white;
-    transform-origin: left;
-    transform: scaleX(var(--chapter-progress, 0));
-  }
-  .invitation-motion-active .wedding-photo-story {
-    height: 180vh;
-  }
-}
-@media (max-width: 800px) and (prefers-reduced-motion: no-preference) {
-  .invitation-motion-active .wedding-photo-story {
-    height: 150svh;
-  }
-  .wedding-photo-card {
-    width: 28%;
-    height: 44%;
-    border-width: 3px;
-  }
-}
-
 /* Vietnamese accents need room above names, including during title reveals. */
 .wedding-hero-copy h1,
 .invitation-seal h2 {
@@ -3773,9 +3553,6 @@ a.stat-card:focus-visible {
 .invitation-seal .eyebrow {
   line-height: 1.7;
   letter-spacing: 0.14em;
-}
-.wedding-photo-caption {
-  line-height: 1.6;
 }
 
 /* Wedding storytelling: a portrait, a vow and a hand-drawn floral line. */
@@ -3803,8 +3580,6 @@ a.stat-card:focus-visible {
 }
 .wedding-story-photo img {
   object-fit: cover;
-  translate: 0 var(--photo-drift, 0px);
-  scale: var(--photo-scale, 1);
 }
 .wedding-story-photo span {
   position: absolute;
@@ -4933,26 +4708,6 @@ body:has(.admin-drawer[open]) {
   .home-motion-active .hero-invitation {
     translate: 0 calc(var(--hero-travel, 0px) * -0.45);
   }
-  .photo-card-2 {
-    left: 23%;
-    top: 7%;
-    width: 22%;
-    height: 48%;
-    z-index: -1;
-    transform: translateY(calc(-1 * var(--orbit-travel, 0px)))
-      rotateX(var(--orbit-turn, 18deg)) rotate(-15deg)
-      scale(var(--orbit-scale, 0.8));
-  }
-  .photo-card-3 {
-    right: 23%;
-    top: 38%;
-    width: 22%;
-    height: 48%;
-    z-index: -1;
-    transform: translateY(var(--orbit-travel, 0px))
-      rotateX(calc(-1 * var(--orbit-turn, 18deg))) rotate(15deg)
-      scale(var(--orbit-scale, 0.8));
-  }
 }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .home-motion-active .hero-visual {
@@ -4992,17 +4747,6 @@ body:has(.admin-drawer[open]) {
     opacity: 1;
   }
 }
-@media (max-width: 800px) {
-  .photo-card-2 {
-    left: 20%;
-    top: 8%;
-  }
-  .photo-card-3 {
-    right: 20%;
-    top: 45%;
-  }
-}
-
 /* A celebratory reveal lives in the top layer; QR cards never expand the page. */
 .gift-box-trigger {
   border: 0;

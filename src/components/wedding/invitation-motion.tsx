@@ -1,8 +1,57 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
+import styles from "./invitation-motion.module.css";
 
-/** Progressive enhancement: server-rendered content always remains readable. */
+const ease = "cubic-bezier(.22,1,.36,1)";
+/** One-shot entrances; a container that holds other targets stays put. */
+const targetSelector = [
+  "[data-hero-copy] > *",
+  "[data-hero-photo]",
+  "[data-story-image]",
+  ".story-words",
+  ".album-title-line",
+  ".wedding-section > :not(dialog, .wedding-photo-story)",
+  ".wedding-thanks > :not(dialog)",
+  ".family-grid > *",
+  ".event-card",
+  ".wedding-wishes > article",
+  ".wedding-album > button",
+].join(", ");
+const photoSelector =
+  "[data-hero-photo], [data-story-image], .wedding-album > button";
+/** Individual transform properties compose with each design's own transform. */
+const entrances: Record<string, Keyframe[]> = {
+  "vuon-thuong": [
+    { clipPath: "circle(0% at 50% 65%)", opacity: 0.3 },
+    { clipPath: "circle(100% at 50% 65%)", opacity: 1 },
+  ],
+  "song-hy": [{ rotate: "y -35deg", opacity: 0, offset: 0 }],
+  "ngay-chung-doi": [
+    { clipPath: "inset(0 100% 0 0)" },
+    { clipPath: "inset(0 0% 0 0)" },
+  ],
+  "dem-sao": [{ scale: "0.7", filter: "blur(12px)", opacity: 0, offset: 0 }],
+  "nang-thu": [
+    { translate: "0 90px", rotate: "-18deg", opacity: 0, offset: 0 },
+  ],
+  "loi-hen": [
+    { clipPath: "inset(50% 0 50% 0)" },
+    { clipPath: "inset(0% 0 0% 0)" },
+  ],
+  "thu-tinh": [{ rotate: "x -45deg", opacity: 0, offset: 0 }],
+  "khoanh-khac": [{ scale: "1.18", opacity: 0.2, offset: 0 }],
+  "ben-nhau": [
+    { clipPath: "inset(0 45% 0 45%)" },
+    { clipPath: "inset(0 0% 0 0%)" },
+  ],
+};
+
+/**
+ * Progressive enhancement: server-rendered content always remains readable.
+ * Scroll-linked motion lives in CSS scroll timelines, so nothing here runs per
+ * scroll frame; JS only plays entrances once and keeps album prints tactile.
+ */
 export function InvitationMotion({ children }: { children: ReactNode }) {
   const root = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -62,269 +111,161 @@ export function InvitationMotion({ children }: { children: ReactNode }) {
     container.addEventListener("pointermove", tilt);
     container.addEventListener("pointerleave", resetTilt);
     finePointer.addEventListener("change", resetTilt);
-    const animations = new Set<Animation>();
-    const design = container
-      .querySelector(".wedding-page")
-      ?.className.match(/design-([\w-]+)/)?.[1];
-    const entrances: Record<string, Keyframe[]> = {
-      "vuon-thuong": [
-        { clipPath: "circle(0% at 50% 65%)", opacity: 0.3 },
-        { clipPath: "circle(100% at 50% 65%)", opacity: 1 },
-      ],
-      "song-hy": [
-        { transform: "perspective(1000px) rotateY(-35deg)", opacity: 0 },
-        { transform: "perspective(1000px) rotateY(0deg)", opacity: 1 },
-      ],
-      "ngay-chung-doi": [
-        { clipPath: "inset(0 100% 0 0)" },
-        { clipPath: "inset(0 0% 0 0)" },
-      ],
-      "dem-sao": [
-        { transform: "scale(.7)", filter: "blur(12px)", opacity: 0 },
-        { transform: "scale(1)", filter: "blur(0px)", opacity: 1 },
-      ],
-      "nang-thu": [
-        { transform: "translateY(90px) rotate(-18deg)", opacity: 0 },
-        { transform: "translateY(0px) rotate(0deg)", opacity: 1 },
-      ],
-      "loi-hen": [
-        { clipPath: "inset(50% 0 50% 0)" },
-        { clipPath: "inset(0% 0 0% 0)" },
-      ],
-      "thu-tinh": [
-        { transform: "perspective(1200px) rotateX(-45deg)", opacity: 0 },
-        { transform: "perspective(1200px) rotateX(0deg)", opacity: 1 },
-      ],
-      "khoanh-khac": [
-        { transform: "scale(1.18)", opacity: 0.2 },
-        { transform: "scale(1)", opacity: 1 },
-      ],
-      "ben-nhau": [
-        { clipPath: "inset(0 45% 0 45%)" },
-        { clipPath: "inset(0 0% 0 0%)" },
-      ],
-    };
-    const revealPhoto = (element: HTMLElement, index = 0) => {
-      if (preference.matches || !element.animate) return;
-      const animation = element.animate(
-        entrances[design || ""] || [
-          { opacity: 0, transform: "translateY(40px) rotate(-5deg)" },
-          { opacity: 1, transform: "translateY(0) rotate(0deg)" },
-        ],
-        {
-          duration: 1100,
-          delay: index * 80,
-          easing: "cubic-bezier(.22,1,.36,1)",
-        },
-      );
-      animations.add(animation);
-      animation.onfinish = () => animations.delete(animation);
-    };
-    const photos = Array.from(
-      container.querySelectorAll<HTMLElement>(
-        "[data-hero-photo], .wedding-story-photo, .wedding-album > button",
-      ),
-    );
-    const story = container.querySelector<HTMLElement>(".wedding-photo-story");
-    let opened = !container.querySelector(".invitation-opening");
-    let frame = 0;
-    const paint = () => {
-      frame = 0;
-      if (!opened || preference.matches) return;
-      const height = window.innerHeight;
-      if (story) {
-        const bounds = story.getBoundingClientRect();
-        const travel = Math.max(
-          1,
-          bounds.height - (story.firstElementChild as HTMLElement).offsetHeight,
-        );
-        const progress = Math.max(0, Math.min(1, -bounds.top / travel));
-        const opening = Math.min(1, progress / 0.45);
-        // Smoothstep gives each chapter a gentle arrival and departure.
-        const ease = (value: number) => value * value * (3 - 2 * value);
-        const gathering = ease(Math.min(1, progress / 0.38));
-        const departing = ease(
-          Math.max(0, Math.min(1, (progress - 0.72) / 0.28)),
-        );
-        story.style.setProperty("--orbit-opacity", `${1 - gathering}`);
-        story.style.setProperty("--orbit-travel", `${gathering * 140}px`);
-        story.style.setProperty("--orbit-turn", `${(1 - gathering) * 18}deg`);
-        story.style.setProperty("--orbit-scale", `${0.8 + gathering * 0.2}`);
-        story.style.setProperty("--stage-turn", `${(1 - gathering) * 7}deg`);
-        story.style.setProperty("--stage-lift", `${departing * -32}px`);
-        story.style.setProperty("--caption-lift", `${(1 - gathering) * 24}px`);
-        story.style.setProperty("--chapter-progress", `${progress}`);
-        const change = Math.max(0, Math.min(1, (progress - 0.4) / 0.5));
-        story.style.setProperty("--scene-wipe", `${100 * (1 - change)}%`);
-        story.style.setProperty("--scene-shift", `${8 * (1 - change)}%`);
-        story.style.setProperty("--scene-scale", `${1.1 - change * 0.1}`);
-        story.style.setProperty("--scene-first-label", `${1 - change}`);
-        story.style.setProperty("--scene-second-label", `${change}`);
-        story.style.setProperty("--story-inset", `${12 * (1 - opening)}%`);
-        story.style.setProperty("--story-scale", `${1.16 - progress * 0.16}`);
-        story.style.setProperty("--story-radius", `${120 * (1 - opening)}px`);
-      }
-      photos.forEach((photo) => {
-        const bounds = photo.getBoundingClientRect();
-        if (bounds.bottom < 0 || bounds.top > height) return;
-        const progress = Math.max(
-          0,
-          Math.min(1, (height - bounds.top) / (height + bounds.height)),
-        );
-        photo.style.setProperty("--photo-drift", `${(progress - 0.5) * 28}px`);
-        photo.style.setProperty("--photo-scale", `${1.09 - progress * 0.05}`);
-      });
-    };
-    const schedule = () => {
-      if (!frame && opened && !preference.matches)
-        frame = window.requestAnimationFrame(paint);
-    };
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
 
-    const reveal = (element: HTMLElement, index = 0) => {
-      if (preference.matches || !element.animate) return;
-      const animation = element.animate(
-        [
+    const design =
+      container
+        .querySelector(".wedding-page")
+        ?.className.match(/design-([\w-]+)/)?.[1] || "";
+    const candidates = Array.from(
+      container.querySelectorAll<HTMLElement>(targetSelector),
+    ).filter(
+      (element) =>
+        !element.closest('[data-motion="own"], .wedding-photo-story, dialog'),
+    );
+    const targets = candidates.filter(
+      (element) =>
+        !candidates.some(
+          (other) => other !== element && element.contains(other),
+        ),
+    );
+    const keyframes = (element: HTMLElement, index: number): Keyframe[] => {
+      if (element.matches("h2"))
+        return [{ opacity: 0, translate: "0 .45em", scale: "1.04", offset: 0 }];
+      if (element.matches(".event-card"))
+        return [
           {
             opacity: 0,
-            transform: element.matches(".event-card")
-              ? `translateY(32px) rotate(${index % 2 ? -2 : 2}deg)`
-              : `translateY(${index ? 18 : 28}px)`,
-            ...(element.matches(".wedding-album > button")
-              ? { clipPath: "inset(18% 0 18% 0)" }
-              : {}),
+            translate: "0 40px",
+            rotate: `${index % 2 ? -2 : 2}deg`,
+            offset: 0,
           },
-          {
-            opacity: 1,
-            transform: "translateY(0)",
-            ...(element.matches(".wedding-album > button")
-              ? { clipPath: "inset(0% 0 0% 0)" }
-              : {}),
-          },
-        ],
-        {
-          duration: 800,
-          delay: index * 90,
-          easing: "cubic-bezier(.22,1,.36,1)",
-          fill: "backwards",
-        },
-      );
-      animations.add(animation);
-      animation.onfinish = () => animations.delete(animation);
+        ];
+      if (element.matches(photoSelector))
+        return (
+          entrances[design] || [
+            { opacity: 0, translate: "0 48px", scale: "0.94", offset: 0 },
+          ]
+        );
+      return [{ opacity: 0, translate: "0 28px", offset: 0 }];
+    };
+    const animations = new Set<Animation>();
+    const markSection = (element: HTMLElement) =>
+      element
+        .closest(".wedding-section, .wedding-thanks")
+        ?.classList.add("is-revealed");
+    let delay = 0;
+    const reveal = (elements: HTMLElement[]) => {
+      const base = delay;
+      delay = 0;
+      elements
+        .sort((a, b) =>
+          a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING
+            ? -1
+            : 1,
+        )
+        .forEach((element, i) => {
+          observer.unobserve(element);
+          element.dataset.reveal = "in";
+          markSection(element);
+          if (preference.matches || !element.animate) return;
+          const animation = element.animate(keyframes(element, i), {
+            duration: element.matches("h2, " + photoSelector) ? 1100 : 900,
+            delay: base + Math.min(i, 6) * 90,
+            easing: ease,
+            fill: "backwards",
+          });
+          animations.add(animation);
+          const settle = () => animations.delete(animation);
+          animation.onfinish = settle;
+          animation.oncancel = settle;
+        });
     };
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach(({ target, isIntersecting }) => {
-          if (!isIntersecting) return;
-          const element = target as HTMLElement;
-          if (element.matches("[data-hero-copy]")) {
-            Array.from(element.children).forEach((child, i) =>
-              reveal(child as HTMLElement, i),
-            );
-          } else if (element.matches("[data-story-image], [data-hero-photo]")) {
-            revealPhoto(element);
-          } else if (
-            element.matches(".wedding-section > h2, .wedding-thanks > h2")
-          ) {
-            if (!preference.matches) {
-              const animation = element.animate(
-                [
-                  {
-                    clipPath: "inset(-15% -5% 100% -5%)",
-                    transform: "translateY(28px) scale(1.04)",
-                  },
-                  {
-                    clipPath: "inset(-15% -5% -15% -5%)",
-                    transform: "translateY(0) scale(1)",
-                  },
-                ],
-                { duration: 1000, easing: "cubic-bezier(.22,1,.36,1)" },
-              );
-              animations.add(animation);
-              animation.onfinish = () => animations.delete(animation);
-            }
-          } else if (element.matches(".wedding-story-photo")) {
-            if (!preference.matches) {
-              const animation = element.animate(
-                [
-                  {
-                    clipPath: "inset(12% 8% 12% 8% round 45%)",
-                    transform: "translateY(36px) scale(.94)",
-                  },
-                  {
-                    clipPath: "inset(0% 0% 0% 0% round 0%)",
-                    transform: "translateY(0) scale(1)",
-                  },
-                ],
-                { duration: 1300, easing: "cubic-bezier(.22,1,.36,1)" },
-              );
-              animations.add(animation);
-              animation.onfinish = () => animations.delete(animation);
-            }
-          } else if (element.matches(".wedding-album > button")) {
-            const index = Array.from(element.parentElement!.children).indexOf(
-              element,
-            );
-            revealPhoto(element, index % 3);
-          } else {
-            element.classList.add("is-revealed");
-            reveal(element);
-            element
-              .querySelectorAll<HTMLElement>(
-                ".family-grid > div, .event-card, .wedding-wishes > article",
-              )
-              .forEach((child, i) => reveal(child, i + 1));
-          }
-          observer.unobserve(element);
-        });
+        const visible = entries
+          .filter((entry) => entry.isIntersecting)
+          .map((entry) => entry.target as HTMLElement);
+        if (visible.length) reveal(visible);
       },
-      { threshold: 0.08 },
+      { rootMargin: "0px 0px -10% 0px" },
     );
-    const observe = () => {
-      opened = true;
+    // Pause falling petals once the hero is out of view.
+    const petals = new IntersectionObserver((entries) =>
+      entries.forEach(({ target, isIntersecting }) =>
+        target.toggleAttribute("data-paused", !isIntersecting),
+      ),
+    );
+    container
+      .querySelectorAll(".wedding-petals")
+      .forEach((element) => petals.observe(element));
+
+    let started = false;
+    const start = (wait: number) => {
+      if (started) return;
+      started = true;
+      delay = wait;
       container.classList.toggle(
         "invitation-motion-active",
         !preference.matches,
       );
-      schedule();
-      container
-        .querySelectorAll(
-          "[data-story-image], .story-words, .wedding-story-photo, .wedding-story-copy, [data-hero-copy], [data-hero-photo], .wedding-section, .wedding-thanks, .wedding-album > button, .wedding-section > h2, .wedding-thanks > h2",
-        )
+      targets
+        .filter((element) => element.dataset.reveal === "wait")
         .forEach((element) => observer.observe(element));
     };
-    container.addEventListener("invitation-opened", observe);
-    if (!container.querySelector(".invitation-opening")) observe();
-    const stop = () => {
+    // Behind the opening doors everything waits; the hero reveals as they part.
+    const onOpeningStart = (event: Event) =>
+      start(
+        (event as CustomEvent<{ instant?: boolean }>).detail?.instant ? 0 : 650,
+      );
+    const onOpened = () => start(0);
+    const opening = container.querySelector<HTMLDialogElement>(
+      ".invitation-opening",
+    );
+    if (opening?.open) {
+      targets.forEach((element) => (element.dataset.reveal = "wait"));
+      container.addEventListener("invitation-opening-start", onOpeningStart);
+      container.addEventListener("invitation-opened", onOpened);
+    } else {
+      // Already on screen: never hide what the guest is reading.
+      const fold = window.innerHeight * 0.9;
+      targets.forEach((element) => {
+        const bounds = element.getBoundingClientRect();
+        const seen = bounds.top < fold && bounds.bottom > 0;
+        element.dataset.reveal = seen ? "in" : "wait";
+        if (seen) markSection(element);
+      });
+      start(0);
+    }
+
+    const sync = () => {
       container.classList.toggle(
         "invitation-motion-active",
-        opened && !preference.matches,
+        started && !preference.matches,
       );
       if (preference.matches) {
         resetTilt();
         animations.forEach((animation) => animation.cancel());
-        story?.removeAttribute("style");
-        photos.forEach((photo) => {
-          photo.style.removeProperty("--photo-drift");
-          photo.style.removeProperty("--photo-scale");
-        });
-      } else schedule();
+      }
     };
-    preference.addEventListener("change", stop);
+    preference.addEventListener("change", sync);
     return () => {
       resetTilt();
       container.removeEventListener("pointermove", tilt);
       container.removeEventListener("pointerleave", resetTilt);
       finePointer.removeEventListener("change", resetTilt);
-      container.removeEventListener("invitation-opened", observe);
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      window.cancelAnimationFrame(frame);
+      container.removeEventListener("invitation-opening-start", onOpeningStart);
+      container.removeEventListener("invitation-opened", onOpened);
+      preference.removeEventListener("change", sync);
       observer.disconnect();
+      petals.disconnect();
       animations.forEach((animation) => animation.cancel());
-      preference.removeEventListener("change", stop);
+      targets.forEach((element) => delete element.dataset.reveal);
+      container.classList.remove("invitation-motion-active");
     };
   }, []);
-  return <div ref={root}>{children}</div>;
+  return (
+    <div ref={root} className={styles.root}>
+      {children}
+    </div>
+  );
 }

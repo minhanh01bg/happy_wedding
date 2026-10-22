@@ -143,6 +143,7 @@ export function InvitationView({
           guestName={guestName}
           hasMusic={!!musicUrl}
         />
+        <div className="wedding-progress" aria-hidden="true" />
         {invitation.isDemo && (
           <div className="demo-banner">
             THIỆP MINH HỌA · Tên, lịch tiệc và địa điểm là dữ liệu mẫu.

@@ -41,6 +41,13 @@ export function InvitationOpening({
         new Event("invitation-music-request", { bubbles: true }),
       );
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // The page behind the doors starts its entrance while they part.
+    element.dispatchEvent(
+      new CustomEvent("invitation-opening-start", {
+        bubbles: true,
+        detail: { instant: skipMotion || reduce.matches },
+      }),
+    );
     const animations: Animation[] = [];
     const finishImmediately = () =>
       animations.forEach((animation) => animation.finish());

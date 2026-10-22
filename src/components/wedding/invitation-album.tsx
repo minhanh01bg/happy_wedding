@@ -52,14 +52,15 @@ export function InvitationAlbum({
                 fill
                 sizes="(max-width:800px) 90vw, 1000px"
               />
-            </div>
-            <div className="wedding-photo-frame wedding-photo-second">
-              <Image
-                src={weddingImageSource(photos[1])}
-                alt=""
-                fill
-                sizes="(max-width:800px) 90vw, 1000px"
-              />
+              {/* Nested so the frame clips the second scene as it wipes in. */}
+              <div className="wedding-photo-second">
+                <Image
+                  src={weddingImageSource(photos[1])}
+                  alt=""
+                  fill
+                  sizes="(max-width:800px) 90vw, 1000px"
+                />
+              </div>
             </div>
             <div className="wedding-photo-scene-label">
               <span>01 / KỶ NIỆM</span>

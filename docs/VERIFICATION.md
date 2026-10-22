@@ -303,3 +303,26 @@ Quyết định tại [ADR 0005](adr/0005-security-hardening-2026-10.md). Mỗi 
 - E2E `customer buys…` và `admin sidebar…` 2/2 qua với hash định dạng mới (lần đầu lỗi do cấu hình E2E vẫn dùng 100k với tiền tố 600000; đã sửa).
 - **CSP.** `tests/server/security/csp.test.ts`: `script-src` production chỉ còn `'self' 'unsafe-inline'`, có nonce thì bỏ `unsafe-inline`; `connect-src` chỉ là `'self'`, thêm origin Sentry khi có DSN. Enforce/nonce chưa bật (xem ADR 0005 mục 10).
 - **Dependency.** `pnpm audit`: trước 60 cảnh báo (32 high), sau 2 high đã chấp nhận (ADR 0005 mục 11); `pnpm audit --prod` chỉ còn `deepmerge-ts` của Prisma CLI. `pnpm check` (154 test) và `pnpm build` qua với lockfile mới. `pnpm test:e2e` (cache `.next-e2e` đã xóa vì cache cũ làm dev server treo ở “Compiling /”): 27/29 qua; 2 test admin lỗi `page.goto: Page crashed` (renderer Chromium crash khi máy còn ~2 GB RAM), chạy lại riêng `-g "customer buys|admin sidebar"` qua 2/2.
+
+## Chuyển động theo cuộn không dùng JavaScript — 22/10/2026
+
+Quyết định tại [ADR 0006](adr/0006-css-scroll-driven-motion.md). Phạm vi: thiệp mẫu `/w/thiep-mau` (Lời yêu) và cơ chế reveal dùng chung cho mọi mẫu.
+
+- **Đo độ giật.** Dùng `scripts/perf/scroll-trace.ts` của worker perf (Chromium, CPU chậm 4×, cuộn 100 lần × 100px/50ms tới đáy), cùng dev server cho bản cũ và bản mới:
+
+  | Viewport         | Chỉ số                  | Trước        | Sau        |
+  | ---------------- | ----------------------- | ------------ | ---------- |
+  | Mobile 390×844   | Frame >33 ms            | 66,8%        | 40,9%      |
+  | Mobile 390×844   | Long task               | 23 / 1420 ms | 5 / 312 ms |
+  | Mobile 390×844   | Recalc Style            | 1089 ms      | 540 ms     |
+  | Mobile 390×844   | Paint                   | 823 ms       | 253 ms     |
+  | Mobile 390×844   | Ép style/layout đồng bộ | 171 / 603 ms | 3 / 1,2 ms |
+  | Desktop 1440×900 | p50 frame               | 33,4 ms      | 16,7 ms    |
+  | Desktop 1440×900 | Frame >33 ms            | 66,3%        | 38,2%      |
+  | Desktop 1440×900 | Ép style/layout đồng bộ | 201 / 701 ms | 2 / 5,9 ms |
+
+  Ba lần ép layout còn lại đến từ `next/image` khi ảnh tải xong, không từ mã thiệp. Phần còn tốn là React dev dispatch sự kiện và hit-test khi lăn chuột; số đo là dev server trên máy chung đang tải cao (load 4,8–8,5 trên 6 CPU, RAM trống dưới 1 GB), không phải production hay điện thoại thật.
+
+- **Hành vi chương ảnh.** Script Playwright đọc style tính toán và chụp ảnh ở tiến trình 0 → 1 tại 390×844 và 1440×900: khung chân dung scale 0,72 → 1 (mobile) và 0,44 → 1 (desktop), bốn ảnh in tản ra rồi mờ, cảnh hai quét ngang trong khoảng 50–85%, nhãn/caption đổi theo cảnh; mọi animation gắn `ViewTimeline`/`ScrollTimeline`. Không phần tử nào kẹt `data-reveal="wait"`, `scrollWidth` bằng viewport, không lỗi console.
+- **E2E viết lại.** Hai bài chương ảnh dùng helper `scrollChapter` cuộn tới một tỉ lệ của quãng ghim: frame scale <0,8 ở 2% và >0,99 ở 50%; stage `sticky`; cảnh hai translate <5% ở 95% và >95% ở 2%; orbit hiện ở 2%, mờ hẳn ở 50%; hover album đặt `--tilt-x`; reduced motion đổi stage về `relative`, bỏ scale/transform và ẩn orbit, cảnh hai.
+- **Cổng e2e.** `pnpm test:e2e` (29 bài, chromium, dev server 3201) trên máy chung đang thiếu RAM: lần đầu 17 qua, 12 lỗi đều do môi trường (renderer bị kill "Target crashed"/"Page crashed", server 3201 chết sau đó nên `ERR_CONNECTION_REFUSED`); lần thứ hai server treo ngay ở request đăng nhập admin. Chạy lại `pnpm test:e2e --last-failed` khi máy bớt tải: 12/12 qua (4,2 phút), gồm hai bài chương ảnh và bài hiệu ứng ảnh trên mobile. Tổng cộng 29/29 qua trên cùng mã.

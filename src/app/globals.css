@@ -6990,7 +6990,9 @@ body:has(.admin-drawer[open]) {
     grid-template-columns: 1fr;
     gap: 35px;
   }
+  /* Auto margins stop a grid item stretching; fill prints have no width. */
   .story-romance-prints {
+    width: 100%;
     max-width: 450px;
     margin: auto;
   }

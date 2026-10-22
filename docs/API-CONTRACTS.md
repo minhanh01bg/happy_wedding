@@ -70,7 +70,7 @@ templateSchema/planSchema tại `src/lib/wedding.ts` là nguồn kiểu chính t
 
 ## Upload và export
 
-POST `/api/wedding/upload?invitationId=<id>` dùng **raw bytes**, không phải multipart. Content-Type chính xác `image/jpeg`, `image/png` hoặc `image/webp`. Yêu cầu customer session, ownership, origin/rate guards. Stream ≤5×1024×1024 bytes; Sharp decode ≤40.000.000 pixels, rotate, resize rộng ≤1600, WebP quality 85. Trả `{ok:true,data:{url:"/uploads/weddings/<uuid>.webp"}}`. Upload chỉ tạo file, editor phải lưu URL vào invitation; không có cleanup orphan tự động.
+POST `/api/wedding/upload?invitationId=<id>` dùng **raw bytes**, không phải multipart. Content-Type chính xác `image/jpeg`, `image/png` hoặc `image/webp`. Yêu cầu customer session, ownership, origin/rate guards. Stream ≤5×1024×1024 bytes; Sharp decode ≤40.000.000 pixels, rotate, resize rộng ≤1600, WebP quality 85. Trả `{ok:true,data:{url:"/uploads/weddings/<uuid>.webp"}}`. Mỗi upload ghi một `WeddingUpload` (invitation, account, filename, bytes) trong transaction kiểm tra ownership và quota: tối đa 120 ảnh/thiệp (409) và 150 ảnh/account trong 24 giờ trượt (429). Lỗi ghi file xóa bản ghi vừa tạo; lỗi không mong đợi trả 500 kèm correlationId. Upload chỉ tạo file, editor phải lưu URL vào invitation; không có cleanup orphan tự động.
 
 GET `/api/wedding/export/<invitationId>` cần phiên khách và ownership. Trả text/csv UTF-8 BOM, attachment `khach-moi.csv`, tối đa 10.000 phản hồi mới nhất. Cột tên/tham dự/số người/tiệc/lời chúc/ngày gửi; tiệc đổi index sang số bắt đầu 1. Quote/escape và chặn formula prefix `= + @ -`. Private/no-store. Đây là endpoint đọc, không dùng mutation origin guard.
 

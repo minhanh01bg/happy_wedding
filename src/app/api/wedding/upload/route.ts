@@ -5,7 +5,12 @@ import sharp from "sharp";
 
 import { logger } from "@/lib/logger";
 import { customer, mutationLimit, safeOrigin } from "@/server/wedding/guards";
-import { ownedInvitation, WeddingError } from "@/server/wedding/service";
+import { prisma } from "@/server/db/prisma";
+import {
+  ownedInvitation,
+  reserveUpload,
+  WeddingError,
+} from "@/server/wedding/service";
 
 export async function POST(request: Request) {
   try {
@@ -51,7 +56,18 @@ export async function POST(request: Request) {
     const dir = path.join(process.cwd(), "public/uploads/weddings");
     await mkdir(dir, { recursive: true });
     const filename = `${randomUUID()}.webp`;
-    await writeFile(path.join(dir, filename), output);
+    const upload = await reserveUpload(
+      session.accountId,
+      id,
+      filename,
+      output.byteLength,
+    );
+    try {
+      await writeFile(path.join(dir, filename), output);
+    } catch (error) {
+      await prisma.weddingUpload.delete({ where: { id: upload.id } });
+      throw error;
+    }
     return Response.json({
       ok: true,
       data: { url: `/uploads/weddings/${filename}` },
@@ -62,9 +78,13 @@ export async function POST(request: Request) {
         { ok: false, message: error.message },
         { status: error.status },
       );
-    logger.error("wedding_upload_error", { correlationId: randomUUID() });
+    const correlationId = randomUUID();
+    logger.error("wedding_upload_error", {
+      correlationId,
+      errorClass: error instanceof Error ? error.name : "Unknown",
+    });
     return Response.json(
-      { ok: false, message: "Chưa tải được ảnh" },
+      { ok: false, message: "Chưa tải được ảnh", correlationId },
       { status: 500 },
     );
   }

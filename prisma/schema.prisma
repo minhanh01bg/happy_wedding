@@ -154,6 +154,7 @@ model Invitation {
   orders       ServiceOrder[]
   responses    GuestResponse[]
   guests       WeddingGuest[]
+  uploads      WeddingUpload[]
 
   @@index([ownerId, createdAt])
   @@index([status, weddingDate])
@@ -208,6 +209,20 @@ model WeddingGuest {
   responses    GuestResponse[]
 
   @@index([invitationId, createdAt])
+}
+
+/// Every stored upload, so disk use can be bounded per invitation and account.
+model WeddingUpload {
+  id           String     @id @default(cuid())
+  invitationId String
+  invitation   Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  accountId    String
+  filename     String     @unique
+  bytes        Int
+  createdAt    DateTime   @default(now())
+
+  @@index([invitationId])
+  @@index([accountId, createdAt])
 }
 
 model GuestResponse {

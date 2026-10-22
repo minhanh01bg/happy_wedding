@@ -21,15 +21,19 @@ import {
   addGuest,
   confirmPayment,
   MAX_GUESTS_PER_INVITATION,
+  MAX_UPLOADS_PER_ACCOUNT_DAY,
+  MAX_UPLOADS_PER_INVITATION,
   createServiceOrder,
   entitlement,
   publicInvitation,
   publishInvitation,
+  reserveUpload,
   saveInvitation,
   submitResponse,
 } from "@/server/wedding/service";
 
 async function clean() {
+  await prisma.weddingUpload.deleteMany();
   await prisma.guestResponse.deleteMany();
   await prisma.weddingGuest.deleteMany();
   await prisma.weddingPayment.deleteMany();
@@ -676,5 +680,57 @@ describe("Personal guest invitations", () => {
     expect(
       await prisma.weddingGuest.count({ where: { invitationId: i.id } }),
     ).toBe(MAX_GUESTS_PER_INVITATION);
+  });
+});
+
+describe("Upload quotas", () => {
+  it("rejects uploads to another account's invitation", async () => {
+    const i = await draft();
+    await expect(
+      reserveUpload(otherId, i.id, `${randomUUID()}.webp`, 10),
+    ).rejects.toMatchObject({ status: 404 });
+  });
+  it("caps stored uploads per invitation", async () => {
+    const i = await draft();
+    await prisma.weddingUpload.createMany({
+      data: Array.from({ length: MAX_UPLOADS_PER_INVITATION }, () => ({
+        invitationId: i.id,
+        accountId,
+        filename: `${randomUUID()}.webp`,
+        bytes: 10,
+        createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      })),
+    });
+    await expect(
+      reserveUpload(accountId, i.id, `${randomUUID()}.webp`, 10),
+    ).rejects.toMatchObject({ status: 409 });
+  });
+  it("caps uploads per account in a rolling day", async () => {
+    const first = await draft();
+    const second = await saveInvitation(accountId, {
+      ...input(),
+      slug: "second-wedding",
+    });
+    await prisma.weddingUpload.createMany({
+      data: Array.from({ length: MAX_UPLOADS_PER_ACCOUNT_DAY }, (_, n) => ({
+        invitationId: n % 2 ? first.id : second.id,
+        accountId,
+        filename: `${randomUUID()}.webp`,
+        bytes: 10,
+      })),
+    });
+    const third = await saveInvitation(accountId, {
+      ...input(),
+      slug: "third-wedding",
+    });
+    await expect(
+      reserveUpload(accountId, third.id, `${randomUUID()}.webp`, 10),
+    ).rejects.toMatchObject({ status: 429 });
+    await prisma.weddingUpload.updateMany({
+      data: { createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000) },
+    });
+    await expect(
+      reserveUpload(accountId, third.id, `${randomUUID()}.webp`, 10),
+    ).resolves.toMatchObject({ invitationId: third.id });
   });
 });

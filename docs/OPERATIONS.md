@@ -56,7 +56,7 @@ Production env của base kiểm tra chặt. Build có placeholder để prerend
 
 `python3 scripts/backup.py <thư-mục-backup>` tạo SQLite snapshot bằng backup API (an toàn với WAL), sau đó lưu ảnh upload trong tar. Mặc định đọc DATABASE_URL từ `.env`; có thể đưa DATABASE_URL qua environment. Chạy cùng quyền tài khoản vận hành, backup chứa dữ liệu cá nhân nên không phục vụ qua web. Để có snapshot DB/ảnh đồng nhất hoàn toàn, tạm dừng ghi lúc backup.
 
-Ảnh upload được chuyển WebP, giới hạn 5 MB input/40 megapixel, bỏ metadata và tên tệp gốc. URL ảnh là công khai; không tải tài liệu riêng. Không có cơ chế xóa dữ liệu tự động hoặc cleanup file mồ côi trong bản này; cần vận hành retention và khả năng xóa trước khi tăng quy mô.
+Ảnh upload được chuyển WebP, giới hạn 5 MB input/40 megapixel, bỏ metadata và tên tệp gốc. URL ảnh là công khai; không tải tài liệu riêng. Bảng `WeddingUpload` ghi mọi file đã lưu và giới hạn 120 ảnh/thiệp, 150 ảnh/account/24 giờ, nên dung lượng đĩa mỗi tài khoản có trần; file trước migration `20261022000000_wedding_upload_quota` không có bản ghi. Không có cơ chế xóa dữ liệu tự động hoặc cleanup file mồ côi trong bản này; cần vận hành retention và khả năng xóa trước khi tăng quy mô.
 
 Phục hồi: dừng app, khôi phục DB vào đúng DATABASE_URL và ảnh vào `public/uploads/weddings`, kiểm tra quyền đọc/ghi, chạy app và kiểm tra một thiệp đã xuất bản.
 

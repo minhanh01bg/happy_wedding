@@ -47,6 +47,44 @@ export async function addGuest(
     });
   });
 }
+export const MAX_UPLOADS_PER_INVITATION = 120;
+export const MAX_UPLOADS_PER_ACCOUNT_DAY = 150;
+/** Records an upload only while the invitation and account quotas allow it. */
+export async function reserveUpload(
+  ownerId: string,
+  invitationId: string,
+  filename: string,
+  bytes: number,
+) {
+  return prisma.$transaction(async (tx) => {
+    const owned = await tx.invitation.count({
+      where: { id: invitationId, ownerId },
+    });
+    if (!owned) throw new WeddingError(404, "Không tìm thấy thiệp");
+    const forInvitation = await tx.weddingUpload.count({
+      where: { invitationId },
+    });
+    const forAccount = await tx.weddingUpload.count({
+      where: {
+        accountId: ownerId,
+        createdAt: { gt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+      },
+    });
+    if (forInvitation >= MAX_UPLOADS_PER_INVITATION)
+      throw new WeddingError(
+        409,
+        `Mỗi thiệp tải tối đa ${MAX_UPLOADS_PER_INVITATION} ảnh`,
+      );
+    if (forAccount >= MAX_UPLOADS_PER_ACCOUNT_DAY)
+      throw new WeddingError(
+        429,
+        "Bạn đã tải quá nhiều ảnh hôm nay. Vui lòng thử lại sau.",
+      );
+    return tx.weddingUpload.create({
+      data: { invitationId, accountId: ownerId, filename, bytes },
+    });
+  });
+}
 export async function entitlement(invitationId: string) {
   return prisma.serviceOrder.findFirst({
     where: { invitationId, status: "paid", expiresAt: { gt: new Date() } },

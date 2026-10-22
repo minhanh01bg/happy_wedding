@@ -418,3 +418,12 @@ Nguồn tham khảo được mở lại trong lượt này, xem [RESEARCH](RESEA
   - Hai lần chạy trước đó bị môi trường cản:
     - Trước các sửa lỗi review: 30/31. Bài mua, kích hoạt, xuất bản và kiểm duyệt hết 120 giây khi dev server biên dịch nguội lúc máy thiếu RAM. Chạy lại `--last-failed` thì 1/1 qua.
     - Một lần chạy sau sửa lỗi review bị dừng giữa chừng khi load máy lên 136, rồi chạy lại khi máy bớt tải và cho kết quả 31/31 ở trên.
+- **Sau khi merge.** `main` đã fast-forward và push lên origin. Dev server 3200 trả 200 cho `/w/thiep-mau`, cả qua `127.0.0.1` lẫn IP công khai, với markup mới: phong bì, ruy băng, vòng chữ, chữ “Thương” và không còn cánh cửa. Mở thiệp và cuộn trên 3200 ở 390×844 và 1440×900: `scrollWidth` bằng viewport, không lỗi console, timeline của chữ “Thương” là trang và chữ đang viết dở khi đi qua giữa màn hình.
+- **Đo lại với Chrome mặc định.** Script đo ở trên bật cờ `CompositeClipPathAnimation`, nên có thể đánh giá thấp chi phí `clip-path` của chữ “Thương”. Đo lại trên 3200 không có cờ, lúc máy bớt tải (390×844, CPU chậm 4×):
+  - Trang đầy đủ: 1,2% và 1,5% frame >25 ms.
+  - Tắt riêng chữ “Thương”: 0,6% và 1,2%.
+  - Cả hai p95 16,7–16,8 ms, 0–1 long animation frame.
+
+  Hiệu ứng viết chữ không làm giật thêm đáng kể.
+
+- **Chưa làm.** Chưa kiểm tra Safari (chưa hỗ trợ scroll-driven animation, nên sẽ thấy trạng thái tĩnh) hay iPhone/Android thật. Chưa deploy production.

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { Prisma } from "@prisma/client";
 
+import { adminCookieOptionsForRequest } from "@/server/auth/session";
 import { prisma } from "@/server/db/prisma";
 
 export const CUSTOMER_SESSION_COOKIE = "customer_session";
@@ -25,6 +26,14 @@ export const customerCookieOptions = {
   path: "/",
   maxAge: CUSTOMER_SESSION_MAX_AGE_SECONDS,
 };
+
+/** Same Secure-flag policy as the admin cookie, so login and logout agree. */
+export function customerCookieOptionsForRequest(request: Request) {
+  return {
+    ...customerCookieOptions,
+    secure: adminCookieOptionsForRequest(request).secure,
+  };
+}
 
 export async function createCustomerSession(accountId: string) {
   const token = createOpaqueToken();

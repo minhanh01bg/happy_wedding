@@ -8,8 +8,12 @@ import {
   createOpaqueToken,
   digestOpaqueToken,
   CUSTOMER_SESSION_COOKIE,
+  customerCookieOptionsForRequest,
 } from "@/server/customer-auth/session";
-import { SESSION_COOKIE } from "@/server/auth/session";
+import {
+  adminCookieOptionsForRequest,
+  SESSION_COOKIE,
+} from "@/server/auth/session";
 
 describe("customer credentials", () => {
   it("hash mật khẩu có salt và version", async () => {
@@ -52,5 +56,25 @@ describe("verifyCustomerCredential", () => {
     const existing = await time(hash);
     const missing = await time(undefined);
     expect(missing).toBeGreaterThan(existing * 0.4);
+  });
+});
+
+describe("customerCookieOptionsForRequest", () => {
+  it("đăng nhập và đăng xuất dùng cùng chính sách Secure với admin", () => {
+    const https = new Request("https://example.test/api/customer-auth/login");
+    expect(customerCookieOptionsForRequest(https)).toMatchObject({
+      secure: true,
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+    });
+    const proxied = new Request("http://127.0.0.1/api/customer-auth/logout", {
+      headers: { "x-forwarded-proto": "https" },
+    });
+    expect(customerCookieOptionsForRequest(proxied).secure).toBe(true);
+    const http = new Request("http://127.0.0.1/api/customer-auth/logout");
+    expect(customerCookieOptionsForRequest(http).secure).toBe(
+      adminCookieOptionsForRequest(http).secure,
+    );
   });
 });

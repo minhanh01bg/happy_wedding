@@ -11,7 +11,7 @@ import {
 import {
   createCustomerSession,
   CUSTOMER_SESSION_COOKIE,
-  customerCookieOptions,
+  customerCookieOptionsForRequest,
 } from "@/server/customer-auth/session";
 import { prisma } from "@/server/db/prisma";
 import { customerLoginSchema } from "@/types/customer-auth";
@@ -110,13 +110,10 @@ export async function POST(request: Request) {
       headers: { "Cache-Control": "private, no-store" },
     },
   );
-  const isHttps =
-    request.headers.get("x-forwarded-proto") === "https" ||
-    request.url.startsWith("https:");
-
-  response.cookies.set(CUSTOMER_SESSION_COOKIE, session.token, {
-    ...customerCookieOptions,
-    secure: isHttps,
-  });
+  response.cookies.set(
+    CUSTOMER_SESSION_COOKIE,
+    session.token,
+    customerCookieOptionsForRequest(request),
+  );
   return response;
 }

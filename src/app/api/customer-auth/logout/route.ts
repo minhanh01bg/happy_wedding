@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { hasSafeMutationOrigin } from "@/server/http/origin";
 import {
   CUSTOMER_SESSION_COOKIE,
+  customerCookieOptionsForRequest,
   revokeCustomerSession,
 } from "@/server/customer-auth/session";
 
@@ -18,10 +19,7 @@ export async function POST(request: Request) {
   await revokeCustomerSession(cookie ? decodeURIComponent(cookie) : null);
   const response = NextResponse.json({ ok: true });
   response.cookies.set(CUSTOMER_SESSION_COOKIE, "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
+    ...customerCookieOptionsForRequest(request),
     maxAge: 0,
   });
   return response;

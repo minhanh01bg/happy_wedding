@@ -52,6 +52,8 @@ Bản này chạy Node với SQLite và ảnh local; cần máy chủ/container 
 
 Production env của base kiểm tra chặt. Build có placeholder để prerender/build, không thay thế cấu hình runtime. Kiểm tra `.env.example` trước triển khai; không đưa dummy Redis/domain/hash vào production.
 
+`pnpm dev` lắng nghe `0.0.0.0:3200` và `allowedDevOrigins` gồm IP công khai để xem thử từ xa. Dev server không phải môi trường an toàn: có overlay lỗi kèm stack trace, `unsafe-eval`, và không có Redis/secret production. Chỉ dùng với dữ liệu thử, chặn port 3200 bằng firewall khi không xem thử, và không dùng `pnpm dev` thay `pnpm build && pnpm start`.
+
 ## Backup & ảnh
 
 `python3 scripts/backup.py <thư-mục-backup>` tạo SQLite snapshot bằng backup API (an toàn với WAL), sau đó lưu ảnh upload trong tar. Mặc định đọc DATABASE_URL từ `.env`; có thể đưa DATABASE_URL qua environment. Chạy cùng quyền tài khoản vận hành, backup chứa dữ liệu cá nhân nên không phục vụ qua web. Để có snapshot DB/ảnh đồng nhất hoàn toàn, tạm dừng ghi lúc backup.

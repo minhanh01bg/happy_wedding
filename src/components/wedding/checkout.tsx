@@ -3,6 +3,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { ServicePlan } from "@prisma/client";
 import { money } from "@/lib/wedding";
+import { randomUUID } from "@/lib/random-id";
 import { post } from "./client";
 
 export function Checkout({
@@ -29,7 +30,7 @@ export function Checkout({
         setBusy(true);
         setError("");
         try {
-          if (!clientId.current) clientId.current = crypto.randomUUID();
+          if (!clientId.current) clientId.current = randomUUID();
           const result = await post<{ data: { id: string } }>(
             "/api/wedding/orders",
             { invitationId, planId: selected, clientId: clientId.current },

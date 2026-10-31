@@ -1,6 +1,7 @@
 "use client";
 import { DropdownField } from "@/components/kit/dropdown-field";
 import { WEDDING_MUSIC } from "@/lib/wedding-music";
+import { randomUUID } from "@/lib/random-id";
 import { BankSelect } from "./bank-select";
 import {
   useState,
@@ -188,7 +189,7 @@ export function EventFields({
   eventField,
 }: Pick<FieldProps, "data" | "field" | "eventField">) {
   const [eventKeys, setEventKeys] = useState(() =>
-    data.events.map(() => crypto.randomUUID()),
+    data.events.map(() => randomUUID()),
   );
   return (
     <section className="form-section">
@@ -286,7 +287,7 @@ export function EventFields({
           className="secondary small"
           type="button"
           onClick={() => {
-            setEventKeys((keys) => [...keys, crypto.randomUUID()]);
+            setEventKeys((keys) => [...keys, randomUUID()]);
             field("events", [
               ...data.events,
               {

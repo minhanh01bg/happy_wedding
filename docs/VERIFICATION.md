@@ -503,3 +503,22 @@ Phạm vi: `main` tại `4d84d68`, gồm `0dc39eb` (bỏ cảnh báo hydration d
   - Hydration, cả 390px và 1440px: React báo “A tree hydrated but some attributes of the server rendered HTML didn't match the client properties” ở `/` (thuộc tính `__gcrremoteframetoken` trên `<html>`) và ở `/w/thiep-mau` (token đó, cộng `__gcruniqueid` 1, 2, 6, 7 trên form RSVP và các ô nhập). Như vậy test bắt đúng lỗi, và `0dc39eb` là thứ làm nó qua.
   - Bài “Buổi sáng” hết 120 s chờ ô “Ghi giờ bằng chữ (tùy chọn)”, vì ô này chưa có ở bản gốc.
 - **Chưa làm.** Chưa chạy `pnpm test:e2e` nguyên bản (không qua config bọc) và chưa chạy gate trong worktree, vì các lỗi sandbox ở trên. Chưa thử trên iPhone hay Chrome iOS thật: thuộc tính `__gcr*` được giả lập bằng `addInitScript` trong Chromium. Chưa kiểm tra trang công khai `/w/…` của một thiệp đã xuất bản có giờ bằng chữ.
+
+## Tạo id trên trình duyệt khi chạy qua http thường — 31/10/2026
+
+- **Lỗi.** Server thử `http://160.250.247.137:3200` không phải secure context, nên trình duyệt không có `crypto.randomUUID`. Ba chỗ gọi nó trên trình duyệt ném “crypto.randomUUID is not a function”:
+  - `editor-fields.tsx` (key của dòng tiệc, khi render và khi thêm tiệc): `/dashboard/new` và `/dashboard/<id>` hiện “Chưa tải được trang”.
+  - `rsvp-form.tsx` (clientId khi gửi, cả nhánh có và không có localStorage): khách không gửi được RSVP.
+  - `checkout.tsx` (clientId của đơn): chủ thiệp không tạo được đơn.
+- **Sửa.** Thêm `src/lib/random-id.ts` với `randomUUID()`. Hàm này dùng `crypto.randomUUID()` khi có; nếu không có thì dựng UUID v4 theo RFC 4122 từ `crypto.getRandomValues(new Uint8Array(16))` (đặt bit version 4 và variant `10xx`, hex thường 8-4-4-4-12). `getRandomValues` có cả ngoài secure context. Không dùng `Math.random`, vì clientId của RSVP là quyền cập nhật phản hồi của một trình duyệt. Ba component trên dùng hàm này. Không còn chỗ nào trên trình duyệt gọi `crypto.randomUUID`. Route handler phía server (`node:crypto`, `crypto.randomUUID` cho correlationId) chạy trên Node nên giữ nguyên. Hành vi không đổi, không cần ADR.
+- **Schema server.** `responseSchema.clientId` (`src/lib/wedding.ts`) và `clientId` của `/api/wedding/orders` đều là `z.uuid()`. Test kiểm tra id dựng từ `getRandomValues` qua đúng các schema này.
+- **Test mới.**
+  - `tests/lib/random-id.test.ts`: có `randomUUID` gốc thì dùng nó. Khi gỡ `randomUUID` (chỉ còn `getRandomValues`), 200 id đều đúng dạng v4, nibble version là `4`, variant thuộc `8/9/a/b`, qua `z.uuid()`, không trùng nhau, gọi `getRandomValues` 200 lần và không gọi `Math.random`. Với byte toàn `0x00` và toàn `0xff`, kết quả là `00000000-0000-4000-8000-000000000000` và `ffffffff-ffff-4fff-bfff-ffffffffffff`.
+  - `tests/components/client-ids-without-random-uuid.test.tsx`, chạy với `crypto` chỉ có `getRandomValues`:
+    - `RsvpForm` gửi `/api/wedding/rsvp/<slug>` với clientId v4, body qua `responseSchema`, clientId lưu ở `localStorage` và lần gửi lại dùng đúng clientId đó.
+    - `RsvpForm` vẫn gửi được khi `localStorage` ném lỗi.
+    - `Checkout` gửi `/api/wedding/orders` với clientId v4, qua schema của route, rồi chuyển sang `/dashboard/orders/<id>`.
+    - `EventFields` render được, và bấm “Thêm một tiệc” thì có Tiệc 2.
+  - **Kiểm tra đỏ.** Với ba component bản HEAD: 4/4 test component fail với “crypto.randomUUID is not a function” (chỉ bài kiểm tra môi trường qua). Khi tạm cho helper chỉ `return crypto.randomUUID()`: 6/8 fail; 2 bài qua là bài dùng `randomUUID` gốc và bài kiểm tra môi trường. Trả lại bản mới thì 8/8 qua.
+- **Gate.** `TEST_DATABASE_URL="file:$PWD/prisma/prisma/test.db" pnpm check` **exit 0**: lint 0 lỗi (còn cảnh báo ref Music có sẵn tại `music.tsx:55`), TypeScript qua, **26 file / 201 test qua**. Phải đặt `TEST_DATABASE_URL` vì `node_modules` là symlink sang checkout chính (đã ghi ở các mục trước). Không chạy `pnpm build` và E2E theo yêu cầu của bước này; bước sau chạy trên main đã merge.
+- **Chưa làm.** Chưa thử trên server 3200 thật bằng trình duyệt. Còn `navigator.clipboard` (cũng chỉ có trong secure context) ở `actions.tsx` và `gift-accounts.tsx`: hai chỗ đã bọc try/catch và hiện hướng dẫn chép tay, nên không làm hỏng trang; bước này không sửa.

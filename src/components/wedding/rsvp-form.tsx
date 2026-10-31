@@ -1,6 +1,7 @@
 "use client";
 import { DropdownField } from "@/components/kit/dropdown-field";
 import { useState, useRef } from "react";
+import { randomUUID } from "@/lib/random-id";
 import { post } from "./client";
 import type { WeddingEvent } from "@/lib/wedding";
 const PARTY_SIZES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -32,10 +33,10 @@ export function RsvpForm({
       if (!clientId.current) {
         try {
           clientId.current =
-            localStorage.getItem(`rsvp:${slug}`) || crypto.randomUUID();
+            localStorage.getItem(`rsvp:${slug}`) || randomUUID();
           localStorage.setItem(`rsvp:${slug}`, clientId.current);
         } catch {
-          clientId.current = crypto.randomUUID();
+          clientId.current = randomUUID();
         }
       }
       await post(`/api/wedding/rsvp/${slug}`, {

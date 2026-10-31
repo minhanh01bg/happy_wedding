@@ -68,6 +68,7 @@ prisma/*.db
 .crawl/
 .omc/
 .local-admin-password
+.local-customer-*
 .playwright-cli/
 
 /.next-e2e/

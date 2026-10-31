@@ -471,3 +471,35 @@ Nguồn tham khảo được mở lại trong lượt này, xem [RESEARCH](RESEA
   - `pnpm install --offline --frozen-lockfile` fail EROFS (pnpm store chỉ đọc), nên `node_modules` là symlink sang checkout chính như các worktree khác; lockfile giống hệt.
   - E2E **không chạy** theo yêu cầu của bước này; bước kiểm tra sau chạy trên main đã merge. Không đụng dev server 3200, `prisma/dev.db` hay `public/uploads`.
 - **Chưa làm.** Chưa xem trên trình duyệt thật; chưa tạo thiệp Vũ Tú & Nguyễn Ngọc (bước sau).
+
+## Kiểm tra trên main đã merge: hydration Chrome iOS và giờ bằng chữ — 31/10/2026
+
+Phạm vi: `main` tại `4d84d68`, gồm `0dc39eb` (bỏ cảnh báo hydration do Chrome iOS) và `073689c` + `4d84d68` (giờ ghi bằng chữ cho tiệc). Lượt này chỉ thêm test và ghi kết quả, không sửa `src/`.
+
+- **Môi trường.** Mọi gate chạy trên **bản sao sạch các file tracked của commit `4d84d68`** (`git archive 4d84d68` vào scratchpad), có symlink `node_modules` sang checkout chính. Không chạy trong worktree vì Tailwind/Turbopack đọc phải các file che không đọc được của sandbox (`.claude/output-styles`…, lỗi EACCES đã ghi ở mục trước). Không đụng dev server 3200, `prisma/dev.db` hay `public/uploads`; cổng 3201 nằm trong network namespace riêng của sandbox. Mọi server đã dừng sau khi chạy.
+- **`pnpm check`** (`TEST_DATABASE_URL="file:$PWD/prisma/prisma/test.db" pnpm check`): **exit 0, 62 s**. Lint 0 lỗi (còn cảnh báo ref Music có sẵn tại `music.tsx:55`), TypeScript qua, **24 file / 193 test qua** (vitest 40,9 s).
+- **`pnpm build`** (`NEXT_PRIVATE_OUTPUT_TRACE_ROOT=/ NEXT_TELEMETRY_DISABLED=1 pnpm build`): **exit 0, 21 s**. Compile 8,0 s, TypeScript 10,3 s, 14/14 trang tĩnh, không cảnh báo.
+- **E2E: cách chạy.** `pnpm test:e2e` nguyên bản không chạy được trong sandbox vì hai lỗi môi trường, đều đã tái hiện:
+  - `tsx` CLI (trong `e2e/global-setup.ts` và `pnpm db:seed`) mở Unix socket `/tmp/claude-1001/tsx-1001/<pid>.pipe` và bị từ chối `listen EPERM`.
+  - Prisma client được generate trong `node_modules` của checkout chính, nên `DATABASE_URL="file:./e2e.db"` mở `/home/ccgram/happy_wedding/prisma/e2e.db` (kiểm bằng `PRAGMA database_list`), không phải `prisma/e2e.db` của bản sao. Nơi đó chỉ đọc trong sandbox, và không phải DB của lượt chạy này.
+
+  Vì vậy E2E chạy bằng `pnpm exec playwright test -c pw.sandbox.config.ts …`. Config này chỉ có trong bản sao, không commit. Nó import `playwright.config.ts` và giữ nguyên mọi thiết lập (Chromium Desktop Chrome, 1 worker, timeout, `next dev` cổng 3201, `.next-e2e`, mật khẩu admin, CSP). Chỉ đổi ba điều:
+  - `DATABASE_URL` là đường dẫn tuyệt đối tới `prisma/e2e.db` của bản sao.
+  - Setup là một bản sao của `e2e/global-setup.ts`: xóa `prisma/e2e.db*`, `prisma db push`, rồi seed bằng `node --import tsx prisma/seed.ts` thay cho tsx CLI.
+  - Thêm `NEXT_PRIVATE_OUTPUT_TRACE_ROOT=/` để Turbopack nhận symlink `node_modules`.
+
+- **E2E: kết quả trên main.**
+  - `e2e/chrome-ios-hydration.spec.ts`: **2/2 qua (26,7 s)**, 390px 8,8 s và 1440px 6,7 s. Đây là lần đầu bài này chạy thật.
+  - Toàn bộ bộ E2E (`chrome-ios-hydration.spec.ts` và `wedding.spec.ts`): **33/33 qua (5,3 phút)**, exit 0. Đã gồm luồng mua → admin kích hoạt → xuất bản → RSVP → duyệt, sáu viewport responsive với năm layout, mười mẫu trên desktop và mobile, hai bài Lời yêu, bài “guests can skip motion and reach Vietnamese event information”, nhạc, hộp quà và album. Vì đã chạy đủ bộ, không cần chạy riêng các nhóm `--grep`.
+  - Log server của lượt đầy đủ không có dòng nào chứa “hydrat” hay “didn't match”, ngoài tên test. Còn các cảnh báo dev đã có từ trước: next/image (`fill` với parent thiếu `position`, gợi ý LCP) và Base UI (“changing the default value state of an uncontrolled Select”). Không test nào fail vì chúng.
+- **Test mới: `e2e/event-time-label.spec.ts`.** Đăng ký khách mới, mở `/dashboard/new?template=template-rose` (Lời yêu), điền “Buổi sáng” vào ô “Ghi giờ bằng chữ (tùy chọn)” của Tiệc 1 và lưu bản nháp. Bài này kiểm tra:
+  - Sau khi tải lại editor, Tiệc 1 vẫn là “Buổi sáng” và Tiệc 2 rỗng.
+  - Ở bản xem thử nháp `/dashboard/<id>/preview`, sau khi mở thiệp, thẻ tiệc 1 có `<time datetime="2027-02-14">` là “Buổi sáng · 14/02/2027” và không chứa “11:00”. Thẻ tiệc 2 vẫn là “11:00 · 13/02/2027”.
+  - Link lịch của tiệc 1 là cả ngày (`dates=20270214/20270215`); của tiệc 2 giữ giờ (`20270213T040000Z/20270213T070000Z`).
+
+  Bài dùng bản xem thử của chủ thiệp, vì trang công khai `/w/…` chỉ hiện thiệp đã thanh toán và xuất bản. Bản xem thử dùng cùng `InvitationView`, và đúng với trường hợp thiệp nháp chưa công khai. Kết quả: **1/1 qua (27,8 s)**; với `--repeat-each=3` **3/3 qua (39,0 s)**. Prettier, ESLint và `tsc --noEmit` trên cây có file mới đều qua.
+
+- **Đối chiếu với commit gốc `d75a88e`.** Chạy trên bản sao sạch `d75a88e`, cùng config bọc, có thêm hai file spec ở trên: **3/3 fail, exit 1 (154 s)**, đúng như mong đợi.
+  - Hydration, cả 390px và 1440px: React báo “A tree hydrated but some attributes of the server rendered HTML didn't match the client properties” ở `/` (thuộc tính `__gcrremoteframetoken` trên `<html>`) và ở `/w/thiep-mau` (token đó, cộng `__gcruniqueid` 1, 2, 6, 7 trên form RSVP và các ô nhập). Như vậy test bắt đúng lỗi, và `0dc39eb` là thứ làm nó qua.
+  - Bài “Buổi sáng” hết 120 s chờ ô “Ghi giờ bằng chữ (tùy chọn)”, vì ô này chưa có ở bản gốc.
+- **Chưa làm.** Chưa chạy `pnpm test:e2e` nguyên bản (không qua config bọc) và chưa chạy gate trong worktree, vì các lỗi sandbox ở trên. Chưa thử trên iPhone hay Chrome iOS thật: thuộc tính `__gcr*` được giả lập bằng `addInitScript` trong Chromium. Chưa kiểm tra trang công khai `/w/…` của một thiệp đã xuất bản có giờ bằng chữ.

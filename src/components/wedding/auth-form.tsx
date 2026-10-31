@@ -59,11 +59,12 @@ export function AuthForm({
           ? "Tạo tài khoản để chọn mẫu và lưu lời mời của bạn."
           : "Đăng nhập để tiếp tục chăm chút những điều đẹp."}
       </p>
-      <form onSubmit={submit} className="form-stack">
+      <form suppressHydrationWarning onSubmit={submit} className="form-stack">
         {mode === "register" && (
           <label>
             Tên của bạn
             <input
+              suppressHydrationWarning
               name="displayName"
               autoComplete="name"
               minLength={2}
@@ -77,6 +78,7 @@ export function AuthForm({
           <label>
             Số điện thoại
             <input
+              suppressHydrationWarning
               name="phone"
               autoComplete="tel"
               type="tel"
@@ -89,6 +91,7 @@ export function AuthForm({
         <label>
           Mật khẩu
           <input
+            suppressHydrationWarning
             type="password"
             name="password"
             autoComplete={
@@ -104,7 +107,7 @@ export function AuthForm({
         </label>
         {mode === "register" && (
           <label className="inline-check">
-            <input type="checkbox" required />
+            <input suppressHydrationWarning type="checkbox" required />
             <span>
               Tôi đồng ý với{" "}
               <Link className="muted-link" href="/policies">

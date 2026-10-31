@@ -57,7 +57,11 @@ export function RsvpForm({
     }
   }
   return (
-    <form className="wedding-rsvp form-stack" onSubmit={submit}>
+    <form
+      suppressHydrationWarning
+      className="wedding-rsvp form-stack"
+      onSubmit={submit}
+    >
       {disabled && (
         <div className="notice">
           Đây là bản xem thử. Chức năng gửi phản hồi sẽ hoạt động sau khi thiệp
@@ -67,6 +71,7 @@ export function RsvpForm({
       <label>
         Tên của bạn
         <input
+          suppressHydrationWarning
           name="name"
           defaultValue={guestName}
           placeholder="Tên bạn muốn được gọi"
@@ -122,6 +127,7 @@ export function RsvpForm({
       <label>
         Gửi đôi lời chúc
         <textarea
+          suppressHydrationWarning
           name="message"
           maxLength={1000}
           placeholder="Một lời chúc cho ngày chung đôi…"

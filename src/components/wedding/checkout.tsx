@@ -23,6 +23,7 @@ export function Checkout({
   const clientId = useRef("");
   return (
     <form
+      suppressHydrationWarning
       onSubmit={async (e) => {
         e.preventDefault();
         setBusy(true);
@@ -46,6 +47,7 @@ export function Checkout({
         <label className="checkout-plan" key={p.id}>
           <div>
             <input
+              suppressHydrationWarning
               type="radio"
               name="plan"
               value={p.id}
@@ -70,7 +72,7 @@ export function Checkout({
         Thời hạn bắt đầu khi thanh toán được xác nhận.
       </div>
       <label className="inline-check" style={{ marginBottom: 20 }}>
-        <input type="checkbox" required />
+        <input suppressHydrationWarning type="checkbox" required />
         <span>
           Tôi đã đọc thông tin gói và{" "}
           <a
@@ -106,6 +108,7 @@ export function PaymentNote({ id }: { id: string }) {
   const [error, setError] = useState("");
   return (
     <form
+      suppressHydrationWarning
       className="form-stack"
       onSubmit={async (e) => {
         e.preventDefault();
@@ -134,6 +137,7 @@ export function PaymentNote({ id }: { id: string }) {
       <label>
         Thông tin giao dịch đã chuyển
         <input
+          suppressHydrationWarning
           name="note"
           minLength={4}
           maxLength={300}

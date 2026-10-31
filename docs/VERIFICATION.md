@@ -427,3 +427,31 @@ Nguồn tham khảo được mở lại trong lượt này, xem [RESEARCH](RESEA
   Hiệu ứng viết chữ không làm giật thêm đáng kể.
 
 - **Chưa làm.** Chưa kiểm tra Safari (chưa hỗ trợ scroll-driven animation, nên sẽ thấy trạng thái tĩnh) hay iPhone/Android thật. Chưa deploy production.
+
+## Cảnh báo hydration trên Chrome iOS — 31/10/2026
+
+- **Nguyên nhân.** Chrome trên iOS ghi thêm thuộc tính vào DOM trước khi React hydrate: `__gcrremoteframetoken` trên `<html>` và `__gcruniqueid` trên `form`, `input`, `textarea`, `select`. React so với HTML server, thấy thuộc tính thừa và báo “A tree hydrated but some attributes of the server rendered HTML didn't match the client properties” khi mở `/` và `/w/thiep-mau`. Markup của app không sai.
+- **Sửa.** Chỉ thêm `suppressHydrationWarning`, không đổi hành vi, markup hay style. Thuộc tính này chỉ bỏ qua thuộc tính và text của chính phần tử đó, không lan xuống con (tài liệu Next “Understanding suppressHydrationWarning”; `@types/react` khai báo nó trong `HTMLAttributes`), nên phải gắn trên từng ô nhập.
+- **36 phần tử đã gắn:**
+  - `src/app/layout.tsx`: `<html>`.
+  - Thiệp công khai: `rsvp-form.tsx` (form, input `name`, textarea `message`), `music.tsx` (thanh âm lượng `type="range"`).
+  - Trang mẫu: `template-catalog.tsx` (ô “Tìm mẫu thiệp”).
+  - Đăng nhập, đăng ký: `auth-form.tsx` (form, input `displayName`, `phone`, `password`, checkbox đồng ý).
+  - Editor, để chủ thiệp sửa trên iPhone: `invitation-editor.tsx` (form), `editor-fields.tsx` (16 ô input/textarea, gồm ô file và ô URL).
+  - Thanh toán: `checkout.tsx` (2 form, radio, checkbox, ô ghi chú).
+  - Khách mời trong dashboard: `guest-form.tsx` (form, input `name`, `group`).
+  - Không cần gắn: `DropdownField` dùng Base UI Select, vốn đã đặt `suppressHydrationWarning` trên input ẩn của nó.
+  - Chưa gắn: form trang admin (`src/app/admin/*`, `admin-form.tsx`), vì ngoài phạm vi bước này.
+- **Test hồi quy.** `e2e/chrome-ios-hydration.spec.ts` giả lập Chrome iOS bằng `page.addInitScript`. Script gắn token lên `<html>` và dùng MutationObserver gắn `__gcruniqueid` lên `form, input, textarea, select` ngay khi parser tạo chúng. Ở 390×844 và 1440×900, test:
+  - mở `/`, rồi `/w/thiep-mau`, kiểm tra các thuộc tính giả lập đã có mặt trên html và form RSVP;
+  - bấm “Mở thiệp”, cuộn hết trang, cuộn tới RSVP và gõ tên;
+  - yêu cầu không có console error/warning hay pageerror nào chứa “hydrat” hoặc “didn't match”.
+- **Trước và sau sửa.** E2E chưa chạy được trong sandbox (xem dưới), nên bằng chứng trước/sau lấy từ một check tạm, không commit. Check này render server `RsvpForm`, `Music` và `RootLayout`, gắn `__gcr*` như Chrome iOS, rồi `hydrateRoot` trong jsdom:
+  - Trước sửa: 3/3 fail với đúng cảnh báo trên, chỉ ra `__gcruniqueid="1"`, `"2"`, `"6"` (form, input tên, textarea RSVP), `"1"` trên thanh âm lượng, và token trên `<html>`.
+  - Sau sửa: 3/3 qua.
+- **Gate.**
+  - `TEST_DATABASE_URL="file:$PWD/prisma/prisma/test.db" pnpm check` **qua**: lint 0 lỗi (còn cảnh báo ref Music có sẵn), TypeScript qua, 22 file / 154 test. Phải đặt `TEST_DATABASE_URL` vì `node_modules` của worktree là symlink sang checkout chính, nên Prisma đặt DB tương đối vào thư mục chỉ đọc; `pnpm check` để mặc định thì lint và TypeScript qua nhưng 57 test DB fail “attempt to write a readonly database”.
+  - `pnpm build` **fail do môi trường**, không do mã: `TurbopackInternalError: Symlink [project]/node_modules is invalid, it points out of the filesystem root`. Không thử `next build --webpack` vì máy chỉ còn khoảng 790 MB RAM và swap đã đầy; trước đó, chỉ riêng việc biên dịch `/` bằng webpack dev đã làm hết RAM.
+  - E2E (`e2e/chrome-ios-hydration.spec.ts` và `e2e/wedding.spec.ts`, chromium) **chưa chạy được**. Sandbox chặn Unix socket nên tsx CLI trong `e2e/global-setup.ts` báo `listen EPERM`; Turbopack từ chối symlink `node_modules`; dev server webpack thay thế bị hết RAM khi biên dịch `/` (“Process from config.webServer exited early”). Không nới test nào.
+  - `pnpm install --offline` không tạo được `node_modules` riêng: pnpm store chỉ đọc (EROFS).
+- **Cần làm tiếp.** Chạy `pnpm build` và hai file e2e trên ở môi trường có `node_modules` cài thật và đủ RAM. Chưa thử trên iPhone thật.

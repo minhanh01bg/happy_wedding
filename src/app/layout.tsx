@@ -50,8 +50,12 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Chrome on iOS writes __gcr* attributes on <html> and on form fields before
+  // React hydrates. suppressHydrationWarning only covers each element's own
+  // attributes, so every server-rendered form field carries it too.
   return (
     <html
+      suppressHydrationWarning
       lang="vi"
       data-scroll-behavior="smooth"
       className={`${bodyFont.variable} ${headingFont.variable}`}

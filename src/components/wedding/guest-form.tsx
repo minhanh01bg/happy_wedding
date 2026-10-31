@@ -8,6 +8,7 @@ export function GuestForm({ invitationId }: { invitationId: string }) {
   const [error, setError] = useState("");
   return (
     <form
+      suppressHydrationWarning
       className="inline-actions"
       onSubmit={async (e) => {
         e.preventDefault();
@@ -33,6 +34,7 @@ export function GuestForm({ invitationId }: { invitationId: string }) {
       <label>
         Tên khách mời
         <input
+          suppressHydrationWarning
           name="name"
           required
           minLength={2}
@@ -43,6 +45,7 @@ export function GuestForm({ invitationId }: { invitationId: string }) {
       <label>
         Nhóm khách
         <input
+          suppressHydrationWarning
           name="group"
           defaultValue="Bạn bè"
           minLength={1}

@@ -120,7 +120,7 @@ export function InvitationEditor({
   }
   return (
     <div className="editor-grid">
-      <form className="panel" onSubmit={save}>
+      <form suppressHydrationWarning className="panel" onSubmit={save}>
         <IdentityFields data={data} templates={templates} field={field} />
         <StoryFields data={data} field={field} />
         <EventFields data={data} field={field} eventField={eventField} />

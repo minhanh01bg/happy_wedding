@@ -74,6 +74,7 @@ export function IdentityFields({
         <label>
           Đường dẫn thiệp
           <input
+            suppressHydrationWarning
             value={data.slug}
             onChange={(e) => field("slug", e.target.value)}
             required
@@ -91,6 +92,7 @@ export function IdentityFields({
           <label>
             Chú rể
             <input
+              suppressHydrationWarning
               required
               minLength={2}
               maxLength={80}
@@ -101,6 +103,7 @@ export function IdentityFields({
           <label>
             Cô dâu
             <input
+              suppressHydrationWarning
               required
               minLength={2}
               maxLength={80}
@@ -112,6 +115,7 @@ export function IdentityFields({
         <label>
           Ngày giờ cưới chính (giờ Việt Nam)
           <input
+            suppressHydrationWarning
             type="datetime-local"
             required
             value={data.weddingDate ? toLocalDateTime(data.weddingDate) : ""}
@@ -126,6 +130,7 @@ export function IdentityFields({
         <label>
           Lời mở đầu
           <input
+            suppressHydrationWarning
             maxLength={200}
             value={data.headline}
             onChange={(e) => field("headline", e.target.value)}
@@ -147,6 +152,7 @@ export function StoryFields({
         <label>
           Câu chuyện của hai bạn
           <textarea
+            suppressHydrationWarning
             maxLength={4000}
             rows={6}
             value={data.story}
@@ -156,6 +162,7 @@ export function StoryFields({
         <label>
           Gia đình nhà trai
           <input
+            suppressHydrationWarning
             maxLength={300}
             value={data.groomParents}
             onChange={(e) => field("groomParents", e.target.value)}
@@ -164,6 +171,7 @@ export function StoryFields({
         <label>
           Gia đình nhà gái
           <input
+            suppressHydrationWarning
             maxLength={300}
             value={data.brideParents}
             onChange={(e) => field("brideParents", e.target.value)}
@@ -211,6 +219,7 @@ export function EventFields({
           <label>
             Tên tiệc
             <input
+              suppressHydrationWarning
               required
               minLength={2}
               maxLength={80}
@@ -221,6 +230,7 @@ export function EventFields({
           <label>
             Ngày giờ (giờ Việt Nam)
             <input
+              suppressHydrationWarning
               type="datetime-local"
               required
               value={event.date ? toLocalDateTime(event.date) : ""}
@@ -236,6 +246,7 @@ export function EventFields({
           <label>
             Địa điểm
             <input
+              suppressHydrationWarning
               required
               minLength={2}
               maxLength={160}
@@ -246,6 +257,7 @@ export function EventFields({
           <label>
             Địa chỉ
             <input
+              suppressHydrationWarning
               required
               minLength={2}
               maxLength={300}
@@ -318,6 +330,7 @@ export function PhotoFields({
           {uploading ? "Đang tải ảnh…" : "Thêm ảnh từ thiết bị"}
         </span>
         <input
+          suppressHydrationWarning
           type="file"
           accept="image/jpeg,image/png,image/webp"
           onChange={upload}
@@ -396,6 +409,7 @@ export function ExtraFields({
           />
           {data.musicUrl && data.musicUrl !== WEDDING_MUSIC.url && (
             <input
+              suppressHydrationWarning
               type="url"
               aria-label="Đường dẫn bài hát riêng"
               placeholder="https://…/bai-hat.mp3"
@@ -443,6 +457,7 @@ export function ExtraFields({
               <label>
                 Số tài khoản {side.toLowerCase()}
                 <input
+                  suppressHydrationWarning
                   value={data[account]}
                   maxLength={30}
                   autoComplete="off"
@@ -452,6 +467,7 @@ export function ExtraFields({
               <label>
                 Chủ tài khoản {side.toLowerCase()}
                 <input
+                  suppressHydrationWarning
                   value={data[name]}
                   maxLength={100}
                   onChange={(e) => field(name, e.target.value)}

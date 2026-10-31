@@ -101,6 +101,7 @@ export function Music({ url }: { url: string }) {
           <label>
             Âm lượng nhạc nền
             <input
+              suppressHydrationWarning
               type="range"
               min="0"
               max="1"

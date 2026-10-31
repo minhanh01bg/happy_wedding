@@ -39,6 +39,7 @@ export function TemplateCatalog({
           )}
         </div>
         <input
+          suppressHydrationWarning
           aria-label="Tìm mẫu thiệp"
           placeholder="Tìm một tấm thiệp…"
           value={search}

@@ -26,7 +26,7 @@ const party: WeddingEvent = {
 };
 const ceremony: WeddingEvent = {
   title: "Lễ thành hôn nhà trai",
-  date: "2026-11-09T01:00:00.000Z", // 08:00 chỉ để xếp thứ tự và lấy ngày
+  date: "2026-11-09T01:00:00.000Z", // 08:00 không hiện; chỉ lấy ngày
   timeLabel: "Buổi sáng",
   venue: "Tư gia nhà trai",
   address: "Địa chỉ minh họa",

@@ -9,7 +9,7 @@ Mỗi tiệc trong `Invitation.eventsJson` có `date` là một thời điểm I
 ## Decision
 
 1. **Thêm `timeLabel` tùy chọn vào từng tiệc**, là chữ tự do: trim, tối đa 40 ký tự, kiểm tra bằng Zod trong `eventSchema` cùng các field khác. Chuỗi rỗng được transform thành không có, nên field không được lưu và `eventsJson` của tiệc không nhãn giống hệt trước.
-2. **`date` vẫn bắt buộc.** Nó vẫn cho ngày hiển thị, ngày trên lịch, thứ tự tiệc và việc so khớp với `weddingDate`. Khi có nhãn, phần giờ của `date` chỉ để xếp thứ tự và không hiện cho khách.
+2. **`date` vẫn bắt buộc.** Nó cho ngày hiển thị, ngày trên lịch và việc so khớp đúng với `weddingDate`. Thứ tự tiệc là thứ tự nhập trong editor; chỉ số trong mảng cũng là `eventIndex` của RSVP. Khi có nhãn, phần giờ của `date` không hiện cho khách.
 3. **Hiển thị:** mọi chỗ in giờ của tiệc (dòng giờ dưới tên tiệc ở cả mười mẫu, ô giờ riêng của Song hỷ, Khoảnh khắc, Bên nhau) in nhãn thay giờ; ngày vẫn hiện. `<time datetime>` chỉ mang ngày `YYYY-MM-DD` theo giờ Việt Nam, để dữ liệu máy đọc không chứa giờ giả.
 4. **Lịch:** tiệc có nhãn tạo sự kiện cả ngày theo ngày Việt Nam của `date` (`dates=YYYYMMDD/YYYYMMDD`, ngày kết thúc loại trừ). Phần mô tả ghi “Thời gian: <nhãn>” và nói rõ thiệp không ghi giờ cụ thể. Link “Thêm ngày cưới vào lịch” ở phần đếm ngược làm giống vậy khi tiệc trùng đúng `weddingDate` có nhãn. Tiệc không nhãn giữ khoảng ba giờ tạm tính như cũ.
 5. **Countdown không đổi:** vẫn đếm tới “Ngày giờ cưới chính” do khách nhập. Đây là field riêng của thiệp, không phải tiệc, nên nhãn không ảnh hưởng.
@@ -17,7 +17,7 @@ Mỗi tiệc trong `Invitation.eventsJson` có `date` là một thời điểm I
 ## Alternatives
 
 - **Danh sách cố định** (Buổi sáng / Buổi trưa / Buổi chiều / Buổi tối): dễ kiểm soát nhưng thiệp in có nhiều cách ghi (“Giờ hoàng đạo”, “Sau lễ gia tiên”…). Chữ tự do ngắn đủ linh hoạt, và 40 ký tự giữ được bố cục các mẫu.
-- **Cho `date` chỉ là ngày** (`YYYY-MM-DD`) khi không có giờ: đổi kiểu dữ liệu của field bắt buộc, làm vỡ sắp xếp, so khớp `weddingDate`, `weddingDateParts` và mọi bản ghi cũ. Nhãn riêng không chạm dữ liệu hiện có.
+- **Cho `date` chỉ là ngày** (`YYYY-MM-DD`) khi không có giờ: đổi kiểu dữ liệu của field bắt buộc, làm vỡ so khớp `weddingDate`, `weddingDateParts` và mọi bản ghi cũ. Nhãn riêng không chạm dữ liệu hiện có.
 - **Cờ `noTime` kèm chữ cố định “Trong ngày”**: không ghi được đúng chữ gia đình muốn.
 - **Lịch vẫn dùng giờ của `date` với nhãn trong mô tả**: lịch của khách sẽ báo một giờ sai, đúng điều cần tránh. Bỏ hẳn link lịch cho tiệc có nhãn thì khách mất chức năng. Sự kiện cả ngày là cách đúng đơn giản nhất mà Google Calendar hỗ trợ trực tiếp.
 

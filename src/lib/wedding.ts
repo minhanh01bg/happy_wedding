@@ -30,7 +30,8 @@ export const eventSchema = z.strictObject({
   /**
    * Giờ ghi bằng chữ, ví dụ "Buổi sáng", hiện thay cho giờ của `date`.
    * Chuỗi rỗng được bỏ đi, nên thiệp không có nhãn lưu JSON y như trước.
-   * `date` vẫn bắt buộc vì nó cho ngày, thứ tự và ngày trên lịch.
+   * `date` vẫn bắt buộc: nó cho ngày hiển thị, ngày trên lịch và việc so khớp
+   * đúng với `weddingDate`. Thứ tự tiệc là thứ tự nhập trong editor.
    */
   timeLabel: z
     .string()

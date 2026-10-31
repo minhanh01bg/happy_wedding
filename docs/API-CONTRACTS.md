@@ -19,7 +19,7 @@ Thành công thường `{ "ok": true }`, có data khi cần. Lỗi domain `{ "ok
 | `guests`       | `{invitationId: string, name: string, group: string}`          | name 2–100, group 1–80; ownership; tối đa 2.000 khách (kiểm tra và tạo trong một transaction); token do server tạo |
 | `moderate`     | `{id: responseId, status: "approved" \| "hidden"}`             | Chỉ response thuộc thiệp của account                                                                               |
 
-InvitationInput chính xác tại `src/lib/wedding.ts`: templateId, slug, groom, bride, weddingDate, headline, story, groomParents, brideParents, events, photos, coverUrl, musicUrl, giftBank, giftAccount, giftName (nhà trai), brideGiftBank, brideGiftAccount, brideGiftName (nhà gái, mặc định rỗng để tương thích client cũ). Zod strict không chấp nhận field thừa. Date là ISO datetime có offset; image URL chỉ ảnh sample hoặc WebP upload local; mỗi bên ngân hàng điền đủ bộ hoặc bỏ trống toàn bộ. Tiền mừng không tạo ServiceOrder/WeddingPayment.
+InvitationInput chính xác tại `src/lib/wedding.ts`: templateId, slug, groom, bride, weddingDate, headline, story, groomParents, brideParents, events, photos, coverUrl, musicUrl, giftBank, giftAccount, giftName (nhà trai), brideGiftBank, brideGiftAccount, brideGiftName (nhà gái, mặc định rỗng để tương thích client cũ). Zod strict không chấp nhận field thừa. Mỗi phần tử `events` (1–4) có dạng `{title, date, timeLabel?, venue, address}`, xem mục “Giờ ghi bằng chữ cho tiệc” bên dưới. Date là ISO datetime có offset; image URL chỉ ảnh sample hoặc WebP upload local; mỗi bên ngân hàng điền đủ bộ hoặc bỏ trống toàn bộ. Tiền mừng không tạo ServiceOrder/WeddingPayment.
 
 Ví dụ browser đã có phiên và invitationId/planId từ dữ liệu server:
 
@@ -115,7 +115,7 @@ Nút bỏ qua hiệu ứng và điều hướng nội dung chỉ đổi tương 
 
 `GET /support` là trang hướng dẫn không yêu cầu đăng nhập. Chỉ xuất thông tin liên hệ chủ dịch vụ (support/supportPhone/supportEmail); không xuất merchant bank/account/name, đơn hoặc danh sách khách. Không có API mutation mới.
 
-Liên kết lịch công khai dùng ngày giờ của từng phần tử eventsJson, chuyển thành timestamp UTC cho Google Calendar; không thêm guest token vào URL. Không có mutation hoặc schema mới. Thời điểm kết thúc trên lịch bên ngoài là giá trị tạm tính ba giờ, không phải thời điểm kết thúc được cặp đôi xác nhận.
+Liên kết lịch công khai dùng ngày giờ của từng phần tử eventsJson, chuyển thành timestamp UTC cho Google Calendar; không thêm guest token vào URL. Phần tử có `timeLabel` (từ 31/10/2026) thì dùng sự kiện cả ngày thay cho timestamp. Không có mutation hoặc schema mới. Thời điểm kết thúc trên lịch bên ngoài là giá trị tạm tính ba giờ, không phải thời điểm kết thúc được cặp đôi xác nhận.
 
 Chuyển động ảnh theo cuộn (05/10/2026) chỉ là nâng cấp trình bày phía xem thiệp; không thêm API, không đổi payload ảnh, quyền công khai hay guest token. Ảnh nổi bật trang trí dùng ảnh đầu album, không có điều khiển hoặc dữ liệu khách mới.
 
@@ -190,3 +190,23 @@ Hero, trình tự các mục và chuyển động opening resolve từ layout/pa
 ### Lịch tháng và composition lịch tiệc — 10/10/2026
 
 Không thay payload/schema. Lịch tháng đọc weddingDate theo Asia/Ho_Chi_Minh; các khung tiệc đọc eventsJson giữ nguyên index/ngày/địa điểm. Không có API chọn ngày công khai hoặc lịch âm. Không thêm mốc chương trình/trang phục lấy từ thiệp tham khảo. Quyền public/preview, RSVP và quà giữ hợp đồng hiện hành.
+
+### Giờ ghi bằng chữ cho tiệc — 31/10/2026
+
+Payload `invitations` nhận thêm một field tùy chọn trong từng tiệc:
+
+```ts
+type WeddingEvent = {
+  title: string; // trim, 2–80 ký tự
+  date: string; // ISO datetime có offset; vẫn bắt buộc khi có timeLabel
+  timeLabel?: string; // trim, tối đa 40 ký tự, ví dụ "Buổi sáng"
+  venue: string; // trim, 2–160 ký tự
+  address: string; // trim, 2–300 ký tự
+};
+```
+
+- Chuỗi rỗng hoặc chỉ có khoảng trắng coi như không có nhãn: server bỏ field khi lưu, nên `eventsJson` của tiệc không nhãn giống hệt trước. Dài hơn 40 ký tự trả 400 `Giờ ghi bằng chữ tối đa 40 ký tự`. Kiểu khác string vẫn bị Zod từ chối.
+- Client cũ không gửi field vẫn hợp lệ. Bản ghi cũ không có field được `readEvents` đọc như trước; không cần migration vì `eventsJson` là JSON.
+- Uniqueness giữa các tiệc vẫn tính theo `title`, `date`, `venue`; `timeLabel` không tham gia. Sửa nhãn không đổi số lượng hay thứ tự tiệc nên không chạm quy tắc chặn sau khi đã có RSVP.
+- Hiển thị: nhãn thay giờ, ngày vẫn hiện; `<time datetime>` chỉ mang ngày `YYYY-MM-DD` theo giờ Việt Nam.
+- Lịch: link Google Calendar của tiệc có nhãn là `dates=YYYYMMDD/YYYYMMDD` (cả ngày, ngày kết thúc loại trừ) theo ngày Việt Nam của `date`, `details` bắt đầu bằng `Thời gian: <nhãn>.` Link “Thêm ngày cưới vào lịch” cũng thành cả ngày khi tiệc trùng đúng `weddingDate` có nhãn. Không thêm route, quyền hay guest token. Lý do: [ADR 0007](adr/0007-event-written-time-label.md).

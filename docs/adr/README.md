@@ -10,5 +10,6 @@ Các ADR được ghi lại sau triển khai ngày 03/10/2026, đối chiếu ba
 | [0004](0004-template-configuration-and-edit-concurrency.md) | Mẫu từ cấu hình và editor version, tiệc index                  |
 | [0005](0005-security-hardening-2026-10.md)                  | Gia cố bảo mật sau rà soát 22/10/2026                          |
 | [0006](0006-css-scroll-driven-motion.md)                    | Chuyển động theo cuộn bằng CSS scroll timeline, không JS/frame |
+| [0007](0007-event-written-time-label.md)                    | Giờ tiệc ghi bằng chữ; lịch thành sự kiện cả ngày              |
 
 ADR mới dùng số tiếp theo, ghi context, decision, alternatives, consequences, evidence và điều kiện xem xét lại. Nếu thay quyết định, thêm ADR superseding thay vì xóa lịch sử.

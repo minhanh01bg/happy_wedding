@@ -244,6 +244,20 @@ export function EventFields({
             />
           </label>
           <label>
+            Ghi giờ bằng chữ (tùy chọn)
+            <input
+              suppressHydrationWarning
+              maxLength={40}
+              placeholder="Buổi sáng"
+              value={event.timeLabel ?? ""}
+              onChange={(e) => eventField(i, "timeLabel", e.target.value)}
+            />
+            <small>
+              Ví dụ: Buổi sáng. Khi có nội dung, thiệp hiện chữ này thay cho
+              giờ.
+            </small>
+          </label>
+          <label>
             Địa điểm
             <input
               suppressHydrationWarning

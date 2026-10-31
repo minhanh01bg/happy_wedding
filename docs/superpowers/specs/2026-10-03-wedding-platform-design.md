@@ -43,7 +43,7 @@ Khách đăng ký bằng số điện thoại và mật khẩu tối thiểu 10 
 
 Thiệp có tên hai người, ngày cưới, tiêu đề, câu chuyện, gia đình, 1–4 tiệc, ảnh bìa, album, nhạc HTTPS tùy chọn và hai tài khoản ngân hàng mừng cưới nhà trai/nhà gái tùy chọn. Mỗi bên điền đủ ngân hàng, tài khoản, chủ tài khoản hoặc bỏ trống; mã QR có nút sao chép tài khoản và mở ảnh để lưu, thông tin chuyển khoản vẫn đọc được khi QR lỗi. Slug duy nhất, chữ thường/số/gạch ngang, dài 3–80. Slug của thiệp đã xuất bản chỉ đổi sau khi thu hồi.
 
-Mỗi tiệc có `title`, `date`, `venue`, `address`. Lịch, Maps và lựa chọn RSVP dùng cùng mảng tiệc. Input datetime local được đổi sang ISO với offset Việt Nam; lưu DateTime trong DB. Mảng tiệc/ảnh lưu JSON có Zod kiểm tra lúc đọc và ghi.
+Mỗi tiệc có `title`, `date`, `venue`, `address` và `timeLabel` tùy chọn (từ 31/10/2026). Lịch, Maps và lựa chọn RSVP dùng cùng mảng tiệc. Input datetime local được đổi sang ISO với offset Việt Nam; lưu DateTime trong DB. Mảng tiệc/ảnh lưu JSON có Zod kiểm tra lúc đọc và ghi. `timeLabel` là giờ ghi bằng chữ, ví dụ “Buổi sáng”, cho tiệc không có giờ cụ thể: Zod trim, tối đa 40 ký tự, chuỗi rỗng coi như không có và không được lưu. Khi có nhãn, mọi chỗ thiệp hiện giờ của tiệc (ở cả mười mẫu) hiện nhãn thay giờ, ngày vẫn hiện; `date` vẫn bắt buộc để cho ngày, thứ tự và ngày trên lịch. Link thêm vào lịch của tiệc có nhãn là sự kiện cả ngày ([ADR 0007](../../adr/0007-event-written-time-label.md)). Tiệc không có nhãn hiển thị và lưu y như trước.
 
 Bản nháp tối đa 12 ảnh; gói trả phí có giới hạn snapshot 1–40. Upload yêu cầu phiên và thiệp đã lưu thuộc chủ tài khoản; nhận JPG/PNG/WebP tối đa 5 MB, decode tối đa 40 megapixel, chuyển WebP và loại metadata. Ảnh phục vụ qua URL công khai. Nhạc chỉ phát khi người xem chủ động bật.
 
@@ -190,7 +190,7 @@ Dashboard `/admin` dùng period 7/30/90 ngày gần nhất (mặc định 30), n
 
 ## Lịch riêng từng tiệc — 05/10/2026
 
-Mỗi thẻ tiệc có link Google Calendar riêng dùng đúng event.date/title/venue/address; giờ được truyền bằng timestamp UTC. Ngày cưới chung chỉ thêm địa điểm nếu có tiệc trùng đúng thời điểm, không mặc định mượn địa điểm của tiệc đầu tiên. Lịch tạo sẵn kết thúc sau ba giờ, ghi rõ tạm tính và cho khách điều chỉnh trong lịch; không đổi lịch tiệc lưu trên thiệp. Liên kết không chứa tên khách hay guest token.
+Mỗi thẻ tiệc có link Google Calendar riêng dùng đúng event.date/title/venue/address; giờ được truyền bằng timestamp UTC. Ngày cưới chung chỉ thêm địa điểm nếu có tiệc trùng đúng thời điểm, không mặc định mượn địa điểm của tiệc đầu tiên. Tiệc có `timeLabel` (từ 31/10/2026) không truyền giờ: link là sự kiện cả ngày theo ngày Việt Nam của `date`, phần mô tả ghi “Thời gian: <nhãn>”; link ngày cưới chung cũng thành cả ngày khi tiệc trùng đúng thời điểm đó có nhãn. Lịch tạo sẵn kết thúc sau ba giờ, ghi rõ tạm tính và cho khách điều chỉnh trong lịch; không đổi lịch tiệc lưu trên thiệp. Liên kết không chứa tên khách hay guest token.
 
 ## Chuyển động ảnh theo cuộn — 05/10/2026
 
@@ -273,3 +273,7 @@ Mười mẫu có cấu trúc hero khác nhau thật trong HTML, không chỉ m�
 ### Hoàn thiện phần lịch và mở thiệp — 10/10/2026
 
 Mười mẫu hiện có được bổ sung composition lịch tiệc riêng và artwork mở thiệp theo ý tưởng. Lịch tháng đánh dấu weddingDate theo giờ Việt Nam, có thứ/ngày rõ ràng và vẫn hiện khi không có JS. Từng tiệc giữ giờ, ngày, địa điểm, chỉ đường và thêm lịch từ dữ liệu khách nhập. Không thay đổi schema hoặc giả lập chương trình cưới/trang phục khi chưa có dữ liệu. Native dialog, nhạc qua gesture, album và modal quà hai bên giữ nguyên chức năng. Chi tiết quan sát tham khảo/giới hạn bộ “29 mẫu” nằm trong RESEARCH.
+
+### Giờ ghi bằng chữ cho tiệc — 31/10/2026
+
+Thiệp in của nhà trai ghi “Lễ thành hôn nhà trai” ngày 09/11/2026 là “Thời gian: Buổi sáng”, không có giờ. Editor có ô “Ghi giờ bằng chữ (tùy chọn)” dưới ô ngày giờ của từng tiệc; khách vẫn chọn ngày giờ (giờ chỉ để xếp thứ tự) và ghi “Buổi sáng”. Thẻ tiệc hiện “Buổi sáng · 09/11/2026” thay cho “08:00 · 09/11/2026”; các ô giờ riêng của Song hỷ, Khoảnh khắc và Bên nhau cũng hiện nhãn. Thẻ `<time>` khi đó chỉ mang ngày (`datetime="2026-11-09"`). Tiệc khác giữ giờ, ví dụ “Tiệc cưới nhà trai” 08/11/2026 lúc 16:00. Countdown vẫn đếm tới “Ngày giờ cưới chính” do khách nhập, không suy từ nhãn. Không đổi Prisma schema, migration, API route hay quyền; RSVP và CSV vẫn chỉ dùng tên tiệc. Admin hiện không có màn nào hiển thị chi tiết tiệc nên không có chỗ cần thêm nhãn. Quyết định và hành vi lịch: [ADR 0007](../../adr/0007-event-written-time-label.md).

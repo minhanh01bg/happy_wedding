@@ -98,7 +98,14 @@ export function InvitationEvents({
       <h2>Ngày vui, có bạn.</h2>
       <div className={`${styles.grid} ${styles[design] || ""}`}>
         {events.map((event, index) => {
-          const { day, month, year, time } = weddingDateParts(event.date);
+          const {
+            day,
+            month,
+            year,
+            time: clock,
+          } = weddingDateParts(event.date);
+          // Giờ ghi bằng chữ (vd "Buổi sáng") thay giờ ở mọi chỗ; ngày vẫn hiện.
+          const time = event.timeLabel || clock;
           const stamp = (
             <div className={styles.stamp}>
               <span>{String(day).padStart(2, "0")}</span>
@@ -111,7 +118,13 @@ export function InvitationEvents({
             <header className={styles.title}>
               <p className="eyebrow">0{index + 1} / LỊCH TIỆC</p>
               <h3>{event.title}</h3>
-              <time dateTime={new Date(event.date).toISOString()}>
+              <time
+                dateTime={
+                  event.timeLabel
+                    ? `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+                    : new Date(event.date).toISOString()
+                }
+              >
                 {time} · {dateLabel(event.date)}
               </time>
             </header>
@@ -137,6 +150,7 @@ export function InvitationEvents({
                   event.date,
                   `${event.title} — ${couple}`,
                   `${event.venue}, ${event.address}`,
+                  event.timeLabel,
                 )}
                 target="_blank"
                 rel="noopener noreferrer"

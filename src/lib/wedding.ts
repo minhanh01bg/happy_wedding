@@ -27,6 +27,17 @@ const imageSchema = z
 export const eventSchema = z.strictObject({
   title: z.string().trim().min(2).max(80),
   date: z.iso.datetime({ offset: true }),
+  /**
+   * Giờ ghi bằng chữ, ví dụ "Buổi sáng", hiện thay cho giờ của `date`.
+   * Chuỗi rỗng được bỏ đi, nên thiệp không có nhãn lưu JSON y như trước.
+   * `date` vẫn bắt buộc vì nó cho ngày, thứ tự và ngày trên lịch.
+   */
+  timeLabel: z
+    .string()
+    .trim()
+    .max(40, "Giờ ghi bằng chữ tối đa 40 ký tự")
+    .transform((label) => label || undefined)
+    .optional(),
   venue: z.string().trim().min(2).max(160),
   address: z.string().trim().min(2).max(300),
 });

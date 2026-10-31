@@ -455,3 +455,19 @@ Nguồn tham khảo được mở lại trong lượt này, xem [RESEARCH](RESEA
   - E2E (`e2e/chrome-ios-hydration.spec.ts` và `e2e/wedding.spec.ts`, chromium) **chưa chạy được**. Sandbox chặn Unix socket nên tsx CLI trong `e2e/global-setup.ts` báo `listen EPERM`; Turbopack từ chối symlink `node_modules`; dev server webpack thay thế bị hết RAM khi biên dịch `/` (“Process from config.webServer exited early”). Không nới test nào.
   - `pnpm install --offline` không tạo được `node_modules` riêng: pnpm store chỉ đọc (EROFS).
 - **Cần làm tiếp.** Chạy `pnpm build` và hai file e2e trên ở môi trường có `node_modules` cài thật và đủ RAM. Chưa thử trên iPhone thật.
+
+## Giờ ghi bằng chữ cho tiệc — 31/10/2026
+
+- **Thay đổi.** Thêm `timeLabel` tùy chọn cho từng tiệc (trim, tối đa 40 ký tự, chuỗi rỗng là không có) trong `eventSchema`. Editor có ô “Ghi giờ bằng chữ (tùy chọn)”. Mười mẫu in nhãn thay giờ, ngày vẫn hiện. Link lịch của tiệc có nhãn là sự kiện cả ngày theo ngày Việt Nam. Countdown không đổi. Không có migration. Quyết định ở [ADR 0007](adr/0007-event-written-time-label.md).
+- **Test mới.**
+  - `tests/lib/wedding-event-time-label.test.ts`: nhận và trim “ Buổi sáng ”; 40 ký tự qua, 41 bị từ chối tại `timeLabel` với “Giờ ghi bằng chữ tối đa 40 ký tự”; `""` và `"   "` cho JSON giống hệt tiệc không nhãn; `date` vẫn bắt buộc; `DEMO_CONTENT.events` đọc lại qua `readEvents` không đổi một ký tự.
+  - `tests/lib/wedding-calendar.test.ts`: tiệc có nhãn lúc 00:30 ngày 09/11 giờ Việt Nam (08/11 theo UTC) cho `dates=20261109/20261110`, mô tả có “Thời gian: Buổi sáng”; ngày 31/12 sang `20270101`.
+  - `tests/components/invitation-events.test.tsx`: chạy trên 15 composition (10 mẫu và 5 fallback theo layout). Tiệc có nhãn hiện “Buổi sáng · 09/11/2026” trong `<time datetime="2026-11-09">`, không có “08:00”, link lịch cả ngày; ô giờ riêng của Song hỷ, Khoảnh khắc, Bên nhau hiện nhãn. Tiệc không nhãn ra đúng chuỗi cũ `<time dateTime="2026-11-08T09:00:00.000Z">16:00 · 08/11/2026</time>` và `dates=20261108T090000Z%2F20261108T120000Z`; JSON cũ và nhãn rỗng cho markup giống hệt nhau.
+  - Kiểm tra đỏ: tạm thay `invitation-events.tsx` bằng bản HEAD thì 16 test nhãn fail, 16 test “như cũ” vẫn qua; trả lại bản mới thì tất cả qua.
+- **Gate.**
+  - `TEST_DATABASE_URL="file:$PWD/prisma/prisma/test.db" pnpm check` **exit 0**: lint 0 lỗi (còn cảnh báo ref Music có sẵn tại `music.tsx:55`), TypeScript qua, 24 file / 193 test. Riêng ba file test mới: 3 file / 40 test qua.
+  - `pnpm build` trong worktree **fail do sandbox**, không do mã: `TurbopackInternalError: … src/app/globals.css [app-client] (css) … reading file ".../ccg-worker-9899abb2/.claude/output-styles" - Permission denied (os error 13)`. Tailwind tự quét mọi file không bị `.gitignore` loại; sandbox đặt các file che (thiết bị ký tự không đọc được) như `.claude/*`, `.bashrc`, `.idea` vào gốc worktree. Lỗi symlink `node_modules` ghi ở mục trước được tránh bằng `NEXT_PRIVATE_OUTPUT_TRACE_ROOT`.
+  - `pnpm build` trên bản sao sạch **exit 0**: chép toàn bộ file tracked cùng ba file test/ADR mới (cùng nội dung working tree; `diff -rq src` không khác) sang scratchpad, symlink `node_modules`, chạy `NEXT_PRIVATE_OUTPUT_TRACE_ROOT=/ NEXT_TELEMETRY_DISABLED=1 pnpm build`. Compile 8,2 s, TypeScript qua, 14/14 trang tĩnh, không cảnh báo. Không sửa config hay file ngoài `src`, `docs`, `tests`.
+  - `pnpm install --offline --frozen-lockfile` fail EROFS (pnpm store chỉ đọc), nên `node_modules` là symlink sang checkout chính như các worktree khác; lockfile giống hệt.
+  - E2E **không chạy** theo yêu cầu của bước này; bước kiểm tra sau chạy trên main đã merge. Không đụng dev server 3200, `prisma/dev.db` hay `public/uploads`.
+- **Chưa làm.** Chưa xem trên trình duyệt thật; chưa tạo thiệp Vũ Tú & Nguyễn Ngọc (bước sau).

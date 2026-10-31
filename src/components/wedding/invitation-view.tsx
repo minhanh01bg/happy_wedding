@@ -70,6 +70,7 @@ export function InvitationView({
     invitation.weddingDate,
     `Lễ cưới ${invitation.groom} & ${invitation.bride}`,
     mainEvent ? `${mainEvent.venue}, ${mainEvent.address}` : "",
+    mainEvent?.timeLabel,
   );
   const sections = {
     countdown: (

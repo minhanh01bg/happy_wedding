@@ -19,7 +19,7 @@ Thành công thường `{ "ok": true }`, có data khi cần. Lỗi domain `{ "ok
 | `guests`       | `{invitationId: string, name: string, group: string}`          | name 2–100, group 1–80; ownership; tối đa 2.000 khách (kiểm tra và tạo trong một transaction); token do server tạo |
 | `moderate`     | `{id: responseId, status: "approved" \| "hidden"}`             | Chỉ response thuộc thiệp của account                                                                               |
 
-InvitationInput chính xác tại `src/lib/wedding.ts`: templateId, slug, groom, bride, weddingDate, headline, story, groomParents, brideParents, events, photos, coverUrl, musicUrl, giftBank, giftAccount, giftName (nhà trai), brideGiftBank, brideGiftAccount, brideGiftName (nhà gái, mặc định rỗng để tương thích client cũ). Zod strict không chấp nhận field thừa. Mỗi phần tử `events` (1–4) có dạng `{title, date, timeLabel?, venue, address, side?, mapUrl?, lat?, lng?}`, xem các mục “Giờ ghi bằng chữ cho tiệc”, “Bên của tiệc” và “Bản đồ cho tiệc” bên dưới. Date là ISO datetime có offset; image URL chỉ ảnh sample hoặc WebP upload local; `musicUrl` chỉ nhận chuỗi rỗng, `/audio/loi-hen.mp3`, đúng mẫu `/uploads/weddings/<uuid>.mp3` của upload nhạc (UUID chữ thường, không nhận đường dẫn local khác) hoặc HTTPS MP3/OGG trên tên miền; mỗi bên ngân hàng điền đủ bộ hoặc bỏ trống toàn bộ. Tiền mừng không tạo ServiceOrder/WeddingPayment.
+InvitationInput chính xác tại `src/lib/wedding.ts`: templateId, slug, groom, bride, weddingDate, headline, story, groomParents, brideParents, events, photos, coverUrl, musicUrl, giftBank, giftAccount, giftName (nhà trai), brideGiftBank, brideGiftAccount, brideGiftName (nhà gái, mặc định rỗng để tương thích client cũ), `madeBy?` (người làm thiệp, xem mục “Người làm thiệp” bên dưới). Zod strict không chấp nhận field thừa. Mỗi phần tử `events` (1–4) có dạng `{title, date, timeLabel?, venue, address, side?, mapUrl?, lat?, lng?}`, xem các mục “Giờ ghi bằng chữ cho tiệc”, “Bên của tiệc” và “Bản đồ cho tiệc” bên dưới. Date là ISO datetime có offset; image URL chỉ ảnh sample hoặc WebP upload local; `musicUrl` chỉ nhận chuỗi rỗng, `/audio/loi-hen.mp3`, đúng mẫu `/uploads/weddings/<uuid>.mp3` của upload nhạc (UUID chữ thường, không nhận đường dẫn local khác) hoặc HTTPS MP3/OGG trên tên miền; mỗi bên ngân hàng điền đủ bộ hoặc bỏ trống toàn bộ. Tiền mừng không tạo ServiceOrder/WeddingPayment.
 
 Ví dụ browser đã có phiên và invitationId/planId từ dữ liệu server:
 
@@ -260,3 +260,20 @@ type WeddingEvent = {
 - “Chỉ đường đến tiệc” mở `mapUrl` khi có, không thì tìm `venue, address` trên Google Maps như trước; vẫn `rel="noopener noreferrer"`.
 - CSP thêm `frame-src 'self' https://maps.google.com https://www.google.com`; trước đó frame rơi về `default-src 'self'`.
 - Client cũ và bản ghi cũ không có field vẫn hợp lệ; không cần migration. Uniqueness và quy tắc chặn sau khi có RSVP không đổi, vì sửa bản đồ không đổi số lượng hay thứ tự tiệc.
+
+### Người làm thiệp — 01/11/2026
+
+Payload `invitations` nhận thêm một field tùy chọn ở cấp thiệp (không nằm trong `events`):
+
+```ts
+type InvitationInput = {
+  // …các field ở trên
+  madeBy?: string; // trim, tối đa 60 ký tự, một dòng; "" là xóa
+};
+```
+
+- Lưu ở cột `Invitation.madeBy` (TEXT NOT NULL DEFAULT `''`, migration `20261101000000_invitation_made_by`).
+- **Không gửi field thì giữ giá trị đã lưu**: khác với ba field ngân hàng nhà gái (mặc định rỗng), client cũ lưu thiệp không xóa mất ghi công. Thiệp mới không gửi field nhận `""`. Có gửi thì lưu chuỗi đã trim; `""` hoặc chỉ khoảng trắng là xóa.
+- Dài hơn 60 ký tự (sau trim) trả 400 `Người làm thiệp tối đa 60 ký tự`. Ký tự điều khiển (Unicode Cc, gồm xuống dòng, tab, NUL) hoặc U+2028/U+2029 ở giữa chuỗi trả 400 `Người làm thiệp chỉ gồm một dòng chữ, không xuống dòng`. Kiểu khác string vẫn bị Zod từ chối.
+- Hiển thị ở cuối thiệp (`/w/[slug]`, xem thử của chủ thiệp): khi khác rỗng là dòng chữ thường (không phải link) `Thiệp cưới được chăm chút bởi {madeBy}`, in hoa bằng CSS như dòng studio, thay hẳn dòng “THIỆP CƯỚI ĐƯỢC CHĂM CHÚT BỞI HỶ STUDIO” và hiện cả khi gói có `removeBranding`. Rỗng thì như trước: link studio về `/`, ẩn khi `removeBranding`. React escape nội dung; không dùng `dangerouslySetInnerHTML`.
+- Không thêm route, quyền hay field response; `publish` kiểm lại `madeBy` đã lưu cùng các field khác.

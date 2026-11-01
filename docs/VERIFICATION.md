@@ -865,3 +865,15 @@ Phạm vi: bảng “Phản hồi & lời chúc” ở `/dashboard/[id]/guests`.
   - `tests/server/wedding/moderate-wish.test.ts`, 3 test trên DB test: chủ thiệp đổi pending → approved → hidden → approved; khách hàng khác nhận 404 và không đổi được (cả hidden → approved và approved → hidden); gửi `pending` nhận 400.
 - **E2E**: `e2e/wedding.spec.ts:250` vẫn bấm “Duyệt lời chúc” rồi chờ “Đã duyệt”, khớp nhãn mới; không sửa spec. **Chưa chạy** vì máy thiếu RAM.
 - **Chưa làm.** Chưa chạy e2e, `pnpm build` hay xem trên trình duyệt. Không đụng server 3200 hay DB thật.
+
+## 01/11/2026 — người làm thiệp ở cuối thiệp (`madeBy`)
+
+Phạm vi: Invitation có cột `madeBy` (migration `20261101000000_invitation_made_by`, chỉ `ALTER TABLE "Invitation" ADD COLUMN "madeBy" TEXT NOT NULL DEFAULT ''`). Editor có ô “Người làm thiệp (tuỳ chọn)”; cuối thiệp hiện “Thiệp cưới được chăm chút bởi …” là chữ thường thay dòng studio, cả khi gói bỏ branding; rỗng thì như trước. Chi tiết: spec mục “Người làm thiệp ở cuối thiệp”, API Contracts mục “Người làm thiệp”.
+
+- **Migration**: `prisma migrate diff --from-migrations prisma/migrations --to-schema-datamodel prisma/schema.prisma` trên shadow DB tạm trả “This is an empty migration”, tức các migration (gồm migration mới) khớp đúng schema. **Chưa áp dụng vào `prisma/dev.db`**; test chỉ dùng `prisma/prisma/test.db` (`prisma db push` của vitest).
+- **`pnpm check`**: exit 0. Lint 0 lỗi (còn cảnh báo ref có sẵn ở `music.tsx:55`), TypeScript qua, **43 file / 415 test qua**.
+- **Test đơn vị** (dữ liệu giả, “bạn thân cô dâu”, “em họ chú rể”):
+  - `tests/lib/wedding-made-by.test.ts`, 13 test: không gửi field thì kết quả parse không có `madeBy`; trim; `""` và chuỗi trắng thành `""`; 60 ký tự sau trim qua, 61 trả lỗi; xuống dòng, CR, tab, NUL, ký tự điều khiển C0/C1, U+2028/U+2029 ở giữa bị từ chối; kiểu khác string bị từ chối.
+  - `tests/server/wedding/service.test.ts`, mục “Invitation maker's credit (madeBy)”, 4 test: thiệp mới không gửi field nhận `""`; lưu bản đã trim, lưu lại không có field giữ nguyên giá trị (field khác vẫn đổi), gửi `""` thì xóa; giá trị sai không đổi bản ghi hay version; xuất bản và `publicInvitation` trả `madeBy`.
+  - `tests/components/invitation-made-by.test.tsx`, 7 test: rỗng thì footer chỉ có link studio về `/`; rỗng + `removeBranding` không có dòng nào; có `madeBy` thì dòng chữ thường, không có link nào trong footer, kể cả khi `removeBranding`; HTML trong `madeBy` hiện như chữ; editor hiện giá trị đã lưu (maxLength 60), gửi lại nguyên giá trị, gửi bản đã trim khi sửa và `""` khi xóa, lần lưu sau dùng version server trả về.
+- **Chưa làm.** Chưa chạy e2e, `pnpm build` hay xem trên trình duyệt (máy thiếu RAM). Chưa áp migration vào DB thật, chưa đặt `madeBy` cho thiệp thật nào; không đụng server 3200.

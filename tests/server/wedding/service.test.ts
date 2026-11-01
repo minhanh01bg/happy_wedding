@@ -529,6 +529,74 @@ describe("Separate wedding gift accounts", () => {
   });
 });
 
+describe("Invitation maker's credit (madeBy)", () => {
+  /** Payload from a client that does not know the field. */
+  function withoutMadeBy() {
+    const legacy: Partial<ReturnType<typeof input>> = { ...input() };
+    delete legacy.madeBy;
+    return legacy as ReturnType<typeof input>;
+  }
+  it("defaults to empty when a new invitation omits it", async () => {
+    const invitation = await saveInvitation(accountId, withoutMadeBy());
+    expect(invitation.madeBy).toBe("");
+  });
+  it("stores the trimmed credit, keeps it when omitted and clears it with an empty string", async () => {
+    const created = await saveInvitation(accountId, {
+      ...input(),
+      madeBy: "  bạn thân cô dâu  ",
+    });
+    expect(created.madeBy).toBe("bạn thân cô dâu");
+
+    const kept = await saveInvitation(
+      accountId,
+      { ...withoutMadeBy(), headline: "Lời mở đầu mới" },
+      created.id,
+      created.version,
+    );
+    expect(kept).toMatchObject({
+      madeBy: "bạn thân cô dâu",
+      headline: "Lời mở đầu mới",
+    });
+
+    const cleared = await saveInvitation(
+      accountId,
+      { ...input(), madeBy: "" },
+      created.id,
+      kept.version,
+    );
+    expect(cleared.madeBy).toBe("");
+  });
+  it("rejects newlines and over-long credits without touching the stored value", async () => {
+    const created = await saveInvitation(accountId, {
+      ...input(),
+      madeBy: "bạn thân cô dâu",
+    });
+    for (const madeBy of ["dòng một\ndòng hai", "a".repeat(61)])
+      await expect(
+        saveInvitation(
+          accountId,
+          { ...input(), madeBy },
+          created.id,
+          created.version,
+        ),
+      ).rejects.toThrow();
+    expect(
+      await prisma.invitation.findUniqueOrThrow({ where: { id: created.id } }),
+    ).toMatchObject({ madeBy: "bạn thân cô dâu", version: created.version });
+  });
+  it("publishes with a credit and serves it on the public invitation", async () => {
+    const invitation = await saveInvitation(accountId, {
+      ...input(),
+      madeBy: "bạn thân cô dâu",
+    });
+    await activate(invitation.id);
+    await publishInvitation(accountId, invitation.id, true);
+    expect(await publicInvitation(invitation.slug)).toMatchObject({
+      madeBy: "bạn thân cô dâu",
+    });
+  });
+});
+
 describe("Admin reporting", () => {
   it("uses actual payments, Vietnam day boundaries and excludes demo revenue", async () => {
     const now = new Date("2026-10-03T16:30:00Z");

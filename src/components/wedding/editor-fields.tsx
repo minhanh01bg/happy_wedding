@@ -160,6 +160,20 @@ export function IdentityFields({
             onChange={(e) => field("headline", e.target.value)}
           />
         </label>
+        <label>
+          Người làm thiệp (tuỳ chọn)
+          <input
+            suppressHydrationWarning
+            maxLength={60}
+            value={data.madeBy ?? ""}
+            onChange={(e) => field("madeBy", e.target.value)}
+            placeholder="Ví dụ: em gái cô dâu"
+          />
+          <small>
+            Hiện ở cuối thiệp: “Thiệp cưới được chăm chút bởi{" "}
+            {data.madeBy?.trim() || "…"}”. Bỏ trống để giữ dòng mặc định.
+          </small>
+        </label>
       </div>
     </section>
   );

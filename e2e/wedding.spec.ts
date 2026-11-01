@@ -156,10 +156,11 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
   const guestHref = await guestLink.getAttribute("href");
   const guestContext = await browser.newContext();
   const guest = await guestContext.newPage();
-  await guest.route(
-    "https://img.vietqr.io/image/970436-1111122222-*",
-    (route) => route.abort(),
-  );
+  // QR mừng cưới tự sinh trong trang, không tải ảnh từ img.vietqr.io.
+  const vietQrRequests: string[] = [];
+  guest.on("request", (request) => {
+    if (request.url().includes("vietqr.io")) vietQrRequests.push(request.url());
+  });
   await guest.goto(`http://127.0.0.1:3201${guestHref}`);
   await guest.getByRole("button", { name: /^Mở thiệp/ }).click();
   await expect(guest.locator(".invitation-opening")).not.toBeVisible();
@@ -184,10 +185,16 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
     }),
   ).toBeVisible();
   await guest.locator(".gift-card").first().scrollIntoViewIfNeeded();
-  await expect(guest.locator(".gift-card").first()).toContainText(
-    "Chưa tải được mã QR",
-  );
+  await expect(
+    guest
+      .getByRole("button", {
+        name: "Phóng to mã QR mừng cưới nhà trai của NGUYEN VAN A",
+        exact: true,
+      })
+      .locator("img"),
+  ).toHaveAttribute("src", /^data:image\/svg\+xml,/);
   await expect(guest.locator(".gift-card").first()).toContainText("1111122222");
+  expect(vietQrRequests).toEqual([]);
   await guest
     .getByRole("button", { name: "Đóng hộp quà", exact: true })
     .click();

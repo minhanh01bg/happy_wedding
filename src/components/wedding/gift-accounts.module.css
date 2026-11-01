@@ -1,0 +1,382 @@
+/*
+ * Hộp quà mừng cưới trong dialog .gift-modal.
+ * Thẻ vẫn mang class global .gift-card (cho hiệu ứng mở hộp quà và e2e), nên
+ * các selector dưới đây dùng [data-side] để thắng những rule .gift-modal
+ * .gift-card cũ trong globals.css mà không phải sửa file đó.
+ */
+
+/* Header gọn: một tiêu đề, một dòng phụ. */
+.header {
+  margin: -6px auto 18px;
+  max-width: 420px;
+}
+.header .title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(25px, 6.4vw, 34px);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+.header .lead {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #6b5359;
+  opacity: 1;
+}
+
+.grid {
+  display: grid;
+  /* Hai cột cả trên điện thoại: thấy đủ hai nút sao chép mà không cuộn;
+     QR nhỏ vẫn bấm phóng to được. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  max-width: 560px;
+  margin: 0 auto;
+  text-align: center;
+}
+.grid > :only-child {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: min(100%, 280px);
+}
+
+.grid .card[data-side] {
+  --side-ink: var(--tone);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 16px 14px;
+  color: #3d2b31;
+  background: color-mix(in srgb, var(--side-ink) 8%, var(--card));
+  border: 1px solid color-mix(in srgb, var(--side-ink) 18%, transparent);
+  border-radius: 18px;
+  overflow-wrap: anywhere;
+}
+/* Nhà trai một sắc xanh sương, nhà gái giữ sắc hồng của hộp quà. */
+.grid .card[data-side="groom"] {
+  --side-ink: #46606e;
+}
+
+.card[data-side] .side {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  color: var(--side-ink);
+  background: color-mix(in srgb, var(--side-ink) 14%, var(--card));
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+}
+
+/* Ô QR vuông trắng: chỉ có mã, không chữ. */
+.card[data-side] .qrTile {
+  position: relative;
+  display: block;
+  width: min(100%, 188px);
+  min-height: 0;
+  margin: 12px 0;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--side-ink) 20%, transparent);
+  border-radius: 14px;
+  font: inherit;
+}
+.card[data-side] button.qrTile {
+  cursor: zoom-in;
+}
+.card[data-side] button.qrTile:hover {
+  background: #fff;
+  border-color: var(--side-ink);
+}
+.qrTile img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 8px;
+}
+.zoomBadge {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--side-ink);
+  box-shadow: 0 2px 6px #0003;
+}
+
+.card[data-side] .qrFailed {
+  display: grid;
+  place-items: center;
+  width: min(100%, 188px);
+  aspect-ratio: 1;
+  margin: 12px 0;
+  padding: 12px;
+  background: #fff;
+  border: 1px dashed color-mix(in srgb, var(--side-ink) 45%, transparent);
+  border-radius: 14px;
+}
+.card[data-side] .qrFailed p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #5b3f48;
+  opacity: 1;
+}
+
+.card[data-side] .name {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  text-wrap: balance;
+}
+.card[data-side] .bank {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #6b5359;
+  opacity: 1;
+}
+
+/* Đẩy ngân hàng, số và nút xuống đáy để nút hai thẻ thẳng hàng. */
+.copyArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  margin-top: auto;
+}
+.card[data-side] .number {
+  display: inline-flex;
+  min-height: 32px;
+  margin: 0;
+  padding: 2px 6px;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  font-family:
+    ui-monospace, "SF Mono", Menlo, Consolas, "Roboto Mono", monospace;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: copy;
+}
+.card[data-side] .number:hover {
+  background: color-mix(in srgb, var(--side-ink) 9%, transparent);
+}
+/* Khoảng giữa các nhóm 4 số là khoảng trống hiển thị, không phải dấu cách:
+   chọn tay hay sao chép đều ra số liền. */
+.digits {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  column-gap: 0.3em;
+  user-select: all;
+  -webkit-user-select: all;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+}
+.card[data-side] .action {
+  display: inline-flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 200px;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 12px;
+  color: var(--side-ink);
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--side-ink) 55%, transparent);
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+.card[data-side] .action:hover {
+  background: color-mix(in srgb, var(--side-ink) 10%, transparent);
+}
+.card[data-side] .copy[data-copied],
+.card[data-side] .copy[data-copied]:hover {
+  color: #fff;
+  background: var(--side-ink);
+  border-color: var(--side-ink);
+}
+.card[data-side] .copyHint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #5b3f48;
+  opacity: 1;
+}
+.selectable {
+  font-family:
+    ui-monospace, "SF Mono", Menlo, Consolas, "Roboto Mono", monospace;
+  font-weight: 700;
+  user-select: all;
+  -webkit-user-select: all;
+}
+
+/* Lớp xem QR lớn: dialog modal lồng trong hộp quà, phủ kín màn hình. */
+.card[data-side] .zoom {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  color: #3d2b31;
+  background: transparent;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.card[data-side] .zoom[open] {
+  display: grid;
+  place-items: center;
+}
+.zoom::backdrop {
+  background: rgb(24 14 19 / 0.86);
+}
+.zoomPanel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(100%, 440px);
+  padding: 18px 18px 20px;
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 24px 80px #0007;
+  text-align: center;
+}
+.card[data-side] .zoomClose {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  min-height: 0;
+  padding: 0;
+  color: var(--side-ink);
+  background: #fff;
+  border: 1px solid color-mix(in srgb, var(--side-ink) 25%, transparent);
+  border-radius: 50%;
+}
+.card[data-side] .zoomClose:hover {
+  background: color-mix(in srgb, var(--side-ink) 8%, #fff);
+}
+.zoomQr {
+  /* Vừa màn hình nhưng chừa chỗ cho tên, số tài khoản và các nút. */
+  width: clamp(180px, min(100%, 100svh - 320px), 400px);
+  margin: 12px 0 4px;
+}
+.zoomQr img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  /* Nhấn giữ trên iOS mở menu "Lưu ảnh" thay vì kéo ảnh. */
+  -webkit-touch-callout: default;
+}
+.card[data-side] .saveHint {
+  margin: 0 0 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #6b5359;
+  opacity: 1;
+}
+.zoomPanel .copyArea {
+  margin-top: 0;
+}
+
+@media (max-width: 519px) {
+  .header {
+    margin-bottom: 14px;
+  }
+  .grid {
+    gap: 10px;
+  }
+  .grid .card[data-side] {
+    padding: 12px 8px;
+  }
+  /* Thẻ hẹp: số nhỏ lại để 14–15 chữ số vẫn nằm một dòng. */
+  .grid .card[data-side] .number {
+    padding: 2px 4px;
+    font-size: 14px;
+  }
+  .digits {
+    column-gap: 0.25em;
+  }
+  .grid .card[data-side] .name {
+    font-size: 14px;
+  }
+  .card[data-side] .action {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  /* Lớp xem lớn rộng hơn thẻ: số to lại cho dễ đọc. */
+  .grid .card[data-side] .zoomPanel .number {
+    padding: 2px 6px;
+    font-size: 17px;
+  }
+}
+/* Dưới 360px hai cột quá hẹp cho nút sao chép: xếp một cột, QR nhỏ lại. */
+@media (max-width: 359px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .card[data-side] .qrTile,
+  .card[data-side] .qrFailed {
+    width: min(100%, 160px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .card[data-side] .zoom[open] {
+    animation: zoom-fade 0.2s ease-out both;
+  }
+  .zoom[open] .zoomPanel {
+    animation: zoom-rise 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .card[data-side] .action {
+    transition:
+      background 0.18s,
+      color 0.18s;
+  }
+}
+@keyframes zoom-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes zoom-rise {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}

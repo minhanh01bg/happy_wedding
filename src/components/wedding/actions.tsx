@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { copyText } from "@/lib/copy-text";
 import { post } from "./client";
 
 export function Logout({ admin = false }: { admin?: boolean }) {
@@ -104,17 +105,13 @@ export function CopyButton({
   return (
     <button
       className="secondary small"
-      onClick={async () => {
-        try {
-          const url = value.startsWith("/")
-            ? `${window.location.origin}${value}`
-            : value;
-          await navigator.clipboard.writeText(url);
-          setCopied(true);
-          setError(false);
-        } catch {
-          setError(true);
-        }
+      onClick={async (event) => {
+        const url = value.startsWith("/")
+          ? `${window.location.origin}${value}`
+          : value;
+        const copiedNow = await copyText(url, event.currentTarget);
+        setCopied(copiedNow);
+        setError(!copiedNow);
       }}
     >
       {error

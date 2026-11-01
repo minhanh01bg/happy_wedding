@@ -16,6 +16,7 @@ const encodes = vi.hoisted(() => ({
 const slots = vi.hoisted(() => ({
   encode: undefined as { active: number; waiting: number } | undefined,
   acquired: 0,
+  granted: () => {},
 }));
 
 // Count the route's own Sharp pipelines (the only caller that passes
@@ -50,9 +51,12 @@ vi.mock("@/server/wedding/slots", async (importOriginal) => {
     createSlots: (options: Parameters<typeof actual.createSlots>[0]) => {
       const created = actual.createSlots(options);
       const acquire = created.acquire;
-      created.acquire = () => {
+      created.acquire = (signal?: AbortSignal) => {
         slots.acquired++;
-        return acquire();
+        return acquire(signal).then((release) => {
+          slots.granted();
+          return release;
+        });
       };
       return (slots.encode = created);
     },
@@ -83,11 +87,16 @@ vi.mock("@/server/wedding/service", async (importOriginal) => ({
 }));
 
 import { POST } from "@/app/api/wedding/upload/route";
+import { logger } from "@/lib/logger";
 
 const MiB = 1024 * 1024;
 const SLOW = 120_000;
 
-function upload(body: BodyInit, contentType = "image/jpeg") {
+function upload(
+  body: BodyInit,
+  contentType = "image/jpeg",
+  signal?: AbortSignal,
+) {
   return POST(
     new Request(
       "http://127.0.0.1:3200/api/wedding/upload?invitationId=invitation-1",
@@ -101,6 +110,7 @@ function upload(body: BodyInit, contentType = "image/jpeg") {
         },
         body,
         duplex: "half",
+        signal,
       } as RequestInit,
     ),
   );
@@ -149,6 +159,7 @@ describe("POST /api/wedding/upload", () => {
     stored.reserved.length = 0;
     Object.assign(encodes, { started: 0, active: 0, peak: 0 });
     slots.acquired = 0;
+    slots.granted = () => {};
     encodes.gate = undefined;
   });
 
@@ -413,4 +424,97 @@ describe("POST /api/wedding/upload", () => {
     },
     SLOW,
   );
+
+  it(
+    "bỏ ảnh đang xếp hàng khi khách hủy: không mã hóa, không lưu, không trừ quota",
+    async () => {
+      const photo = await jpeg(64, 64).toBuffer();
+      holdEncodes();
+      const running = Promise.all([upload(photo), upload(photo)]);
+      await vi.waitFor(() => expect(encodes.started).toBe(2), {
+        timeout: 10_000,
+      });
+      const controller = new AbortController();
+      const cancelled = upload(photo, "image/jpeg", controller.signal);
+      await vi.waitFor(() => expect(slots.encode?.waiting).toBe(1), {
+        timeout: 10_000,
+      });
+
+      controller.abort();
+      expect(slots.encode?.waiting).toBe(0);
+      encodes.open();
+      const response = await cancelled;
+      expect(response.status).toBe(499);
+      expect(await response.json()).toEqual({
+        ok: false,
+        message: "Đã hủy tải ảnh",
+      });
+      expect((await running).map((done) => done.status)).toEqual([200, 200]);
+      expect(encodes.started).toBe(2);
+      expect(stored.files).toHaveLength(2);
+      expect(stored.reserved).toHaveLength(2);
+      expect([slots.encode?.active, slots.encode?.waiting]).toEqual([0, 0]);
+    },
+    SLOW,
+  );
+
+  it("khách hủy đúng lúc được cấp slot thì không mã hóa và trả slot", async () => {
+    const controller = new AbortController();
+    slots.granted = () => controller.abort();
+    const response = await upload(
+      await jpeg(64, 64).toBuffer(),
+      "image/jpeg",
+      controller.signal,
+    );
+    expect(response.status).toBe(499);
+    expect(encodes.started).toBe(0);
+    expect(stored.files).toHaveLength(0);
+    expect(stored.reserved).toHaveLength(0);
+    expect([slots.encode?.active, slots.encode?.waiting]).toEqual([0, 0]);
+  });
+
+  it("khách hủy trong lúc mã hóa thì không lưu file, không trừ quota", async () => {
+    holdEncodes();
+    const controller = new AbortController();
+    const pending = upload(
+      await jpeg(64, 64).toBuffer(),
+      "image/jpeg",
+      controller.signal,
+    );
+    await vi.waitFor(() => expect(encodes.started).toBe(1), {
+      timeout: 10_000,
+    });
+    controller.abort();
+    encodes.open();
+    const response = await pending;
+    expect(response.status).toBe(499);
+    expect(stored.files).toHaveLength(0);
+    expect(stored.reserved).toHaveLength(0);
+    expect([slots.encode?.active, slots.encode?.waiting]).toEqual([0, 0]);
+  });
+
+  it("ghi log khi mã hóa lỗi, khách vẫn nhận 400 tiếng Việt", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => {});
+    // The header is intact, so the file passes inspect() and fails in decode.
+    const photo = await jpeg(1200, 800).toBuffer();
+    const response = await upload(photo.subarray(0, photo.length >> 1));
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({
+      ok: false,
+      message: "Tệp ảnh không hợp lệ hoặc quá lớn",
+    });
+    expect(encodes.started).toBe(1);
+    expect(warn).toHaveBeenCalledTimes(1);
+    const [event, meta] = warn.mock.calls[0];
+    expect(event).toBe("wedding_upload_encode_failed");
+    // Exactly these keys: no image bytes, cookies, tokens or file names.
+    expect(meta).toStrictEqual({
+      correlationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+      errorClass: "Error",
+      errorCode: undefined,
+    });
+    expect(stored.files).toHaveLength(0);
+    expect(stored.reserved).toHaveLength(0);
+    expect([slots.encode?.active, slots.encode?.waiting]).toEqual([0, 0]);
+  });
 });

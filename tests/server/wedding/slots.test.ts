@@ -1,7 +1,11 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { createSlots, SlotsBusyError } from "@/server/wedding/slots";
+import {
+  createSlots,
+  SlotsAbortedError,
+  SlotsBusyError,
+} from "@/server/wedding/slots";
 
 describe("createSlots", () => {
   beforeEach(() => {
@@ -67,5 +71,45 @@ describe("createSlots", () => {
     expect(slots.active).toBe(0);
     await slots.acquire();
     expect(slots.active).toBe(1);
+  });
+
+  it("lượt chờ bị hủy rời hàng ngay, không giữ slot hay làm lệch thứ tự", async () => {
+    const slots = createSlots({ slots: 1, queue: 10, waitMs: 60_000 });
+    const release = await slots.acquire();
+    const controller = new AbortController();
+    let cancelled: unknown = "pending";
+    slots.acquire(controller.signal).then(
+      () => (cancelled = "granted"),
+      (error: unknown) => (cancelled = error),
+    );
+    const order: string[] = [];
+    const next = slots.acquire().then((release) => {
+      order.push("next");
+      return release;
+    });
+    expect([slots.active, slots.waiting]).toEqual([1, 2]);
+
+    controller.abort();
+    expect(slots.waiting).toBe(1);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(cancelled).toBeInstanceOf(SlotsAbortedError);
+    expect(slots.active).toBe(1);
+
+    // The freed slot goes to the next waiter, not to the cancelled one.
+    release();
+    const nextRelease = await next;
+    expect(order).toEqual(["next"]);
+    expect([slots.active, slots.waiting]).toEqual([1, 0]);
+    nextRelease();
+    expect(slots.active).toBe(0);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("tín hiệu đã hủy thì không lấy cả slot đang trống", async () => {
+    const slots = createSlots({ slots: 1, queue: 10, waitMs: 60_000 });
+    await expect(slots.acquire(AbortSignal.abort())).rejects.toBeInstanceOf(
+      SlotsAbortedError,
+    );
+    expect([slots.active, slots.waiting]).toEqual([0, 0]);
   });
 });

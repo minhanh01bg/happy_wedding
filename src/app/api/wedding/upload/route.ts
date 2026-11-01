@@ -24,15 +24,29 @@ import {
   reserveUpload,
   WeddingError,
 } from "@/server/wedding/service";
-import { createSlots, SlotsBusyError } from "@/server/wedding/slots";
+import {
+  createSlots,
+  SlotsAbortedError,
+  SlotsBusyError,
+} from "@/server/wedding/slots";
 
 const IMAGE_FORMATS = ["jpeg", "png", "webp"];
+
+/**
+ * Next aborts request.signal when the client disconnects before the response
+ * is sent. Such an upload gets 499 (nginx's "client closed request"), which
+ * nobody reads; it only tells the request apart from real failures.
+ */
+function aborted() {
+  return new WeddingError(499, "Đã hủy tải ảnh");
+}
 
 /**
  * A full-resolution encode takes about 6 s and 350-470 MB of RAM for a 45 MP
  * 8-bit JPEG, and up to about 800 MB inside the decode budget, so this process
  * runs at most two at once. Later uploads wait their turn; only a full queue or a long wait
- * gets 503. The editor sends one photo at a time.
+ * gets 503. An upload whose client leaves drops out of the queue and is never
+ * encoded or counted against the quota. The editor sends one photo at a time.
  */
 const encodeSlots = createSlots({ slots: 2, queue: 10, waitMs: 60_000 });
 
@@ -69,7 +83,16 @@ async function encode(image: Sharp) {
     // to sRGB, because /uploads is public. effort 2 matches effort 4 in size
     // and quality on a 45 MP photo at about 1/5 of the time and half the RAM.
     return await image.rotate().webp({ quality: 90, effort: 2 }).toBuffer();
-  } catch {
+  } catch (error) {
+    // The header passed, so the pixel data is broken or libvips failed. Log
+    // only the error's class and code: no image bytes, names or cookies.
+    const code =
+      error instanceof Error && "code" in error ? error.code : undefined;
+    logger.warn("wedding_upload_encode_failed", {
+      correlationId: randomUUID(),
+      errorClass: error instanceof Error ? error.name : "Unknown",
+      errorCode: typeof code === "string" ? code : undefined,
+    });
     throw new WeddingError(400, UPLOAD_IMAGE_INVALID);
   }
 }
@@ -106,17 +129,25 @@ export async function POST(request: Request) {
     const input = Buffer.concat(chunks, bytes);
     chunks.length = 0;
     const image = await inspect(input);
-    const release = await encodeSlots.acquire().catch((error: unknown) => {
-      if (!(error instanceof SlotsBusyError)) throw error;
-      logger.warn("wedding_upload_busy", { waiting: encodeSlots.waiting });
-      throw new WeddingError(503, UPLOAD_SERVER_BUSY);
-    });
+    const release = await encodeSlots
+      .acquire(request.signal)
+      .catch((error: unknown) => {
+        if (error instanceof SlotsAbortedError) throw aborted();
+        if (!(error instanceof SlotsBusyError)) throw error;
+        logger.warn("wedding_upload_busy", { waiting: encodeSlots.waiting });
+        throw new WeddingError(503, UPLOAD_SERVER_BUSY);
+      });
     let output: Buffer;
     try {
+      // The client may have left after the grant, before this line ran.
+      if (request.signal.aborted) throw aborted();
       output = await encode(image);
     } finally {
       release();
     }
+    // Checked again before the file and the quota record: the client may
+    // have left during the encode, and nobody would save the URL.
+    if (request.signal.aborted) throw aborted();
     const dir = path.join(process.cwd(), "public/uploads/weddings");
     await mkdir(dir, { recursive: true });
     const filename = `${randomUUID()}.webp`;

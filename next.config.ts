@@ -12,6 +12,9 @@ const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   poweredByHeader: false,
   allowedDevOrigins: ["127.0.0.1", "160.250.247.137"],
+  // The live invitation runs under `next dev`, so guests would see the
+  // Dev Tools "N" button. Compile and runtime errors still surface.
+  devIndicators: false,
   images: {
     // Default list minus 3840. Uploads keep full resolution (up to 64 MP), and a
     // 3840-wide variant of a 45 MP photo took 6 s against the optimizer's 7 s

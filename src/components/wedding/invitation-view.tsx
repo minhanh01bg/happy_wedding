@@ -158,9 +158,10 @@ export function InvitationView({
           </span>
           <a href="#rsvp">Xác nhận tham dự ↓</a>
         </div>
+        {/* RSVP is the pill in .wedding-top right above, at every width, so
+            the chips skip it rather than repeat the same link. */}
         <nav className="wedding-shortcuts" aria-label="Các mục trong thiệp">
           <a href="#lich-tiec">Lịch tiệc & chỉ đường</a>
-          <a href="#rsvp">Xác nhận tham dự</a>
           {!!photos.length && <a href="#album">Album ảnh</a>}
           {(giftAccounts.length > 0 || invitation.isDemo) && (
             <a href="#gifts">Mừng cưới</a>

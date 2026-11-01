@@ -229,3 +229,24 @@ type WeddingEvent = {
 - `eventSide(event)` trong `src/lib/rsvp-events.ts` cho bên của tiệc: dùng `side` nếu có; không có thì đoán theo `title`, không phân biệt hoa thường: chứa “nhà trai” là nhà trai, chứa “nhà gái” hoặc “vu quy” là nhà gái, còn lại là tiệc chung.
 - Form RSVP chỉ hỏi bên khi thiệp có tiệc của cả hai nhà. Tiệc chung hiện ở cả hai bên. Payload RSVP không đổi: vẫn chỉ gửi `eventIndex` gốc, DB không đổi.
 - Uniqueness giữa các tiệc vẫn tính theo `title`, `date`, `venue`; `side` không tham gia.
+
+### Bản đồ cho tiệc — 01/11/2026
+
+Payload `invitations` nhận thêm ba field tùy chọn trong từng tiệc:
+
+```ts
+type WeddingEvent = {
+  // …các field ở hai mục trên
+  mapUrl?: string; // trim, tối đa 2.000 ký tự; chỉ https và host Google Maps
+  lat?: number; // ghim bản đồ, 8–23,5 (khung Việt Nam)
+  lng?: number; // ghim bản đồ, 102–110 (khung Việt Nam)
+};
+```
+
+- `mapUrl` chỉ nhận `https:` không user/password/cổng, với host `maps.app.goo.gl` (path khác `/`), `maps.google.com`, hoặc `goo.gl`, `www.google.com`, `google.com` với path `/maps…`. Query như `?g_st=ic` được giữ nguyên. Link khác (kể cả `http:`, `javascript:`, host lạ) trả 400 `Link bản đồ phải là link Google Maps bắt đầu bằng https://`. Chuỗi rỗng coi như không có: server bỏ field khi lưu.
+- `lat`/`lng` phải là số trong khung Việt Nam (400 `Vị trí bản đồ phải nằm trong Việt Nam`) và đi theo cặp (400 `Vị trí bản đồ cần đủ cả vĩ độ và kinh độ`, kiểm ở `invitationSchema`). Editor tự điền cặp này khi link dài có tọa độ và xóa khi link đổi; client API có thể gửi thẳng tọa độ của link rút gọn.
+- Server **không** gọi `mapUrl` và không theo redirect của link rút gọn ([ADR 0009](adr/0009-event-map-without-link-resolution.md)). Tọa độ của bản đồ lấy theo thứ tự: `lat`/`lng` đã lưu, rồi đọc từ link dài (`!3d<lat>!4d<lng>`, rồi `q=`/`query=<lat>,<lng>`, rồi `@<lat>,<lng>`), cuối cùng tìm theo `venue, address`.
+- Trang thiệp hiện khối “Đường đến tiệc” dưới các thẻ tiệc: mỗi địa điểm khác nhau một iframe `https://maps.google.com/maps?q=<lat>,<lng>|<venue, address>&z=16&hl=vi&output=embed`, `loading="lazy"`, `referrerPolicy="no-referrer"`. Hai tiệc cùng chỗ (trùng tọa độ tới 5 chữ số, hoặc trùng địa điểm + địa chỉ đã bỏ dấu, chữ thường, gom dấu câu khi thiếu tọa độ) chung một bản đồ, ghi bên theo `eventSide` ở mục trên (“Nhà trai”, “Nhà gái”, hoặc “Nhà trai và nhà gái” khi hai nhà chung chỗ; tiệc chung không ghi), tên địa điểm, địa chỉ và các tiệc ở đó.
+- “Chỉ đường đến tiệc” mở `mapUrl` khi có, không thì tìm `venue, address` trên Google Maps như trước; vẫn `rel="noopener noreferrer"`.
+- CSP thêm `frame-src 'self' https://maps.google.com https://www.google.com`; trước đó frame rơi về `default-src 'self'`.
+- Client cũ và bản ghi cũ không có field vẫn hợp lệ; không cần migration. Uniqueness và quy tắc chặn sau khi có RSVP không đổi, vì sửa bản đồ không đổi số lượng hay thứ tự tiệc.

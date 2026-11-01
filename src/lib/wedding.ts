@@ -1,6 +1,7 @@
 import { DEMO_PHOTOS } from "./wedding-images";
 import { z } from "zod";
 import { WEDDING_MUSIC } from "./wedding-music";
+import { VIETNAM_BOUNDS, isGoogleMapsUrl } from "./event-map";
 
 export const PALETTES = [
   "rose",
@@ -46,6 +47,33 @@ export const eventSchema = z.strictObject({
     .optional(),
   venue: z.string().trim().min(2).max(160),
   address: z.string().trim().min(2).max(300),
+  /**
+   * Link Google Maps của địa điểm (tùy chọn), cho nút “Chỉ đường đến tiệc”.
+   * Chỉ https và host Google Maps; chuỗi rỗng được bỏ đi. Server không gọi
+   * link này (ADR 0009). `lat`/`lng` là ghim của bản đồ nhúng, nằm trong Việt
+   * Nam và đi theo cặp (kiểm ở `invitationSchema`; thiếu một nửa thì bản đồ
+   * bỏ qua). Không có thì đọc từ link dài, rồi tìm theo địa điểm + địa chỉ.
+   */
+  mapUrl: z
+    .string()
+    .trim()
+    .max(2000, "Link Google Maps tối đa 2.000 ký tự")
+    .refine(
+      (url) => !url || isGoogleMapsUrl(url),
+      "Link bản đồ phải là link Google Maps bắt đầu bằng https://",
+    )
+    .transform((url) => url || undefined)
+    .optional(),
+  lat: z
+    .number()
+    .min(VIETNAM_BOUNDS.lat.min, "Vị trí bản đồ phải nằm trong Việt Nam")
+    .max(VIETNAM_BOUNDS.lat.max, "Vị trí bản đồ phải nằm trong Việt Nam")
+    .optional(),
+  lng: z
+    .number()
+    .min(VIETNAM_BOUNDS.lng.min, "Vị trí bản đồ phải nằm trong Việt Nam")
+    .max(VIETNAM_BOUNDS.lng.max, "Vị trí bản đồ phải nằm trong Việt Nam")
+    .optional(),
 });
 export const invitationSchema = z
   .strictObject({
@@ -75,6 +103,13 @@ export const invitationSchema = z
           new Set(events.map((e) => `${e.title}-${e.date}-${e.venue}`)).size ===
           events.length,
         "Các tiệc không được trùng nhau",
+      )
+      .refine(
+        (events) =>
+          events.every(
+            (event) => (event.lat === undefined) === (event.lng === undefined),
+          ),
+        "Vị trí bản đồ cần đủ cả vĩ độ và kinh độ",
       ),
     photos: z
       .array(imageSchema)

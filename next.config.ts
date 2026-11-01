@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 import { buildCspHeader } from "./src/server/security/csp";
+import { MAP_FRAME_ORIGINS } from "./src/lib/event-map";
 
-const csp = buildCspHeader({ extraImageOrigins: ["https://img.vietqr.io"] });
+const csp = buildCspHeader({
+  extraImageOrigins: ["https://img.vietqr.io"],
+  // Bản đồ nhúng ở “Đường đến tiệc” (ADR 0009).
+  extraFrameOrigins: MAP_FRAME_ORIGINS,
+});
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   distDir: process.env.NEXT_DIST_DIR || ".next",

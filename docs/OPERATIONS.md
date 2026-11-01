@@ -54,6 +54,8 @@ Production env của base kiểm tra chặt. Build có placeholder để prerend
 
 `pnpm dev` lắng nghe `0.0.0.0:3200` và `allowedDevOrigins` gồm IP công khai để xem thử từ xa. Dev server không phải môi trường an toàn: có overlay lỗi kèm stack trace, `unsafe-eval`, và không có Redis/secret production. Chỉ dùng với dữ liệu thử, chặn port 3200 bằng firewall khi không xem thử, và không dùng `pnpm dev` thay `pnpm build && pnpm start`.
 
+Xem thiệp dev qua domain khác (ví dụ nginx HTTPS chuyển tới port 3200): Next chặn request cross-origin tới tài nguyên dev (`/_next/*`, HMR) từ hostname không có trong `allowedDevOrigins`, nên trang qua domain đó sẽ hỏng. Thêm hostname vào `.env` bằng ALLOWED_DEV_ORIGINS, cách nhau bằng dấu phẩy, không scheme, không port, ví dụ `ALLOWED_DEV_ORIGINS="thiep.example.com"` (nhận ký tự đại diện như `*.example.com`). Danh sách này cộng thêm vào `127.0.0.1` và IP công khai; mục có scheme/port/đường dẫn làm `next dev` dừng khi nạp config. Đặt luôn NEXT_PUBLIC_APP_URL là `https://` của domain đó để link chia sẻ, canonical và OpenGraph dùng domain; CANONICAL_ORIGIN có thể giữ origin IP, vì kiểm tra origin (`src/server/http/origin.ts`) tin cả hai. Khởi động lại dev server sau khi đổi `.env`.
+
 ## Backup & ảnh
 
 `python3 scripts/backup.py <thư-mục-backup>` tạo SQLite snapshot bằng backup API (an toàn với WAL), sau đó lưu ảnh upload trong tar. Mặc định đọc DATABASE_URL từ `.env`; có thể đưa DATABASE_URL qua environment. Chạy cùng quyền tài khoản vận hành, backup chứa dữ liệu cá nhân nên không phục vụ qua web. Để có snapshot DB/ảnh đồng nhất hoàn toàn, tạm dừng ghi lúc backup.

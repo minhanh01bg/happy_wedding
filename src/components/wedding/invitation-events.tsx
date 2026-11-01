@@ -1,15 +1,50 @@
 import { CalendarPlus, MapPin, Heart } from "lucide-react";
 import { dateLabel, type WeddingEvent } from "@/lib/wedding";
 import { weddingCalendarUrl } from "@/lib/wedding-calendar";
-import { weddingDateParts, weddingMonth } from "@/lib/wedding-date-calendar";
+import {
+  weddingDateParts,
+  weddingEventDays,
+  weddingMonth,
+} from "@/lib/wedding-date-calendar";
 import styles from "./invitation-events.module.css";
 
-/** UTC is used only to lay out an already-resolved Vietnamese calendar month. */
-export function InvitationDateCalendar({ date }: { date: Date }) {
+/** The wedding day's ring, and a second hand-drawn one for other event days. */
+const RINGS = {
+  wedding:
+    "M52 13C43 3 17 3 8 16 0 29 10 47 32 48 53 49 62 34 57 21 53 11 41 6 27 8",
+  event:
+    "M11 40C3 28 9 9 30 6 51 3 62 17 58 30 54 44 37 50 23 47 10 44 4 34 8 23",
+};
+
+/** "A", "A và B", "A, B và C". */
+function joinTitles(titles: string[]) {
+  const last = titles[titles.length - 1];
+  return titles.length > 1
+    ? `${titles.slice(0, -1).join(", ")} và ${last}`
+    : last;
+}
+
+/**
+ * UTC is used only to lay out an already-resolved Vietnamese calendar month.
+ * The wedding day and every other day of that month with an event are circled.
+ */
+export function InvitationDateCalendar({
+  date,
+  events = [],
+}: {
+  date: Date;
+  events?: readonly Pick<WeddingEvent, "title" | "date">[];
+}) {
   const { day, month, year, rows } = weddingMonth(date);
+  const eventDays = weddingEventDays(date, events);
+  const circled = new Set([day, ...eventDays.keys()]);
   return (
     <div className={styles.calendar} data-wedding-calendar>
-      <p className="eyebrow">KHOANH TRÒN MỘT NGÀY ĐẶC BIỆT</p>
+      <p className="eyebrow">
+        {circled.size > 1
+          ? "KHOANH TRÒN NHỮNG NGÀY ĐẶC BIỆT"
+          : "KHOANH TRÒN MỘT NGÀY ĐẶC BIỆT"}
+      </p>
       <table>
         <caption>
           Tháng {month} · {year}
@@ -41,14 +76,18 @@ export function InvitationDateCalendar({ date }: { date: Date }) {
           {rows.map((row, week) => (
             <tr key={week}>
               {row.map((value, column) => {
+                const wedding = value === day;
+                const titles =
+                  value === null ? undefined : eventDays.get(value);
                 return (
                   <td key={column}>
                     {value !== null &&
-                      (value === day ? (
+                      (circled.has(value) ? (
                         <span
                           className={styles.selected}
-                          data-wedding-day={day}
-                          aria-label={`Ngày cưới: ${day}/${month}/${year}`}
+                          data-wedding-day={wedding ? day : undefined}
+                          data-event-day={wedding ? undefined : value}
+                          aria-label={`${titles ? joinTitles(titles) : "Ngày cưới"}: ${value}/${month}/${year}`}
                         >
                           <Heart aria-hidden="true" />
                           <svg
@@ -59,7 +98,7 @@ export function InvitationDateCalendar({ date }: { date: Date }) {
                           >
                             <path
                               pathLength={1}
-                              d="M52 13C43 3 17 3 8 16 0 29 10 47 32 48 53 49 62 34 57 21 53 11 41 6 27 8"
+                              d={wedding ? RINGS.wedding : RINGS.event}
                             />
                           </svg>
                           {value}

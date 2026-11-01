@@ -77,7 +77,7 @@ export function InvitationView({
       <section className="wedding-section wedding-countdown">
         <p className="eyebrow">CHÚNG MÌNH SẮP CHUNG MỘT NHÀ</p>
         <h2>Cùng đếm ngược ngày vui</h2>
-        <InvitationDateCalendar date={invitation.weddingDate} />
+        <InvitationDateCalendar date={invitation.weddingDate} events={events} />
         <Countdown date={invitation.weddingDate.toISOString()} />
         <a
           className="text-link"

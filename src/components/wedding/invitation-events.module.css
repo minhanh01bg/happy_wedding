@@ -498,6 +498,46 @@
   stroke-dasharray: 1;
   overflow: visible;
 }
+/* Other event days are circled again by hand: the heart and the ring lean the
+   other way (the ring also starts its stroke elsewhere, see RINGS). */
+.selected[data-event-day] svg {
+  transform: rotate(9deg);
+}
+:global(.design-loi-yeu) .selected[data-event-day] svg.ring {
+  transform: rotate(5deg);
+}
+/* Two circled days side by side (a Saturday and its Sunday): each ring stays
+   inside its own cell, so the strokes neither cross nor touch a number. */
+:global(.design-loi-yeu)
+  .calendar
+  td:has(> .selected):has(+ td > .selected)
+  > .selected
+  svg.ring,
+:global(.design-loi-yeu)
+  .calendar
+  td:has(> .selected)
+  + td
+  > .selected
+  svg.ring {
+  left: -10px;
+  width: calc(100% + 20px);
+}
+@media (max-width: 760px) {
+  :global(.design-loi-yeu)
+    .calendar
+    td:has(> .selected):has(+ td > .selected)
+    > .selected
+    svg.ring,
+  :global(.design-loi-yeu)
+    .calendar
+    td:has(> .selected)
+    + td
+    > .selected
+    svg.ring {
+    left: -8px;
+    width: calc(100% + 16px);
+  }
+}
 :global(.design-loi-yeu) .calendar caption {
   font-weight: 500;
   font-size: 32px;

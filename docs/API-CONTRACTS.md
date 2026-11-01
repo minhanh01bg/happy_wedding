@@ -19,7 +19,7 @@ Thành công thường `{ "ok": true }`, có data khi cần. Lỗi domain `{ "ok
 | `guests`       | `{invitationId: string, name: string, group: string}`          | name 2–100, group 1–80; ownership; tối đa 2.000 khách (kiểm tra và tạo trong một transaction); token do server tạo |
 | `moderate`     | `{id: responseId, status: "approved" \| "hidden"}`             | Chỉ response thuộc thiệp của account                                                                               |
 
-InvitationInput chính xác tại `src/lib/wedding.ts`: templateId, slug, groom, bride, weddingDate, headline, story, groomParents, brideParents, events, photos, coverUrl, musicUrl, giftBank, giftAccount, giftName (nhà trai), brideGiftBank, brideGiftAccount, brideGiftName (nhà gái, mặc định rỗng để tương thích client cũ). Zod strict không chấp nhận field thừa. Mỗi phần tử `events` (1–4) có dạng `{title, date, timeLabel?, venue, address}`, xem mục “Giờ ghi bằng chữ cho tiệc” bên dưới. Date là ISO datetime có offset; image URL chỉ ảnh sample hoặc WebP upload local; mỗi bên ngân hàng điền đủ bộ hoặc bỏ trống toàn bộ. Tiền mừng không tạo ServiceOrder/WeddingPayment.
+InvitationInput chính xác tại `src/lib/wedding.ts`: templateId, slug, groom, bride, weddingDate, headline, story, groomParents, brideParents, events, photos, coverUrl, musicUrl, giftBank, giftAccount, giftName (nhà trai), brideGiftBank, brideGiftAccount, brideGiftName (nhà gái, mặc định rỗng để tương thích client cũ). Zod strict không chấp nhận field thừa. Mỗi phần tử `events` (1–4) có dạng `{title, date, timeLabel?, venue, address, side?, mapUrl?, lat?, lng?}`, xem các mục “Giờ ghi bằng chữ cho tiệc”, “Bên của tiệc” và “Bản đồ cho tiệc” bên dưới. Date là ISO datetime có offset; image URL chỉ ảnh sample hoặc WebP upload local; mỗi bên ngân hàng điền đủ bộ hoặc bỏ trống toàn bộ. Tiền mừng không tạo ServiceOrder/WeddingPayment.
 
 Ví dụ browser đã có phiên và invitationId/planId từ dữ liệu server:
 
@@ -49,6 +49,8 @@ type RSVPInput = {
   guestToken?: string; // tối đa 100 ký tự, phải thuộc thiệp
 };
 ```
+
+`eventIndex` là chỉ số gốc của tiệc trong `events`. Form chọn nó qua bên (nhà trai/nhà gái) và ngày, nhưng chỉ gửi `eventIndex`, không gửi `side`. Khách không tham dự hoặc chưa chắc thì gửi `eventIndex: 0`.
 
 Trả data `{id: responseId}`. Thiệp phải công khai hợp lệ. Personal client identity được thay bằng guest ID; submit lại cập nhật một record và đưa lời chúc về pending.
 
@@ -210,3 +212,20 @@ type WeddingEvent = {
 - Uniqueness giữa các tiệc vẫn tính theo `title`, `date`, `venue`; `timeLabel` không tham gia. Sửa nhãn không đổi số lượng hay thứ tự tiệc nên không chạm quy tắc chặn sau khi đã có RSVP.
 - Hiển thị: nhãn thay giờ, ngày vẫn hiện; `<time datetime>` chỉ mang ngày `YYYY-MM-DD` theo giờ Việt Nam.
 - Lịch: link Google Calendar của tiệc có nhãn là `dates=YYYYMMDD/YYYYMMDD` (cả ngày, ngày kết thúc loại trừ) theo ngày Việt Nam của `date`, `details` bắt đầu bằng `Thời gian: <nhãn>.` Link “Thêm ngày cưới vào lịch” cũng thành cả ngày khi tiệc trùng đúng `weddingDate` có nhãn. Không thêm route, quyền hay guest token. Lý do: [ADR 0007](adr/0007-event-written-time-label.md).
+
+### Bên của tiệc — 01/11/2026
+
+Payload `invitations` nhận thêm một field tùy chọn trong từng tiệc:
+
+```ts
+type WeddingEvent = {
+  // …các field như mục trên
+  side?: "groom" | "bride"; // nhà trai | nhà gái; bỏ trống là tiệc chung
+};
+```
+
+- Giá trị khác `"groom"`/`"bride"` trả 400. Client cũ không gửi field vẫn hợp lệ; `eventsJson` cũ đọc như trước, không cần migration.
+- Editor có ô “Tiệc của”: Nhà trai, Nhà gái hoặc Chung. Chung bỏ field khỏi JSON.
+- `eventSide(event)` trong `src/lib/rsvp-events.ts` cho bên của tiệc: dùng `side` nếu có; không có thì đoán theo `title`, không phân biệt hoa thường: chứa “nhà trai” là nhà trai, chứa “nhà gái” hoặc “vu quy” là nhà gái, còn lại là tiệc chung.
+- Form RSVP chỉ hỏi bên khi thiệp có tiệc của cả hai nhà. Tiệc chung hiện ở cả hai bên. Payload RSVP không đổi: vẫn chỉ gửi `eventIndex` gốc, DB không đổi.
+- Uniqueness giữa các tiệc vẫn tính theo `title`, `date`, `venue`; `side` không tham gia.

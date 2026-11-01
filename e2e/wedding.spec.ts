@@ -191,23 +191,31 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
   await guest
     .getByRole("button", { name: "Đóng hộp quà", exact: true })
     .click();
-  await chooseDropdown(
-    guest,
-    "Bạn có thể đến chung vui không?",
-    "Mình sẽ xác nhận sau",
-  );
+  // RSVP: radio tham dự, rồi bên (thiệp mẫu có tiệc của cả hai nhà) và ngày.
+  await guest
+    .getByRole("radio", { name: "Mình sẽ xác nhận sau", exact: true })
+    .check();
   await expect(
-    guest.getByRole("combobox", { name: "Số người tham dự", exact: true }),
+    guest.getByRole("group", { name: "Số người tham dự", exact: true }),
   ).not.toBeVisible();
-  await chooseDropdown(
-    guest,
-    "Bạn có thể đến chung vui không?",
-    "Có, mình sẽ tham dự",
-  );
-  await chooseDropdown(guest, "Bạn đến tiệc nào?", "Tiệc cưới nhà gái");
-  await expect(guest.locator('input[name="eventIndex"]')).toHaveValue("1");
-  await chooseDropdown(guest, "Bạn đến tiệc nào?", "Tiệc cưới nhà trai");
-  await chooseDropdown(guest, "Số người tham dự", "2 người");
+  await guest
+    .getByRole("radio", { name: "Có, mình sẽ tham dự", exact: true })
+    .check();
+  await guest.getByRole("radio", { name: "Nhà gái", exact: true }).check();
+  const brideDay = guest.getByRole("radio", { name: /^Thứ bảy · 13\/02 / });
+  await expect(brideDay).toBeChecked();
+  await expect(brideDay).toHaveValue("1");
+  await expect(guest.getByRole("radio", { name: /14\/02/ })).toHaveCount(0);
+  await guest.getByRole("radio", { name: "Nhà trai", exact: true }).check();
+  await expect(
+    guest.getByRole("radio", { name: /^Chủ nhật · 14\/02 / }),
+  ).toBeChecked();
+  await guest
+    .getByRole("button", { name: "Thêm một người", exact: true })
+    .click();
+  await expect(
+    guest.getByRole("group", { name: "Số người tham dự", exact: true }),
+  ).toContainText("2 người");
   await guest
     .getByLabel("Gửi đôi lời chúc")
     .fill("Chúc anh chị trăm năm hạnh phúc!");

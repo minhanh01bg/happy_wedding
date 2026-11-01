@@ -15,6 +15,10 @@
 
 # next.js
 /.next/
+# scripts/deploy-prod.sh: new build, previous build, failed build
+/.next-staging/
+/.next-prev/
+/.next-failed/
 /out/
 
 # production

@@ -14,5 +14,6 @@ Các ADR được ghi lại sau triển khai ngày 03/10/2026, đối chiếu ba
 | [0008](0008-full-resolution-uploads.md)                     | Ảnh upload giữ độ phân giải gốc, WebP q90, bỏ metadata, 40 MB  |
 | [0009](0009-event-map-without-link-resolution.md)           | Bản đồ tiệc nhúng; server không giải link Maps rút gọn         |
 | [0010](0010-local-mp3-upload.md)                            | Nhạc nền MP3 tải lên local: kiểm byte, 15 MB, chung quota ảnh  |
+| [0011](0011-runtime-uploads-under-next-start.md)            | Ảnh/MP3 tải lên sau build được route phục vụ dưới `next start` |
 
 ADR mới dùng số tiếp theo, ghi context, decision, alternatives, consequences, evidence và điều kiện xem xét lại. Nếu thay quyết định, thêm ADR superseding thay vì xóa lịch sử.

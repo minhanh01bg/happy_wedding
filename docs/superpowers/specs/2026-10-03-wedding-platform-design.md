@@ -252,6 +252,8 @@ Thiệp demo công khai `/w/thiep-mau` cũng hiển thị mục Quà mừng và 
 
 Hộp quà mở native dialog thay cho chèn QR vào trang. Nắp bật, glow và 40 hạt confetti/trái tim chạy một lần khi mở; QR xuất hiện sau nhịp mở. Modal có tên, focus trap native, Escape/nút đóng/backdrop, trả focus, khóa cuộn nền và cuộn riêng trên mobile. Reduced motion hiện QR ngay và bỏ burst/reveal. Tài khoản thật và fallback tải QR/sao chép giữ nguyên.
 
+Sao chép số tài khoản chạy cả trên http thường: không có Clipboard API thì dùng textarea ẩn + `execCommand("copy")` ngay trong cú chạm, số chép ra không có dấu cách. QR mừng cưới sinh ngay trong trang từ payload VietQR (BIN, số tài khoản, CRC trùng ảnh img.vietqr.io cũ) nên ảnh chỉ có mã, không lặp tên/số/ngân hàng và không phụ thuộc mạng ngoài; mỗi thẻ hiện nhãn bên, QR, chủ tài khoản, ngân hàng, số và nút "Sao chép STK", hai thẻ cạnh nhau từ 360px để hộp vừa một màn hình điện thoại. Chạm ảnh QR mở lớp phóng to là dialog lồng (Esc/nền/X chỉ đóng lớp này, trả focus về ảnh), lưu bằng nhấn giữ ảnh hoặc nút "Tải ảnh QR" tải PNG, không mở tab mới.
+
 ### Landing studio — 08/10/2026
 
 Trang chủ bổ sung showcase năm ảnh cưới minh họa ghim theo cuộn, ảnh mở thành hình quạt; bốn thẻ lợi ích, FAQ dùng native details và bố cục editorial. Tham khảo preview công khai Showcase Equator / Carousel Spotlight của https://www.getlayers.ai/; không dùng mã nguồn/prompt Premium. Nội dung catalog vẫn đọc server, animation chỉ tăng cường client qua HomeMotion, giữ HTML hiển thị khi không có JS. Reduced motion bỏ ghim và chuyển động. Các CTA dẫn tới catalog, thiệp mẫu và tạo bản nháp; không thay API, giá, entitlement hay dữ liệu khách hàng.

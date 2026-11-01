@@ -3807,6 +3807,10 @@ a.stat-card:focus-visible {
   height: 38px;
   border: 1px solid currentColor;
   border-radius: 50%;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
 }
 .music-settings summary {
   cursor: pointer;
@@ -3815,7 +3819,9 @@ a.stat-card:focus-visible {
   min-width: 44px;
   min-height: 48px;
   border-left: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  border-radius: 0 31px 31px 0;
   list-style: none;
+  transition: background-color 0.2s ease;
 }
 .music-settings summary::-webkit-details-marker {
   display: none;
@@ -3865,6 +3871,41 @@ a.stat-card:focus-visible {
   .music-toggle.is-playing .music-disc {
     box-shadow: 0 0 0 4px color-mix(in srgb, var(--tone) 12%, transparent);
     transition: box-shadow 400ms ease;
+  }
+}
+/*
+ * button:hover (0,1,1) tô nền mận #643647 cho nút của ứng dụng; trên thiệp nó
+ * thắng background: transparent một class của nút nhạc và hộp quà, kể cả lúc
+ * chạm trên điện thoại (hover dính). Giữ nền trong suốt ở mọi thiết bị.
+ */
+.wedding-page :is(.music-toggle, .gift-box-trigger):hover {
+  background: transparent;
+}
+.music-toggle > span:last-child {
+  text-decoration: underline 1px transparent;
+  text-underline-offset: 5px;
+  transition: text-decoration-color 0.2s ease;
+}
+/* Đĩa nhạc đổ màu chủ đạo, biểu tượng đảo màu nền; chữ gạch chân mảnh. */
+.music-toggle:focus-visible .music-disc {
+  background: var(--tone);
+  color: var(--card);
+  border-color: var(--tone);
+}
+.music-toggle:focus-visible > span:last-child {
+  text-decoration-color: currentColor;
+}
+@media (hover: hover) {
+  .music-toggle:hover .music-disc {
+    background: var(--tone);
+    color: var(--card);
+    border-color: var(--tone);
+  }
+  .music-toggle:hover > span:last-child {
+    text-decoration-color: currentColor;
+  }
+  .music-settings summary:hover {
+    background: color-mix(in srgb, currentColor 8%, transparent);
   }
 }
 @media (max-width: 800px) {
@@ -4098,11 +4139,54 @@ a.stat-card:focus-visible {
   font-family: var(--serif);
   font-size: 24px;
   margin-top: 24px;
+  text-decoration: underline 1px transparent;
+  text-underline-offset: 7px;
+  transition: text-decoration-color 0.25s ease;
 }
 .gift-box-hint {
   display: block;
   margin-top: 10px;
   font-size: 14px;
+}
+/*
+ * Hộp quà không có nền khi di chuột (xem reset ở khối nút nhạc): hộp nhấc lên,
+ * nắp hé nghiêng, bóng đậm hơn và nhãn gạch chân màu chủ đạo.
+ */
+.wedding-gift-box .gift-box-trigger .gift-box-body {
+  transition: box-shadow 0.35s ease;
+}
+.wedding-gift-box .gift-box-trigger:focus-visible .gift-box-label {
+  text-decoration-color: currentColor;
+}
+.wedding-gift-box .gift-box-trigger:focus-visible .gift-box-body {
+  box-shadow: 0 22px 36px color-mix(in srgb, var(--tone) 28%, transparent);
+}
+@media (hover: hover) {
+  .wedding-gift-box .gift-box-trigger:hover .gift-box-label {
+    text-decoration-color: currentColor;
+  }
+  .wedding-gift-box .gift-box-trigger:hover .gift-box-body {
+    box-shadow: 0 22px 36px color-mix(in srgb, var(--tone) 28%, transparent);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wedding-gift-box .gift-box-trigger .gift-box-art {
+    transition: translate 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .wedding-gift-box .gift-box-trigger:focus-visible .gift-box-art {
+    translate: 0 -6px;
+  }
+  .wedding-gift-box .gift-box-trigger:focus-visible .gift-box-lid {
+    transform: translateY(-7px) rotate(-6deg);
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .wedding-gift-box .gift-box-trigger:hover .gift-box-art {
+    translate: 0 -6px;
+  }
+  .wedding-gift-box .gift-box-trigger:hover .gift-box-lid {
+    transform: translateY(-7px) rotate(-6deg);
+  }
 }
 .gift-demo-note {
   margin-top: 24px;
@@ -4899,6 +4983,16 @@ body:has(.admin-drawer[open]) {
   color: var(--tone);
   background: var(--card);
   cursor: pointer;
+}
+/* Không để nền mận của button:hover phủ nút đóng tròn. */
+.wedding-page .gift-modal-close:hover {
+  background: var(--card);
+}
+@media (hover: hover) {
+  .wedding-page .gift-modal-close:hover {
+    background: color-mix(in srgb, var(--tone) 8%, var(--card));
+    border-color: color-mix(in srgb, var(--tone) 45%, transparent);
+  }
 }
 .gift-modal h2 {
   font-family: var(--serif);

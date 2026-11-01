@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   eventDayLabel,
+  eventWeekday,
   eventIsoDay,
   eventSide,
   eventTimeLabel,
@@ -75,6 +76,10 @@ describe("event day and time labels", () => {
     );
     expect(eventIsoDay({ date: "2026-11-08T23:30:00.000Z" })).toBe(
       "2026-11-09",
+    );
+    expect(eventWeekday({ date: "2026-11-08T23:30:00.000Z" })).toBe("Thứ hai");
+    expect(eventWeekday({ date: "2026-11-08T09:00:00.000Z" })).toBe(
+      "Chủ nhật",
     );
   });
 

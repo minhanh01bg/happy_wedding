@@ -10,7 +10,7 @@ Chủ studio muốn phần lịch tiệc “vẽ hẳn cái bản đồ ra”. K
 
 1. **Không gọi mạng khi lưu.** Mỗi tiệc có `mapUrl` tùy chọn (Zod: chỉ https, chỉ host Google Maps) và cặp `lat`/`lng` tùy chọn trong khung Việt Nam. Server chỉ kiểm chuỗi, không fetch và không theo redirect của link.
 2. **Tọa độ đọc bằng hàm thuần** từ link dài: ưu tiên ghim `!3d!4d`, rồi `q=`/`query=`, cuối cùng tâm khung nhìn `@lat,lng`. Editor điền `lat`/`lng` khi khách dán link dài và xóa khi link đổi. Link rút gọn để trống tọa độ, trừ khi client API gửi kèm tọa độ đã biết.
-3. **Bản đồ nhúng không cần API key:** `https://maps.google.com/maps?q=<lat>,<lng>&z=16&hl=vi&output=embed`, không có tọa độ thì `q=<venue, address>`. Mỗi địa điểm khác nhau một iframe, `loading="lazy"`, `referrerPolicy="no-referrer"`. CSP mở `frame-src` cho đúng `https://maps.google.com` và `https://www.google.com`.
+3. **Bản đồ nhúng không cần API key:** `https://maps.google.com/maps?q=<lat>,<lng>&z=16&hl=vi&output=embed`, không có tọa độ thì `q=<venue, address>`. Mỗi địa điểm khác nhau một iframe, `loading="lazy"`, `referrerPolicy="no-referrer"`. Từ 01/11/2026 (bổ sung) iframe nằm ngay trong thẻ tiệc của địa điểm đó, không còn khối “Đường đến tiệc” riêng dưới các thẻ; các tiệc chung thẻ khi trùng bên và trùng địa điểm + địa chỉ sau khi bỏ khoảng trắng hai đầu. CSP mở `frame-src` cho đúng `https://maps.google.com` và `https://www.google.com`.
 4. **Nút “Chỉ đường đến tiệc” mở đúng `mapUrl`** khi có, nên link rút gọn vẫn đưa khách tới ghim gốc trên Google Maps.
 
 ## Alternatives
@@ -28,7 +28,7 @@ Chủ studio muốn phần lịch tiệc “vẽ hẳn cái bản đồ ra”. K
 
 ## Evidence
 
-`tests/lib/event-map.test.ts` (schema, parser với hai link thật đã giải, URL nhúng, gộp địa điểm), `tests/components/invitation-event-maps.test.tsx` (một iframe cho hai tiệc cùng chỗ, hai bản đồ có ghi bên, `referrerpolicy="no-referrer"`, khung từng mẫu) và `tests/server/security/csp.test.ts` (`frame-src`).
+`tests/lib/event-map.test.ts` (schema, parser với hai link thật đã giải, URL nhúng, gộp địa điểm), `tests/components/invitation-event-maps.test.tsx` (bốn tiệc ở hai nơi thành hai thẻ, mỗi thẻ có bên, một iframe nằm trong thẻ, `referrerpolicy="no-referrer"`; mỗi tiệc một nơi vẫn mỗi tiệc một thẻ; góc bo từng mẫu) và `tests/server/security/csp.test.ts` (`frame-src`).
 
 ## Revisit when
 

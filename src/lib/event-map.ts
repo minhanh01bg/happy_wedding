@@ -1,9 +1,9 @@
 /**
  * Bản đồ cho tiệc: kiểm link Google Maps, đọc tọa độ ghim từ link dài, dựng
- * URL nhúng và gộp các tiệc cùng địa điểm. Mọi hàm ở đây là hàm thuần, không
- * gọi mạng: link rút gọn `maps.app.goo.gl` không được server tự giải
- * (ADR 0009), nên bản đồ của nó tìm theo địa điểm + địa chỉ, trừ khi tiệc đã
- * có `lat`/`lng`.
+ * URL nhúng và gộp các tiệc cùng địa điểm thành một thẻ. Mọi hàm ở đây là hàm
+ * thuần, không gọi mạng: link rút gọn `maps.app.goo.gl` không được server tự
+ * giải (ADR 0009), nên bản đồ của nó tìm theo địa điểm + địa chỉ, trừ khi tiệc
+ * đã có `lat`/`lng`.
  */
 import { EVENT_SIDE_LABELS, eventSide } from "./rsvp-events";
 
@@ -135,23 +135,27 @@ export function mapEmbedUrl(place: MapCoordinates | string) {
   return `${MAP_FRAME_ORIGINS[0]}/maps?q=${q}&z=16&hl=vi&output=embed`;
 }
 
-/** Link của nút “Chỉ đường đến tiệc”. */
-export function directionsUrl(event: MappableEvent) {
+/** Link của nút “Chỉ đường đến tiệc”, cho một tiệc hoặc một địa điểm. */
+export function directionsUrl(
+  place: Pick<MappableEvent, "venue" | "address" | "mapUrl">,
+) {
   return (
-    event.mapUrl ||
-    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${event.venue}, ${event.address}`)}`
+    place.mapUrl ||
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${place.venue}, ${place.address}`)}`
   );
 }
 
-/** Bỏ dấu, `đ` → `d`, chữ thường, gom dấu câu và khoảng trắng. */
-function normalize(text: string) {
-  return text
-    .normalize("NFD")
-    .replace(/\p{M}/gu, "")
-    .toLowerCase()
-    .replace(/đ/g, "d")
-    .replace(/[^\p{L}\p{N}]+/gu, " ")
-    .trim();
+/**
+ * Khóa địa điểm của tiệc: `side` (khi có), địa điểm và địa chỉ đã trim. Thẻ
+ * chỉ ghi địa điểm + địa chỉ một lần, nên chỉ chữ giống hệt mới chung thẻ; NFC
+ * để chữ gõ từ bàn phím macOS/iOS (NFD) vẫn khớp với chữ đã dựng sẵn.
+ */
+function placeKey(event: MappableEvent) {
+  return JSON.stringify([
+    event.side ?? null,
+    event.venue.normalize("NFC").trim(),
+    event.address.normalize("NFC").trim(),
+  ]);
 }
 
 /**
@@ -173,46 +177,44 @@ function venueSide(events: readonly Pick<MappableEvent, "title" | "side">[]) {
 export type EventVenue<T extends MappableEvent> = {
   venue: string;
   address: string;
+  /** Tọa độ của tiệc đầu tiên ở đây có tọa độ, cho bản đồ nhúng. */
   coordinates: MapCoordinates | null;
-  /** Bên tổ chức các tiệc ở đây, để ghi trên bản đồ. */
+  /** Link của tiệc đầu tiên ở đây có link, cho nút chỉ đường. */
+  mapUrl?: string;
+  /** Bên tổ chức các tiệc ở đây, để ghi trên thẻ và bản đồ. */
   side?: string;
-  /** Các tiệc ở địa điểm này, kèm vị trí trong mảng tiệc. */
+  /** Các tiệc ở địa điểm này, kèm vị trí trong mảng tiệc (eventIndex RSVP). */
   events: { event: T; index: number }[];
 };
 
 /**
- * Mỗi địa điểm khác nhau một mục, theo thứ tự xuất hiện. Hai tiệc cùng chỗ khi
- * cả hai có tọa độ và tọa độ trùng tới 5 chữ số thập phân (~1 m); nếu một bên
- * không có tọa độ thì so địa điểm + địa chỉ đã chuẩn hóa.
+ * Mỗi địa điểm một mục (một thẻ trên thiệp), theo thứ tự xuất hiện đầu tiên.
+ * Hai tiệc chung chỗ khi cùng `side` (tiệc không ghi `side` đi với nhau), cùng
+ * địa điểm và cùng địa chỉ sau khi trim. Thứ tự và `index` của tiệc giữ nguyên.
  */
 export function groupEventVenues<T extends MappableEvent>(
   events: readonly T[],
 ): EventVenue<T>[] {
-  const venues: EventVenue<T>[] = [];
-  const texts: string[] = [];
+  const venues = new Map<string, EventVenue<T>>();
   events.forEach((event, index) => {
+    const key = placeKey(event);
     const point = eventCoordinates(event);
-    const text = `${normalize(event.venue)}|${normalize(event.address)}`;
-    const at = venues.findIndex(({ coordinates }, i) =>
-      point && coordinates
-        ? coordinates.lat.toFixed(5) === point.lat.toFixed(5) &&
-          coordinates.lng.toFixed(5) === point.lng.toFixed(5)
-        : texts[i] === text,
-    );
-    if (at >= 0) {
-      venues[at].events.push({ event, index });
-      venues[at].coordinates ??= point;
+    const venue = venues.get(key);
+    if (venue) {
+      venue.events.push({ event, index });
+      venue.coordinates ??= point;
+      venue.mapUrl ||= event.mapUrl || undefined;
     } else {
-      venues.push({
-        venue: event.venue,
-        address: event.address,
+      venues.set(key, {
+        venue: event.venue.trim(),
+        address: event.address.trim(),
         coordinates: point,
+        mapUrl: event.mapUrl || undefined,
         events: [{ event, index }],
       });
-      texts.push(text);
     }
   });
-  return venues.map((venue) => ({
+  return [...venues.values()].map((venue) => ({
     ...venue,
     side: venueSide(venue.events.map(({ event }) => event)),
   }));

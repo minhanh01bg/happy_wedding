@@ -1,6 +1,6 @@
 import { DEMO_PHOTOS } from "./wedding-images";
 import { z } from "zod";
-import { WEDDING_MUSIC } from "./wedding-music";
+import { WEDDING_MUSIC, isUploadedMusicUrl } from "./wedding-music";
 import { VIETNAM_BOUNDS, isGoogleMapsUrl } from "./event-map";
 
 export const PALETTES = [
@@ -126,10 +126,11 @@ export const invitationSchema = z
         (v) =>
           !v ||
           v === WEDDING_MUSIC.url ||
+          isUploadedMusicUrl(v) ||
           /^https:\/\/(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}\/[\w./%?=&+-]+\.(?:mp3|ogg)(?:\?[\w=&%-]+)?$/.test(
             v,
           ),
-        "Hãy chọn nhạc có sẵn hoặc dùng đường dẫn HTTPS đến tệp MP3/OGG",
+        "Hãy chọn nhạc có sẵn, tải tệp MP3 lên hoặc dùng đường dẫn HTTPS đến tệp MP3/OGG",
       ),
     giftBank: z
       .string()

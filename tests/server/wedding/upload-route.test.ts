@@ -15,20 +15,22 @@ const encodes = vi.hoisted(() => ({
 }));
 const slots = vi.hoisted(() => ({
   encode: undefined as { active: number; waiting: number } | undefined,
+  acquired: 0,
 }));
 
 // Count the route's own Sharp pipelines (the only caller that passes
 // limitInputPixels) from decode to finished WebP, and let a test hold them.
+// Reading the header with metadata() is not counted; toBuffer() decodes.
 vi.mock("sharp", async (importOriginal) => {
   const real = (await importOriginal<{ default: typeof sharp }>()).default;
   function tracked(input?: unknown, options?: { limitInputPixels?: unknown }) {
     const image = real(input as never, options as never);
     if (options?.limitInputPixels === undefined) return image;
-    encodes.started++;
-    encodes.active++;
-    encodes.peak = Math.max(encodes.peak, encodes.active);
     const toBuffer = image.toBuffer.bind(image) as () => Promise<Buffer>;
     image.toBuffer = (async () => {
+      encodes.started++;
+      encodes.active++;
+      encodes.peak = Math.max(encodes.peak, encodes.active);
       try {
         await encodes.gate;
         return await toBuffer();
@@ -45,8 +47,15 @@ vi.mock("@/server/wedding/slots", async (importOriginal) => {
     await importOriginal<typeof import("@/server/wedding/slots")>();
   return {
     ...actual,
-    createSlots: (options: Parameters<typeof actual.createSlots>[0]) =>
-      (slots.encode = actual.createSlots(options)),
+    createSlots: (options: Parameters<typeof actual.createSlots>[0]) => {
+      const created = actual.createSlots(options);
+      const acquire = created.acquire;
+      created.acquire = () => {
+        slots.acquired++;
+        return acquire();
+      };
+      return (slots.encode = created);
+    },
   };
 });
 
@@ -139,6 +148,7 @@ describe("POST /api/wedding/upload", () => {
     stored.files.length = 0;
     stored.reserved.length = 0;
     Object.assign(encodes, { started: 0, active: 0, peak: 0 });
+    slots.acquired = 0;
     encodes.gate = undefined;
   });
 
@@ -174,6 +184,7 @@ describe("POST /api/wedding/upload", () => {
       expect(response.status).toBe(200);
       const image = await storedImage();
       expect([image.width, image.height]).toEqual([5464, 8192]);
+      expect([slots.acquired, encodes.started]).toEqual([1, 1]);
     },
     SLOW,
   );
@@ -270,6 +281,7 @@ describe("POST /api/wedding/upload", () => {
         );
       }
       expect(stored.files).toHaveLength(0);
+      expect(slots.acquired).toBe(0);
     },
     SLOW,
   );
@@ -354,6 +366,50 @@ describe("POST /api/wedding/upload", () => {
       expect(results.every((response) => response.status === 200)).toBe(true);
       expect(stored.files).toHaveLength(12);
       expect(encodes.peak).toBe(2);
+    },
+    SLOW,
+  );
+
+  it(
+    "từ chối PNG 16-bit RGBA 32 megapixel trước khi lấy slot hay decode",
+    async () => {
+      // 5657×5657 = 32 MP; 16-bit RGBA is 8 bytes per pixel, 256 MB raw.
+      // Without the budget this 3 MB file took about 950 MB to encode.
+      const rgba = () =>
+        sharp({
+          create: {
+            width: 5657,
+            height: 5657,
+            channels: 4,
+            background: { r: 200, g: 143, b: 106, alpha: 0.5 },
+          },
+        });
+      const png16 = await rgba()
+        .toColourspace("rgb16")
+        .png({ compressionLevel: 1 })
+        .toBuffer();
+      const header = await sharp(png16).metadata();
+      expect([header.depth, header.channels, header.hasAlpha]).toEqual([
+        "ushort",
+        4,
+        true,
+      ]);
+      expect(png16.byteLength).toBeLessThan(40 * MiB);
+      // 8-bit RGBA of the same size: alpha makes WebP cost RAM per pixel.
+      const png8 = await rgba().png({ compressionLevel: 1 }).toBuffer();
+
+      for (const body of [png16, png8]) {
+        const response = await upload(body, "image/png");
+        expect(response.status).toBe(400);
+        expect(await response.json()).toEqual({
+          ok: false,
+          message: "Ảnh quá lớn để xử lý, vui lòng dùng ảnh JPEG 8-bit",
+        });
+      }
+      expect(slots.acquired).toBe(0);
+      expect(encodes.started).toBe(0);
+      expect(stored.files).toHaveLength(0);
+      expect(stored.reserved).toHaveLength(0);
     },
     SLOW,
   );

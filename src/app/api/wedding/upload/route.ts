@@ -1,13 +1,17 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import sharp from "sharp";
+import sharp, { type Sharp } from "sharp";
 
 import { logger } from "@/lib/logger";
 import {
+  decodeCostBytes,
+  MAX_UPLOAD_DECODE_BYTES,
   MAX_UPLOAD_IMAGE_BYTES,
   MAX_UPLOAD_IMAGE_PIXELS,
   MAX_UPLOAD_IMAGE_SIDE,
+  UPLOAD_IMAGE_DECODE_TOO_LARGE,
+  UPLOAD_IMAGE_INVALID,
   UPLOAD_IMAGE_SIDE_TOO_LARGE,
   UPLOAD_IMAGE_TOO_LARGE,
   UPLOAD_IMAGE_TYPE_INVALID,
@@ -26,31 +30,47 @@ const IMAGE_FORMATS = ["jpeg", "png", "webp"];
 
 /**
  * A full-resolution encode takes about 6 s and 350-470 MB of RAM for a 45 MP
- * 8-bit JPEG, and far more for a 16-bit PNG, so this process runs at most two
- * at once. Later uploads wait their turn; only a full queue or a long wait
+ * 8-bit JPEG, and up to about 800 MB inside the decode budget, so this process
+ * runs at most two at once. Later uploads wait their turn; only a full queue or a long wait
  * gets 503. The editor sends one photo at a time.
  */
 const encodeSlots = createSlots({ slots: 2, queue: 10, waitMs: 60_000 });
 
-async function encode(input: Buffer) {
+/**
+ * Reads only the header, so every check here runs before the image takes an
+ * encode slot or is decoded.
+ */
+async function inspect(input: Buffer) {
+  const image = sharp(input, {
+    limitInputPixels: MAX_UPLOAD_IMAGE_PIXELS,
+    animated: false,
+  });
+  const metadata = await image.metadata().catch(() => {
+    throw new WeddingError(400, UPLOAD_IMAGE_INVALID);
+  });
+  const { format, width = 0, height = 0 } = metadata;
+  // Content-Type is only a label; Sharp also reads TIFF, GIF, SVG, HEIF...
+  if (!format || !IMAGE_FORMATS.includes(format))
+    throw new WeddingError(400, UPLOAD_IMAGE_TYPE_INVALID);
+  if (Math.max(width, height) > MAX_UPLOAD_IMAGE_SIDE)
+    throw new WeddingError(400, UPLOAD_IMAGE_SIDE_TOO_LARGE);
+  if (width * height > MAX_UPLOAD_IMAGE_PIXELS)
+    throw new WeddingError(400, UPLOAD_IMAGE_INVALID);
+  // Encode RAM follows the raw frame, not the file: an 8.5 MB 16-bit RGBA PNG
+  // of 32 MP needed about 950 MB. 8-bit RGB up to 64 MP stays under budget.
+  if (decodeCostBytes(metadata) > MAX_UPLOAD_DECODE_BYTES)
+    throw new WeddingError(400, UPLOAD_IMAGE_DECODE_TOO_LARGE);
+  return image;
+}
+
+async function encode(image: Sharp) {
   try {
-    const image = sharp(input, {
-      limitInputPixels: MAX_UPLOAD_IMAGE_PIXELS,
-      animated: false,
-    });
-    const { format, width = 0, height = 0 } = await image.metadata();
-    // Content-Type is only a label; Sharp also reads TIFF, GIF, SVG, HEIF...
-    if (!format || !IMAGE_FORMATS.includes(format))
-      throw new WeddingError(400, UPLOAD_IMAGE_TYPE_INVALID);
-    if (Math.max(width, height) > MAX_UPLOAD_IMAGE_SIDE)
-      throw new WeddingError(400, UPLOAD_IMAGE_SIDE_TOO_LARGE);
     // Keep full resolution. Re-encoding drops EXIF/GPS/XMP and converts ICC
     // to sRGB, because /uploads is public. effort 2 matches effort 4 in size
     // and quality on a 45 MP photo at about 1/5 of the time and half the RAM.
     return await image.rotate().webp({ quality: 90, effort: 2 }).toBuffer();
-  } catch (error) {
-    if (error instanceof WeddingError) throw error;
-    throw new WeddingError(400, "Tệp ảnh không hợp lệ hoặc quá lớn");
+  } catch {
+    throw new WeddingError(400, UPLOAD_IMAGE_INVALID);
   }
 }
 
@@ -85,6 +105,7 @@ export async function POST(request: Request) {
     // One contiguous copy from here on; the chunk list would double the RAM.
     const input = Buffer.concat(chunks, bytes);
     chunks.length = 0;
+    const image = await inspect(input);
     const release = await encodeSlots.acquire().catch((error: unknown) => {
       if (!(error instanceof SlotsBusyError)) throw error;
       logger.warn("wedding_upload_busy", { waiting: encodeSlots.waiting });
@@ -92,7 +113,7 @@ export async function POST(request: Request) {
     });
     let output: Buffer;
     try {
-      output = await encode(input);
+      output = await encode(image);
     } finally {
       release();
     }

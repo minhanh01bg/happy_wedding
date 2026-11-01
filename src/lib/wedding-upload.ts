@@ -14,3 +14,49 @@ export const UPLOAD_IMAGE_SIDE_TOO_LARGE =
   "Ảnh có cạnh dài hơn 16.383 px. Vui lòng chọn ảnh nhỏ hơn";
 export const UPLOAD_IMAGE_TYPE_INVALID = "Chỉ nhận ảnh JPEG, PNG hoặc WebP";
 export const UPLOAD_SERVER_BUSY = "Máy chủ đang bận, vui lòng thử lại sau";
+export const UPLOAD_IMAGE_INVALID = "Tệp ảnh không hợp lệ hoặc quá lớn";
+
+/**
+ * Trần bộ nhớ giải nén, tính từ header trước khi decode. RAM lúc mã hóa tăng
+ * theo khung ảnh chứ không theo cỡ file: PNG RGBA 16-bit 32 megapixel chỉ
+ * 8,5 MB nhưng cần khoảng 950 MB. RGB 8-bit tới 64 megapixel (192 MB) vẫn lọt;
+ * ảnh có alpha chỉ lọt tới khoảng 26,2 megapixel (xem `decodeCostBytes`).
+ */
+export const MAX_UPLOAD_DECODE_BYTES = 200 * 1024 * 1024;
+export const UPLOAD_IMAGE_DECODE_TOO_LARGE =
+  "Ảnh quá lớn để xử lý, vui lòng dùng ảnh JPEG 8-bit";
+
+/** Byte mỗi mẫu theo kiểu `depth` của libvips; không rõ thì tính 2. */
+const SAMPLE_BYTES: Record<string, number> = {
+  uchar: 1,
+  char: 1,
+  ushort: 2,
+  short: 2,
+  uint: 4,
+  int: 4,
+  float: 4,
+  complex: 8,
+  double: 8,
+  dpcomplex: 16,
+};
+
+/**
+ * width × height × channels × byte mỗi mẫu, từ `metadata()` của Sharp. Ảnh có
+ * alpha tính như RGBA 16-bit (8 byte/điểm ảnh) dù là 8-bit: WebP nén kênh alpha
+ * tốn RAM theo số điểm ảnh, đo PNG RGBA 8-bit 52 megapixel cần 1,26 GB.
+ */
+export function decodeCostBytes(image: {
+  width?: number;
+  height?: number;
+  channels?: number;
+  depth?: string;
+  hasAlpha?: boolean;
+}) {
+  const pixelBytes =
+    (image.channels ?? 4) * (SAMPLE_BYTES[image.depth ?? ""] ?? 2);
+  return (
+    (image.width ?? 0) *
+    (image.height ?? 0) *
+    Math.max(pixelBytes, image.hasAlpha ? 8 : 0)
+  );
+}

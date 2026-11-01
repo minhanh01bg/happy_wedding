@@ -665,3 +665,41 @@ Phạm vi: `main` tại `6009b2d` (tạo id trên trình duyệt không cần `c
     3. 12 upload giữ ở cổng (2 chạy, 10 chờ); upload thứ 13 → 503 `{ok:false,message:"Máy chủ đang bận, vui lòng thử lại sau"}`; mở cổng thì 12 upload trước đều 200.
 - **Kiểm tra đỏ.** Tạm thay route bằng bản `a512258`: 3/9 fail đúng lý do. TIFF nhận 200. Bài 4 upload: `expected 4 to be 2`, tức route cũ chạy cả 4 pipeline cùng lúc. Bài 503: không có hàng chờ. Trả lại route mới thì 9/9 qua.
 - **Gate.** `TEST_DATABASE_URL="file:$PWD/prisma/prisma/test.db" pnpm check` **exit 0**: lint 0 lỗi (còn cảnh báo có sẵn ở `music.tsx:55`), TypeScript qua, **28 file / 213 test qua**. RAM trước khi chạy: available 3669 MB. Theo yêu cầu review, vòng này không chạy `pnpm build` (bước sau build main đã merge), không chạy server, không chạy E2E, không đụng `prisma/dev.db` hay `public/uploads`.
+
+### Review vòng 2 — ngân sách RAM giải mã — 01/11/2026
+
+- **Thay đổi.** `src/lib/wedding-upload.ts` thêm:
+  - `MAX_UPLOAD_DECODE_BYTES = 200 MiB`.
+  - `UPLOAD_IMAGE_DECODE_TOO_LARGE` (“Ảnh quá lớn để xử lý, vui lòng dùng ảnh JPEG 8-bit”).
+  - `decodeCostBytes(metadata)` = rộng × cao × kênh × byte mỗi mẫu (`uchar` 1, `ushort` 2, …). Ảnh có alpha tính tối thiểu 8 byte/điểm ảnh.
+
+  Route tách `inspect()` ra khỏi phần mã hóa. `inspect()` chạy `metadata()` rồi kiểm tra định dạng, cạnh, 64 megapixel và ngân sách, **trước khi lấy slot**. Chỉ `rotate().webp().toBuffer()` chạy trong slot. Vì vậy tệp hỏng và ảnh trên 64 megapixel cũng không còn chiếm slot.
+
+- **Vì sao tính riêng alpha.** Công thức theo khung thô thuần cho lọt PNG RGBA 8-bit tới khoảng 52 megapixel. Đo một ảnh như vậy cần nhiều RAM hơn mọi ảnh 16-bit dưới ngân sách. Đo `sharp` 0.35.5, `limitInputPixels 64e6`, `rotate(90)`, WebP q90 effort 2, mỗi ảnh một tiến trình mới:
+
+  | Input                                       | Khung thô | Theo ngân sách | Thời gian | Peak RSS     |
+  | ------------------------------------------- | --------- | -------------- | --------- | ------------ |
+  | PNG RGBA 8-bit 7200×7200 (51,8 MP, 3,9 MiB) | 198 MiB   | từ chối (×8)   | 4,8 s     | **1255 MiB** |
+  | PNG RGBA 16-bit 5100×5100 (26 MP, 7,2 MiB)  | 198 MiB   | nhận           | 2,6 s     | 780 MiB      |
+  | PNG RGBA 8-bit 5100×5100 (26 MP, 2,1 MiB)   | 99 MiB    | nhận (198)     | 2,3 s     | 675 MiB      |
+  | JPEG RGB 8-bit 8000×8000 nhiễu (41,8 MiB)¹  | 183 MiB   | nhận           | 10 s      | 641 MiB      |
+  | PNG xám 16-bit 8000×8000 (64 MP, 2,3 MiB)   | 122 MiB   | nhận           | 3,7 s     | 483 MiB      |
+  | JPEG CMYK 8-bit 7200×7200 (51,8 MP, 2 MiB)  | 198 MiB   | nhận           | 6,1 s     | 461 MiB      |
+  | PNG RGB 16-bit 5900×5900 (34,8 MP, 6,5 MiB) | 199 MiB   | nhận           | 2,3 s     | 426 MiB      |
+
+  ¹ Vượt giới hạn 40 MB nên route trả 413; dùng làm cận trên cho JPEG 64 megapixel.
+
+  Ảnh có alpha tốn khoảng 23–27 MiB/megapixel dù 8 hay 16 bit (phần alpha của WebP), nên tính 8 byte/điểm ảnh. Trường hợp xấu nhất còn được nhận là ảnh có alpha khoảng 26,2 megapixel: **khoảng 780 MiB/slot**, khớp 27 MB/MP × 26,2 + 70 MB. **2 slot khoảng 1,6 GB**, cộng ≤ 400 MB body đang chờ, thay cho 1,8 GB/3,6 GB ở vòng 1. Đã ghi vào ADR 0008 và OPERATIONS.
+
+- **Test mới.**
+  - `tests/lib/wedding-upload.test.ts` có 3 test cho `decodeCostBytes`:
+    1. RGB 8-bit 5464×8192, 8192×5464 và 8000×8000 nằm trong ngân sách.
+    2. RGBA 16-bit 5657×5657 (32 MP) vượt; 5100×5100 nằm trong. Ảnh 8-bit có alpha (4 hoặc 2 kênh) 5657×5657 vượt. 7200×7200 4 kênh 8-bit vượt khi `hasAlpha`, nằm trong khi không (CMYK).
+    3. RGB 16-bit 5900×5900 nằm trong, 6000×6000 vượt.
+  - `upload-route.test.ts`:
+    - Đếm số lần lấy slot (`slots.acquired`). Chỉ pipeline có `toBuffer()` mới được tính là decode; `metadata()` chỉ đọc header.
+    - Test mới: PNG RGBA 16-bit 5657×5657 (header `ushort`, 4 kênh, `hasAlpha`, dưới 40 MiB) và bản RGBA 8-bit cùng cỡ → 400 `{ok:false,message:"Ảnh quá lớn để xử lý, vui lòng dùng ảnh JPEG 8-bit"}`. Không lấy slot, không decode, không lưu file, không `reserveUpload`.
+    - Test JPEG 5464×8192 kiểm thêm: lấy đúng 1 slot, decode 1 lần.
+    - Test tệp hỏng / 8001×8001 kiểm thêm: không lấy slot.
+- **Kiểm tra đỏ.** Tạm thay route bằng bản `895c9c7`: **2/10 fail** đúng lý do. Bài PNG 16-bit: `expected 200 to be 400`, tức route cũ mã hóa ảnh. Bài tệp hỏng / 8001×8001: `expected 2 to be +0`, tức route cũ lấy slot rồi mới từ chối. Trả lại route mới (`cmp` khớp) thì 10/10 qua. Test thư viện mới không chạy được trên `895c9c7` vì chưa có `decodeCostBytes`.
+- **Gate.** `TEST_DATABASE_URL="file:$PWD/prisma/prisma/test.db" pnpm check` **exit 0**: lint 0 lỗi (còn cảnh báo có sẵn ở `music.tsx:55`), TypeScript qua, **29 file / 217 test qua**. RAM trước khi chạy: available 3652 MB. Lần chạy đầu fail typecheck (`sharp.Sharp` không có trong kiểu ESM của sharp 0.35), sửa thành `import sharp, { type Sharp }`. Theo yêu cầu review, không chạy `pnpm build`, server hay E2E, không đụng `prisma/dev.db` hay `public/uploads`; ảnh đo nằm ở scratchpad và đã xóa.

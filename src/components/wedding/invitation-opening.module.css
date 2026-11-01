@@ -261,14 +261,19 @@
     max-height: 88dvh;
   }
 }
+/* Skipping is the quiet second choice: an outline under the opening button. */
 .opening[data-opening-design] :global(.opening-skip) {
   background: transparent;
   color: inherit;
-  border: 0;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
   opacity: 1;
-  padding: 12px 14px;
-  text-decoration: underline;
-  text-underline-offset: 4px;
+  padding: 10px 22px;
+}
+@media (hover: hover) {
+  .opening[data-opening-design] :global(.opening-skip):hover {
+    border-color: currentColor;
+    background: color-mix(in srgb, currentColor 10%, transparent);
+  }
 }
 /* Older global skins hid every SVG; the new artwork must remain visible. */
 .opening[data-opening-design] .art svg {
@@ -354,7 +359,8 @@
   margin-top: clamp(10px, 2.2dvh, 24px);
 }
 .opening[data-opening-design="loi-yeu"] :global(.opening-skip) {
-  margin-top: 2px;
+  /* Clear of the opening button's focus ring now the skip has a border. */
+  margin-top: clamp(8px, 1.5dvh, 14px);
 }
 .opening[data-opening-design="loi-yeu"] :global(.opening-hint) {
   margin-top: 4px;

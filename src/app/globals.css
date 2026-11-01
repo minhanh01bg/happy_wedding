@@ -1520,10 +1520,6 @@ button.small {
   max-width: 1100px;
   margin: auto;
 }
-.wedding-top a {
-  letter-spacing: 0;
-  font-size: 12px;
-}
 .demo-banner {
   padding: 12px;
   text-align: center;
@@ -1658,14 +1654,6 @@ button.small {
   display: block;
   margin-top: 18px;
 }
-.event-card a {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  margin-top: 25px;
-  text-decoration: underline;
-  font-size: 12px;
-}
 .wedding-album {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1737,10 +1725,6 @@ button.small {
 .wedding-thanks p {
   font-size: 12px;
   margin: 15px 0;
-}
-.wedding-thanks a {
-  font-size: 10px;
-  letter-spacing: 1px;
 }
 .layout-botanical.wedding-page .wedding-hero {
   display: flex;
@@ -2724,11 +2708,6 @@ body:has(.invitation-opening[open]) {
     gap: 8px 20px;
     text-align: center;
   }
-  .wedding-top a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-  }
   .wedding-hero-image {
     height: clamp(330px, 95vw, 500px);
   }
@@ -2740,10 +2719,6 @@ body:has(.invitation-opening[open]) {
   }
   .wedding-page .event-card p,
   .family-grid p {
-    font-size: 14px;
-  }
-  .event-card a {
-    min-height: 44px;
     font-size: 14px;
   }
   .wedding-rsvp {
@@ -3347,7 +3322,6 @@ a.stat-card:focus-visible {
 .wedding-section > p:not(.eyebrow),
 .family-grid p,
 .wedding-page .event-card p,
-.event-card a,
 .wedding-wishes p,
 .wedding-thanks p,
 .wedding-rsvp label,
@@ -3372,31 +3346,174 @@ a.stat-card:focus-visible {
   font-size: 17px;
   letter-spacing: 2px;
 }
-.wedding-shortcuts {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px 20px;
-  padding: 16px 20px;
-  border-bottom: 1px solid currentColor;
-}
-.wedding-shortcuts a,
-.event-card a {
-  min-height: 44px;
+/* Guest links are designed actions, never bare underlined text. Colours come
+   from the template's --tone and --card, so one set of rules fits every look;
+   the event buttons live beside their cards in invitation-events.module.css. */
+.wedding-top a {
   display: inline-flex;
   align-items: center;
-  text-decoration: underline;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid var(--tone);
+  border-radius: 999px;
+  background: var(--tone);
+  color: var(--card);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+/* Shortcuts are soft chips. A phone scrolls them sideways rather than
+   breaking them over several lines; a shadow marks the hidden edge. */
+.wedding-shortcuts {
+  display: flex;
+  gap: 10px;
+  padding: 12px 20px 16px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 20px;
+  scrollbar-width: none;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  background:
+    linear-gradient(to right, var(--card) 45%, transparent) left / 36px 100%
+      no-repeat local,
+    linear-gradient(to left, var(--card) 45%, transparent) right / 36px 100%
+      no-repeat local,
+    radial-gradient(
+        farthest-side at 0 50%,
+        color-mix(in srgb, var(--tone) 28%, transparent),
+        transparent
+      )
+      left / 16px 100% no-repeat scroll,
+    radial-gradient(
+        farthest-side at 100% 50%,
+        color-mix(in srgb, var(--tone) 28%, transparent),
+        transparent
+      )
+      right / 16px 100% no-repeat scroll;
+}
+.wedding-shortcuts::-webkit-scrollbar {
+  display: none;
+}
+.wedding-shortcuts a {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid color-mix(in srgb, var(--tone) 32%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tone) 6%, transparent);
+  color: var(--tone);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  scroll-snap-align: start;
+}
+/* Auto margins centre the row while it fits and fall to zero once it
+   scrolls, so the first chip is never cut off. */
+.wedding-shortcuts a:first-child {
+  margin-inline-start: auto;
+}
+.wedding-shortcuts a:last-child {
+  margin-inline-end: auto;
+}
+.wedding-page :is(.wedding-top, .wedding-shortcuts) a:focus-visible {
+  outline-offset: 3px;
+}
+.design-loi-yeu .wedding-shortcuts a {
+  border-color: color-mix(in srgb, var(--accent) 75%, transparent);
+  background: transparent;
+}
+.design-song-hy .wedding-shortcuts a {
+  border: 3px double color-mix(in srgb, var(--tone) 70%, transparent);
+  border-radius: 2px;
+}
+/* Secondary actions: an outline in the colour of the text around them. */
+.wedding-countdown .text-link,
+.gift-actions .text-link {
+  gap: 9px;
+  padding: 0 22px;
+  border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  border-radius: 6px;
+  font-size: 14px;
+}
+/* The studio credit signs off under a short hairline, like a letter. */
+.wedding-thanks a {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.wedding-thanks a::before {
+  content: "";
+  width: 32px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.45;
 }
 .opening-skip {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  max-width: 100%;
   min-height: 44px;
   margin: 10px auto 0;
-  padding: 8px;
+  padding: 8px 22px;
   background: transparent;
   color: var(--tone);
-  border: 0;
-  text-decoration: underline;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  border-radius: 6px;
   font-size: 14px;
+  font-weight: 600;
+}
+/* Touch screens skip hover so a tapped chip never stays inverted. */
+@media (hover: hover) {
+  .wedding-shortcuts a:hover,
+  .design-loi-yeu .wedding-shortcuts a:hover {
+    border-color: var(--tone);
+    background: var(--tone);
+    color: var(--card);
+  }
+  .wedding-top a:hover {
+    background: transparent;
+    color: var(--tone);
+  }
+  .wedding-countdown .text-link:hover,
+  .gift-actions .text-link:hover,
+  .wedding-page .opening-skip:hover {
+    border-color: currentColor;
+    background: color-mix(in srgb, currentColor 10%, transparent);
+    color: inherit;
+  }
+  .wedding-thanks a:hover::before {
+    width: 72px;
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .wedding-page :is(.wedding-top, .wedding-shortcuts) a,
+  .wedding-page :is(.wedding-countdown, .gift-actions) .text-link,
+  .wedding-page .opening-skip {
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease;
+  }
+  .wedding-thanks a::before {
+    transition:
+      width 0.3s ease,
+      opacity 0.3s ease;
+  }
 }
 .opening-hint {
   font-size: 13px;
@@ -5385,8 +5502,11 @@ body:has(.admin-drawer[open]) {
   color: var(--letter-paper);
   border: 0;
 }
+/* Champagne marks the hover on the border; the label keeps the paper colour
+   so it stays readable on the plum band. */
 .design-loi-yeu .wedding-countdown .text-link:hover {
-  color: color-mix(in srgb, var(--accent) 55%, white);
+  border-color: color-mix(in srgb, var(--accent) 55%, white);
+  color: inherit;
 }
 .design-loi-yeu .wedding-countdown [data-wedding-calendar] {
   --tone: var(--letter-ink);

@@ -64,15 +64,48 @@
   gap: 15px;
   margin-top: 25px;
 }
+/* Directions lead as a solid button in the template's tone; adding the party
+   to a calendar follows as its outline. Both take the colour of their card. */
 :global(.wedding-page) .events .actions a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
-  max-width: 100%;
+  width: min(100%, 280px);
+  min-height: 46px;
   margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
+  padding: 10px 18px;
+  border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  text-align: center;
+}
+:global(.wedding-page) .events .actions a:first-child {
+  border-color: var(--tone);
+  background: var(--tone);
+  color: var(--card);
+}
+@media (hover: hover) {
+  :global(.wedding-page) .events .actions a:hover {
+    border-color: currentColor;
+    background: color-mix(in srgb, currentColor 10%, transparent);
+  }
+  /* A halo instead of a lighter fill keeps the label's contrast on hover. */
+  :global(.wedding-page) .events .actions a:first-child:hover {
+    border-color: var(--tone);
+    background: var(--tone);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--tone) 24%, transparent);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :global(.wedding-page) .events .actions a {
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
 }
 .ribbon {
   border-block: 1px solid color-mix(in srgb, currentColor 25%, transparent);
@@ -330,12 +363,19 @@
   flex-direction: row;
   justify-content: flex-start;
   flex-wrap: wrap;
-  gap: 25px;
+  gap: 12px;
+}
+:global(.wedding-page) .loi-hen .actions a {
+  width: auto;
 }
 .thu-tinh .card {
   padding: 0 25px 70px !important;
   background: #fffaf4 !important;
   box-shadow: 0 10px 30px #88556112 !important;
+}
+/* The fold's rule sits about 70px up the card: keep the buttons clear of it. */
+.thu-tinh .actions {
+  margin-bottom: 24px;
 }
 .letterHeader {
   display: flex;

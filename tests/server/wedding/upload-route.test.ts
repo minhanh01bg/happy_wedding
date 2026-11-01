@@ -5,6 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const stored = vi.hoisted(() => ({
   files: [] as Buffer[],
   reserved: [] as number[],
+  // Run before the mocked reserveUpload/writeFile; a test may throw here.
+  onReserve: () => {},
+  onWrite: () => {},
 }));
 const encodes = vi.hoisted(() => ({
   started: 0,
@@ -66,6 +69,7 @@ vi.mock("@/server/wedding/slots", async (importOriginal) => {
 vi.mock("node:fs/promises", () => ({
   mkdir: async () => undefined,
   writeFile: async (_file: string, data: Buffer) => {
+    stored.onWrite();
     stored.files.push(data);
   },
 }));
@@ -81,6 +85,7 @@ vi.mock("@/server/wedding/service", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/server/wedding/service")>()),
   ownedInvitation: async () => ({ id: "invitation-1" }),
   reserveUpload: async (_a: string, _i: string, _f: string, bytes: number) => {
+    stored.onReserve();
     stored.reserved.push(bytes);
     return { id: "upload-1" };
   },
@@ -157,6 +162,8 @@ describe("POST /api/wedding/upload", () => {
   beforeEach(() => {
     stored.files.length = 0;
     stored.reserved.length = 0;
+    stored.onReserve = () => {};
+    stored.onWrite = () => {};
     Object.assign(encodes, { started: 0, active: 0, peak: 0 });
     slots.acquired = 0;
     slots.granted = () => {};
@@ -516,8 +523,11 @@ describe("POST /api/wedding/upload", () => {
       bytes: photo.length >> 1,
       errorClass: "Error",
       errorCode: undefined,
-      errorMessage: expect.stringMatching(/^VipsJpeg: premature end/),
+      errorMessage: expect.any(String),
     });
+    expect(
+      (meta as { errorMessage: string }).errorMessage.length,
+    ).toBeLessThanOrEqual(200);
     expect(stored.files).toHaveLength(0);
     expect(stored.reserved).toHaveLength(0);
     expect([slots.encode?.active, slots.encode?.waiting]).toEqual([0, 0]);
@@ -556,5 +566,26 @@ describe("POST /api/wedding/upload", () => {
     expect(slots.acquired).toBe(0);
     expect(stored.files).toHaveLength(0);
     expect(stored.reserved).toHaveLength(0);
+  });
+
+  it("lỗi DB hay ghi file lúc khách vừa hủy vẫn là 500 có log", async () => {
+    const error = vi.spyOn(logger, "error").mockImplementation(() => {});
+    const photo = await jpeg(64, 64).toBuffer();
+    for (const step of ["onReserve", "onWrite"] as const) {
+      const controller = new AbortController();
+      stored[step] = () => {
+        controller.abort();
+        throw Object.assign(new Error("no space left"), { code: "ENOSPC" });
+      };
+      const response = await upload(photo, "image/jpeg", controller.signal);
+      expect(response.status).toBe(500);
+      expect((await response.json()).message).toBe("Chưa tải được ảnh");
+      stored[step] = () => {};
+    }
+    expect(error.mock.calls.map(([event]) => event)).toEqual([
+      "wedding_upload_error",
+      "wedding_upload_error",
+    ]);
+    expect(stored.files).toHaveLength(0);
   });
 });

@@ -123,7 +123,12 @@ export async function POST(request: Request) {
     let bytes = 0;
     const reader = request.body.getReader();
     while (true) {
-      const { done, value } = await reader.read();
+      const { done, value } = await reader.read().catch((error: unknown) => {
+        // A client that leaves mid-body makes the read reject (ECONNRESET)
+        // with request.signal already aborted: a cancel, not a failure.
+        if (request.signal.aborted) throw aborted();
+        throw error;
+      });
       if (done) break;
       bytes += value.byteLength;
       if (bytes > MAX_UPLOAD_IMAGE_BYTES) {
@@ -174,13 +179,7 @@ export async function POST(request: Request) {
       ok: true,
       data: { url: `/uploads/weddings/${filename}` },
     });
-  } catch (caught) {
-    // A client that leaves mid-body makes reader.read() reject (ECONNRESET),
-    // with request.signal already aborted: a cancel, not a server failure.
-    const error =
-      caught instanceof WeddingError || !request.signal.aborted
-        ? caught
-        : aborted();
+  } catch (error) {
     if (error instanceof WeddingError)
       return Response.json(
         { ok: false, message: error.message },

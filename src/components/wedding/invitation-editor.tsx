@@ -5,6 +5,10 @@ import Link from "next/link";
 import type { WeddingTemplate } from "@prisma/client";
 import { Save } from "lucide-react";
 import { invitationSchema, type InvitationInput } from "@/lib/wedding";
+import {
+  MAX_UPLOAD_IMAGE_BYTES,
+  UPLOAD_IMAGE_TOO_LARGE,
+} from "@/lib/wedding-upload";
 import { TemplateArtwork } from "./template-card";
 import { post } from "./client";
 import {
@@ -94,7 +98,8 @@ export function InvitationEditor({
     setError("");
     setUploading(true);
     try {
-      if (file.size > 5 * 1024 * 1024) throw new Error("Ảnh tối đa 5 MB");
+      if (file.size > MAX_UPLOAD_IMAGE_BYTES)
+        throw new Error(UPLOAD_IMAGE_TOO_LARGE);
       if (data.photos.length >= maxPhotos)
         throw new Error(`Gói hiện tại tối đa ${maxPhotos} ảnh`);
       const response = await fetch(`/api/wedding/upload?invitationId=${id}`, {

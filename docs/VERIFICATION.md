@@ -608,3 +608,34 @@ Phạm vi: `main` tại `6009b2d` (tạo id trên trình duyệt không cần `c
   - Đĩa gốc `/` chỉ còn khoảng 2,5 GB trống, mà một lượt `next dev` có thể ghi tạm hơn 1 GB.
   - Chưa chạy `pnpm test:e2e` nguyên bản (không qua config bọc), vì các lỗi sandbox đã ghi ở mục 31/10.
   - Chưa thử trên Safari hay điện thoại thật qua http.
+
+## Ảnh upload giữ độ phân giải gốc — 01/11/2026
+
+- **Pipeline cũ** (`src/app/api/wedding/upload/route.ts`, HEAD `122e951`): stream cắt ở 5 MiB; Sharp `limitInputPixels: 40_000_000`; `rotate()`, `resize({ width: 1600, withoutEnlargement: true })`, `webp({ quality: 85 })`; metadata bị bỏ vì không gọi `withMetadata`. Ảnh 5464×8192 (44,8 megapixel) của khách bị từ chối ở bước decode dù có nâng giới hạn byte.
+- **Thay đổi.** Hằng số chung `src/lib/wedding-upload.ts`: 40 MiB/ảnh, 64 megapixel, cạnh 16.383 px. Route đọc stream tới 40 MiB rồi hủy reader và trả 413 “Ảnh tối đa 40 MB”; đọc header bằng `metadata()`, cạnh >16.383 px trả 400 với lỗi riêng; giữ `rotate()`, bỏ `resize`, WebP quality 90 effort 2. Editor kiểm tra trước bằng cùng hằng số; chữ hướng dẫn ghi “tối đa 40 MB/ảnh, giữ nguyên độ phân giải gốc”. Quy tắc đường dẫn `.webp`, Zod, kiểm tra Content-Type, safe origin, phiên khách và `ownedInvitation`/`reserveUpload` không đổi. Quyết định ở [ADR 0008](adr/0008-full-resolution-uploads.md).
+- **Các tầng khác không cắt body.** `src/proxy.ts` chỉ khớp `/admin/:path*`; Next chỉ clone/buffer body (mặc định 10 MB, `proxyClientMaxBodySize`) khi proxy chạy cho request đó (`resolve-routes.js`, `body-streams.js`). `serverActions.bodySizeLimit` chỉ áp dụng cho Server Action. Route handler tự đọc `request.body`, nên giới hạn duy nhất là vòng đọc stream của route. Chưa thử qua HTTP thật trên server đã build.
+- **Đo pipeline mới** (`sharp` 0.35.5, máy thử 6 CPU, `sharp.concurrency()` mặc định là 1 vì glibc không jemalloc). Ảnh tạo bằng nhiễu Gauss làm mờ phủ gradient, có EXIF GPS, 5464×8192:
+
+  | Input    | effort | Thời gian | Peak RSS | Output   | EXIF/XMP/ICC ra |
+  | -------- | ------ | --------- | -------- | -------- | --------------- |
+  | 17,8 MiB | 4      | 30,9 s    | 617 MB   | 15,0 MiB | không           |
+  | 27,6 MiB | 4      | 33,5 s    | 725 MB   | 19,0 MiB | không           |
+  | 27,6 MiB | 2      | 6,0 s     | 338 MB   | 18,9 MiB | không           |
+  | 17,8 MiB | 2      | 5,5 s     | 320 MB   | 14,9 MiB | không           |
+
+  Effort 2 với 6 thread: 6,4 s, 349 MB. PSNR vùng 1024×1024 so với ảnh nguồn: effort 2 là 36,62 dB, effort 3 và 4 là 36,63 dB; effort 3 chậm như effort 4 (33 s). Vì vậy dùng effort 2 và không đổi `sharp.concurrency` toàn tiến trình.
+
+- **`next/image` với ảnh đầy đủ.** Gọi thẳng `optimizeImage` của Next 16.3.8 (cấu hình mặc định: quality 75, `imgOptMaxInputPixels` 268.402.689, timeout 7 s) trên output WebP 19 MiB, 5464×8192: rộng 828 → 2,2 s, 19 KiB; 1080 → 2,4 s, 80 KiB; 1920 → 3,0 s, 702 KiB; 3840 → 6,0 s, 4,0 MiB; peak RSS 526 MB. `maximumResponseBody` mặc định 50 MB lớn hơn file. Khi tối ưu lỗi hoặc quá 7 s, Next trả file gốc. Chưa thử qua `/_next/image` trên server chạy thật.
+- **Test mới** `tests/server/wedding/upload-route.test.ts` (môi trường node; mock phiên, `reserveUpload` và `node:fs/promises`, nên không ghi DB hay `public/uploads`; safe origin chạy thật):
+  1. JPEG 5464×8192 đệm segment APP15 lên 21 MiB → 200, lưu WebP 5464×8192.
+  2. JPEG 5464×8192 dưới 5 MB → 200, giữ 5464×8192.
+  3. JPEG 3000×2000 có orientation 6, EXIF (Make, GPS), XMP, ICC P3 → 2000×3000; output không có EXIF, XMP, ICC, orientation và không chứa chuỗi “TestCam”.
+  4. Stream 1 MiB/chunk tới 64 MiB → 413 `{ok:false,message:"Ảnh tối đa 40 MB"}`, stream bị hủy, đọc không quá 43 MiB, không lưu file.
+  5. JPEG 16384×64 → 400 “Ảnh có cạnh dài hơn 16.383 px. Vui lòng chọn ảnh nhỏ hơn”.
+  6. Tệp hỏng và JPEG 8001×8001 (64,016 megapixel) → 400 “Tệp ảnh không hợp lệ hoặc quá lớn”.
+- **Kiểm tra đỏ.** Tạm thay route bằng bản HEAD: 5/6 fail đúng lý do: (1) 413 vì 5 MB, (2) 400 vì trần 40 megapixel, (3) ra 1600×2400 thay vì 2000×3000, (4) lỗi “Ảnh tối đa 5 MB”, (5) 200 vì ảnh bị thu về 1600 px. Bài 6 qua ở cả hai bản vì giữ lỗi cũ. Trả lại route mới thì 6/6 qua.
+- **Gate.**
+  - `TEST_DATABASE_URL="file:$PWD/prisma/prisma/test.db" pnpm check` **exit 0**: lint 0 lỗi (còn cảnh báo ref có sẵn ở `music.tsx:55`), TypeScript qua, **27 file / 207 test qua**. RAM trước khi chạy: available 3743 MB.
+  - `pnpm build` trên bản sao sạch (file tracked cùng ba file mới, `diff -rq src` không khác, `node_modules` symlink, `NEXT_PRIVATE_OUTPUT_TRACE_ROOT=/`) **thành công**, có `/api/wedding/upload`. RAM trước khi chạy: available 3701 MB. Đã xóa bản sao sau khi build.
+  - Không chạy E2E. Không đụng dev server 3200, `prisma/dev.db` hay `public/uploads`. Không có ảnh thật trong repo; ảnh đo nằm ở scratchpad và đã xóa.
+- **Chưa làm.** Chưa upload ảnh qua editor trên trình duyệt hay server đã build. Reverse proxy production phải cho body 40 MB (nginx mặc định 1 MB). Ảnh 3840 px của `next/image` mất 6 s, gần timeout 7 s; quá giờ thì khách nhận file gốc khoảng 19 MB. Bước này không đổi cấu hình hiển thị.

@@ -1,6 +1,7 @@
 "use client";
 import { DropdownField } from "@/components/kit/dropdown-field";
 import { WEDDING_MUSIC } from "@/lib/wedding-music";
+import { MAX_UPLOAD_IMAGE_MB } from "@/lib/wedding-upload";
 import { randomUUID } from "@/lib/random-id";
 import { BankSelect } from "./bank-select";
 import {
@@ -331,8 +332,9 @@ export function PhotoFields({
     <section className="form-section">
       <h2>04. Những khoảnh khắc đẹp</h2>
       <p className="fine">
-        {data.photos.length}/{maxPhotos} ảnh · JPEG, PNG, WebP, tối đa 5 MB/ảnh.
-        Chọn ảnh để làm ảnh bìa.
+        {data.photos.length}/{maxPhotos} ảnh · JPEG, PNG, WebP, tối đa{" "}
+        {MAX_UPLOAD_IMAGE_MB} MB/ảnh, giữ nguyên độ phân giải gốc. Chọn ảnh để
+        làm ảnh bìa.
       </p>
       {!id && (
         <p className="notice" style={{ marginTop: 15 }}>

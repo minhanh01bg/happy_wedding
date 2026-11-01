@@ -33,3 +33,23 @@ export function weddingMonth(date: Date) {
   );
   return { day, month, year, rows };
 }
+
+/**
+ * Days of the wedding's month (Vietnam time) that hold at least one event,
+ * each with its event titles in entry order. Events in other months are left
+ * out: the calendar shows only the wedding's month.
+ */
+export function weddingEventDays(
+  date: Date,
+  events: readonly { title: string; date: string | Date }[],
+) {
+  const { month, year } = weddingDateParts(date);
+  const days = new Map<number, string[]>();
+  for (const event of events) {
+    const parts = weddingDateParts(event.date);
+    if (parts.month === month && parts.year === year) {
+      days.set(parts.day, [...(days.get(parts.day) ?? []), event.title]);
+    }
+  }
+  return days;
+}

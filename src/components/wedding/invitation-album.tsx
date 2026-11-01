@@ -5,6 +5,19 @@ import { weddingImageSource } from "@/lib/wedding-images";
 import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Heart, X } from "lucide-react";
 
+/**
+ * `sizes` for one album print, matching its rendered width in globals.css.
+ * Lời yêu sets prints in a 1.1fr / 0.9fr grid inside the section's 880px
+ * content box (sections pad 20px a side up to 800px wide); every third print,
+ * and any landscape print, spans both columns.
+ */
+function albumPhotoSizes(design: string, index: number, landscape: boolean) {
+  if (design !== "loi-yeu") return "(max-width:760px) 90vw, 700px";
+  return index % 3 === 2 || landscape
+    ? "(max-width:800px) calc(100vw - 40px), 880px"
+    : "(max-width:800px) calc(55vw - 28px), 470px";
+}
+
 export function InvitationAlbum({
   photos,
   couple,
@@ -102,67 +115,69 @@ export function InvitationAlbum({
           className="wedding-album"
           key={design === "thu-tinh" ? spread : design}
         >
-          {photos.map((photo, i) => (
-            <button
-              type="button"
-              data-album-photo
-              data-photo-index={i}
-              key={`${photo}-${i}`}
-              hidden={design === "thu-tinh" && Math.floor(i / 2) !== spread}
-              className={
-                [
-                  design === "dem-sao" && spotlight === i ? "is-current" : "",
-                  weddingImageSource(photo).includes(
-                    "wedding-couple-journey",
-                  ) ||
-                  weddingImageSource(photo).includes("wedding-couple-moment") ||
-                  landscape.includes(photo)
-                    ? "is-landscape"
-                    : "",
-                ]
-                  .filter(Boolean)
-                  .join(" ") || undefined
-              }
-              style={
-                {
-                  "--photo-index": i,
-                  "--print-turn": `${((i % 3) - 1) * 7}deg`,
-                } as import("react").CSSProperties
-              }
-              aria-label={`Xem ảnh kỷ niệm ${i + 1} của ${couple}`}
-              onFocus={() => {
-                if (design === "dem-sao") setSpotlight(i);
-              }}
-              onPointerEnter={() => {
-                if (design === "dem-sao") setSpotlight(i);
-              }}
-              onClick={() => {
-                setDirection("next");
-                setSelected(i);
-                dialog.current?.showModal();
-              }}
-            >
-              <picture className="album-photo-surface">
-                <Image
-                  onLoad={(event) => {
-                    const image = event.currentTarget;
-                    if (image.naturalWidth > image.naturalHeight * 1.2)
-                      setLandscape((current) =>
-                        current.includes(photo) ? current : [...current, photo],
-                      );
-                  }}
-                  src={weddingImageSource(photo)}
-                  alt={`Kỷ niệm của ${couple}, ảnh ${i + 1}`}
-                  fill
-                  sizes="(max-width:760px) 90vw, 700px"
-                />
-              </picture>
-              <span aria-hidden="true">
-                <b>{String(i + 1).padStart(2, "0")}</b>{" "}
-                {design === "nang-thu" ? "Một ngày thật đẹp ♡" : "Xem ảnh ↗"}
-              </span>
-            </button>
-          ))}
+          {photos.map((photo, i) => {
+            const isLandscape =
+              weddingImageSource(photo).includes("wedding-couple-journey") ||
+              weddingImageSource(photo).includes("wedding-couple-moment") ||
+              landscape.includes(photo);
+            return (
+              <button
+                type="button"
+                data-album-photo
+                data-photo-index={i}
+                key={`${photo}-${i}`}
+                hidden={design === "thu-tinh" && Math.floor(i / 2) !== spread}
+                className={
+                  [
+                    design === "dem-sao" && spotlight === i ? "is-current" : "",
+                    isLandscape ? "is-landscape" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ") || undefined
+                }
+                style={
+                  {
+                    "--photo-index": i,
+                    "--print-turn": `${((i % 3) - 1) * 7}deg`,
+                  } as import("react").CSSProperties
+                }
+                aria-label={`Xem ảnh kỷ niệm ${i + 1} của ${couple}`}
+                onFocus={() => {
+                  if (design === "dem-sao") setSpotlight(i);
+                }}
+                onPointerEnter={() => {
+                  if (design === "dem-sao") setSpotlight(i);
+                }}
+                onClick={() => {
+                  setDirection("next");
+                  setSelected(i);
+                  dialog.current?.showModal();
+                }}
+              >
+                <picture className="album-photo-surface">
+                  <Image
+                    onLoad={(event) => {
+                      const image = event.currentTarget;
+                      if (image.naturalWidth > image.naturalHeight * 1.2)
+                        setLandscape((current) =>
+                          current.includes(photo)
+                            ? current
+                            : [...current, photo],
+                        );
+                    }}
+                    src={weddingImageSource(photo)}
+                    alt={`Kỷ niệm của ${couple}, ảnh ${i + 1}`}
+                    fill
+                    sizes={albumPhotoSizes(design, i, isLandscape)}
+                  />
+                </picture>
+                <span aria-hidden="true">
+                  <b>{String(i + 1).padStart(2, "0")}</b>{" "}
+                  {design === "nang-thu" ? "Một ngày thật đẹp ♡" : "Xem ảnh ↗"}
+                </span>
+              </button>
+            );
+          })}
         </div>
         {design === "thu-tinh" && photos.length > 2 && (
           <div className="album-page-controls">

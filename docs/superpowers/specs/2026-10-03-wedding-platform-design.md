@@ -236,7 +236,7 @@ Dropdown trạng thái tài khoản ở `/admin/customers` dùng cùng `Dropdown
 
 ### Album và nhạc thiệp mẫu — 07/10/2026
 
-Mẫu mới dùng sáu ảnh thật cùng cặp đôi, album hai cột so le và ảnh ngang rộng mỗi ba ảnh. Demo lưu từ baseline với đúng ba ảnh stock cũ được nâng album lúc render; demo có musicUrl rỗng dùng piano Lời hẹn. Nhạc bắt đầu khi bấm mở thiệp, có tắt/bật/âm lượng; skip vẫn yên lặng. Thiệp khách và album demo tùy chỉnh giữ dữ liệu đã chọn, không ghi đè DB. Guard công khai/entitlement không đổi.
+Mẫu mới dùng sáu ảnh thật cùng cặp đôi, album hai cột so le và một khung rộng 3:2 mỗi ba ảnh. Demo lưu từ baseline với đúng ba ảnh stock cũ được nâng album lúc render; demo có musicUrl rỗng dùng piano Lời hẹn. Nhạc bắt đầu khi bấm mở thiệp, có tắt/bật/âm lượng; skip vẫn yên lặng. Thiệp khách và album demo tùy chỉnh giữ dữ liệu đã chọn, không ghi đè DB. Guard công khai/entitlement không đổi.
 
 Phần Câu chuyện dùng bố cục ảnh in giấy chữ nhật nghiêng nhẹ, kèm ảnh nhỏ so le khi album có ảnh khác. Ưu tiên ảnh album khác ảnh bìa; album rỗng dùng ảnh bìa. Khung vòm phần đầu giữ nguyên, ảnh câu chuyện tiếp tục hỗ trợ motion/reduced motion và responsive.
 
@@ -277,3 +277,7 @@ Mười mẫu hiện có được bổ sung composition lịch tiệc riêng và
 ### Giờ ghi bằng chữ cho tiệc — 31/10/2026
 
 Thiệp in của nhà trai ghi “Lễ thành hôn nhà trai” ngày 09/11/2026 là “Thời gian: Buổi sáng”, không có giờ. Editor có ô “Ghi giờ bằng chữ (tùy chọn)” dưới ô ngày giờ của từng tiệc; khách vẫn chọn ngày giờ (giờ đó không hiện cho khách) và ghi “Buổi sáng”. Thẻ tiệc hiện “Buổi sáng · 09/11/2026” thay cho “08:00 · 09/11/2026”; các ô giờ riêng của Song hỷ, Khoảnh khắc và Bên nhau cũng hiện nhãn. Thẻ `<time>` khi đó chỉ mang ngày (`datetime="2026-11-09"`). Tiệc khác giữ giờ, ví dụ “Tiệc cưới nhà trai” 08/11/2026 lúc 16:00. Countdown vẫn đếm tới “Ngày giờ cưới chính” do khách nhập, không suy từ nhãn. Không đổi Prisma schema, migration, API route hay quyền; RSVP và CSV vẫn chỉ dùng tên tiệc. Admin hiện không có màn nào hiển thị chi tiết tiệc nên không có chỗ cần thêm nhãn. Quyết định và hành vi lịch: [ADR 0007](../../adr/0007-event-written-time-label.md).
+
+### Khung rộng của album Lời yêu — 01/11/2026
+
+Ở Lời yêu, cứ ba ảnh có một khung trải hết bề ngang album. Khung này luôn theo tỉ lệ 3:2, bằng khung của ảnh ngang, nên bố cục không nhảy khi một ảnh tải xong và được nhận là ảnh ngang. Ảnh dọc 2:3 chỉ hiện khoảng 44% chiều cao trong khung này (khung 16:9 trước đây chỉ còn 37,5% và cắt giữa, làm mất mặt người), nên được cắt giữ phần trên (`object-position: 50% 12%`), nơi khuôn mặt nằm trong ảnh cưới đứng hoặc nửa người. Tính cả hiệu ứng ảnh trôi theo cuộn, vùng thấy được nằm trong khoảng 10–48% chiều cao ảnh; ảnh ngồi có mặt thấp hơn giữa ảnh vẫn có thể bị cắt ở khung này, còn lightbox luôn mở ảnh nguyên vẹn. Ảnh ngang vẫn cắt giữa như trước. `sizes` của từng khung theo bề rộng thật: khung rộng 880px (≤800px: 100vw − 40px), khung cột 470px (≤800px: 55vw − 28px), để trình duyệt không lấy bản 750px cho khung 880px. Các mẫu khác giữ `sizes` cũ. Không đổi dữ liệu ảnh, thứ tự album hay `images.deviceSizes`.

@@ -845,3 +845,23 @@ Phạm vi: form RSVP của mọi thiệp bỏ nhóm “Bạn đến vào ngày n
   - `tests/server/wedding/export-csv.test.ts`, mới: cột “Tiệc” ghi “Nhà gái”/“Nhà trai” cho khách đến tiệc có bên; tiệc chung, phản hồi `declined`/`undecided` và tiệc đã xóa giữ số thứ tự tiệc.
 - **E2E**: `e2e/wedding.spec.ts` (bài dòng 14) đổi luồng RSVP sang hai lựa chọn còn lại, kiểm không có câu hỏi ngày, ô “Tiệc” của dashboard và CSV ghi “Nhà trai”. **Chưa chạy** vì máy thiếu RAM.
 - **Chưa làm.** Chưa chạy e2e, `pnpm build` hay xem trên trình duyệt. Không đụng server 3200, DB thật hay thiệp thật; không gửi form nào.
+
+---
+
+## 01/11/2026 — Lời chúc đã ẩn vẫn là đã duyệt
+
+Phạm vi: bảng “Phản hồi & lời chúc” ở `/dashboard/[id]/guests`. Theo yêu cầu của chủ thiệp, ẩn lời chúc chỉ gỡ nó khỏi thiệp, không làm nó trông như chưa đọc. Chỉ `pending` là chưa duyệt; `hidden` là đã duyệt nhưng không hiện trên thiệp. DB giữ `pending`/`approved`/`hidden`, không migration; API `moderate` và trang công khai (chỉ hiện `approved`) không đổi. Nhãn riêng cho lời chúc nằm ở `src/app/dashboard/[id]/guests/wish-moderation.tsx`; `STATUS_LABELS` chung giữ “Chờ xác nhận”/“Đã ẩn” cho đơn hàng. Không sửa `globals.css`: dùng lại `.badge.approved`, `.fine`, `.table-actions`.
+
+| Trạng thái | Huy hiệu              | Ghi chú cạnh huy hiệu  | Nút                                        |
+| ---------- | --------------------- | ---------------------- | ------------------------------------------ |
+| `pending`  | “Chưa duyệt” (màu be) | —                      | “Duyệt lời chúc” → approved, “Ẩn” → hidden |
+| `approved` | “Đã duyệt” (xanh)     | “Đang hiện trên thiệp” | “Ẩn khỏi thiệp” → hidden                   |
+| `hidden`   | “Đã duyệt” (xanh)     | “Đã ẩn khỏi thiệp”     | “Hiện lại trên thiệp” → approved           |
+
+- **Rà soát chỗ đếm/tô lời chúc chưa duyệt.** Chỉ trang khách mời đọc `wishStatus` để hiện huy hiệu. Không có bộ đếm “chờ duyệt”, bộ lọc hay cột CSV nào về trạng thái lời chúc. Dashboard tổng quan (`src/app/dashboard/page.tsx`) chỉ đếm phản hồi và số khách; CSV (`/api/wedding/export/[id]`) không xuất `wishStatus`; báo cáo admin (`src/server/wedding/reporting.ts`) và các trang `/admin` không đọc `GuestResponse`. Bộ đếm “Chưa quyết định” ở trang khách mời là attendance `undecided`, không phải trạng thái lời chúc.
+- **`pnpm check`**: exit 0, 122 s. Lint 0 lỗi (còn cảnh báo ref có sẵn ở `music.tsx:55`), TypeScript qua, **43 file / 400 test qua**. Available trước khi chạy 1528 MB.
+- **Test mới** (dữ liệu giả):
+  - `tests/components/wish-moderation.test.tsx`, 6 test: huy hiệu, lớp `badge`, ghi chú và nút cho từng trạng thái; mỗi nút gửi đúng status; trạng thái lạ coi như chưa duyệt; `STATUS_LABELS.pending`/`hidden` giữ nguyên.
+  - `tests/server/wedding/moderate-wish.test.ts`, 3 test trên DB test: chủ thiệp đổi pending → approved → hidden → approved; khách hàng khác nhận 404 và không đổi được (cả hidden → approved và approved → hidden); gửi `pending` nhận 400.
+- **E2E**: `e2e/wedding.spec.ts:250` vẫn bấm “Duyệt lời chúc” rồi chờ “Đã duyệt”, khớp nhãn mới; không sửa spec. **Chưa chạy** vì máy thiếu RAM.
+- **Chưa làm.** Chưa chạy e2e, `pnpm build` hay xem trên trình duyệt. Không đụng server 3200 hay DB thật.

@@ -247,13 +247,6 @@ describe("groupEventVenues", () => {
     title: "Lễ thành hôn nhà trai",
     date: "2026-11-09T01:00:00.000Z",
   };
-  const bride = {
-    title: "Tiệc cưới nhà gái",
-    date: "2026-11-07T09:00:00.000Z",
-    venue: "Tư gia nhà gái",
-    address: "Địa chỉ minh họa",
-    mapUrl: BRIDE_PIN,
-  };
 
   it("gives the two groom parties at one place a single venue", () => {
     const venues = groupEventVenues([
@@ -332,14 +325,35 @@ describe("groupEventVenues", () => {
   });
 
   it("names the side from `side`, then the title, else leaves it out", () => {
-    const [shared] = groupEventVenues([
-      party,
-      { ...ceremony, title: "Lễ vu quy" },
-    ]);
-    expect(shared.side).toBe("Nhà trai và nhà gái");
     const [explicit] = groupEventVenues([{ ...party, side: "bride" as const }]);
     expect(explicit.side).toBe("Nhà gái");
     const [common] = groupEventVenues([{ ...party, title: "Tiệc cưới" }]);
     expect(common.side).toBeUndefined();
+  });
+
+  it("joins a party without `side` to its family's party by the title", () => {
+    const venues = groupEventVenues([
+      { ...party, side: "groom" as const, mapUrl: GROOM_SHORT },
+      // An older party saved before `side`: "nhà trai" in the title.
+      { ...ceremony, mapUrl: GROOM_SHORT },
+    ]);
+    expect(
+      venues.map(({ side, events }) => [side, events.map(({ index }) => index)]),
+    ).toEqual([["Nhà trai", [0, 1]]]);
+  });
+
+  it("keeps two families apart at one place when both are guessed", () => {
+    const venues = groupEventVenues([
+      party,
+      { ...ceremony, title: "Lễ vu quy" },
+      // `side` wins over the title, so this one joins the vu quy card.
+      { ...ceremony, side: "bride" as const },
+    ]);
+    expect(
+      venues.map(({ side, events }) => [side, events.map(({ index }) => index)]),
+    ).toEqual([
+      ["Nhà trai", [0]],
+      ["Nhà gái", [1, 2]],
+    ]);
   });
 });

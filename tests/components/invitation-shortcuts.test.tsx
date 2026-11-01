@@ -53,6 +53,7 @@ const invitation: Invitation & { template: WeddingTemplate } = {
   brideGiftBank: "",
   brideGiftAccount: "",
   brideGiftName: "",
+  madeBy: "",
   status: "published",
   isDemo: false,
   version: 1,

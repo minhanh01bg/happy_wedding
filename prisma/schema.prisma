@@ -146,6 +146,7 @@ model Invitation {
   brideGiftBank String @default("")
   brideGiftAccount String @default("")
   brideGiftName String @default("")
+  madeBy       String          @default("")
   status       String          @default("draft")
   isDemo       Boolean         @default(false)
   version      Int             @default(1)

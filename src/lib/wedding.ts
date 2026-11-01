@@ -152,6 +152,20 @@ export const invitationSchema = z
       .regex(/^[A-Za-z0-9]{5,30}$|^$/, "Số tài khoản nhà gái không hợp lệ")
       .default(""),
     brideGiftName: z.string().trim().max(100).default(""),
+    /**
+     * Người làm thiệp, hiện ở cuối thiệp thay dòng của studio: “Thiệp cưới
+     * được chăm chút bởi …”. Không gửi thì giữ giá trị đã lưu (client cũ
+     * không xóa mất); chuỗi rỗng là xóa, thiệp quay về dòng studio.
+     */
+    madeBy: z
+      .string()
+      .trim()
+      .max(60, "Người làm thiệp tối đa 60 ký tự")
+      .regex(
+        /^[^\p{Cc}\u2028\u2029]*$/u,
+        "Người làm thiệp chỉ gồm một dòng chữ, không xuống dòng",
+      )
+      .optional(),
   })
   .superRefine((v, ctx) => {
     if (
@@ -278,6 +292,7 @@ export const DEMO_CONTENT: Omit<InvitationInput, "templateId" | "slug"> = {
   brideGiftBank: "",
   brideGiftAccount: "",
   brideGiftName: "",
+  madeBy: "",
 };
 
 export const merchantSchema = z

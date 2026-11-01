@@ -22,6 +22,7 @@ import { InvitationEvents, InvitationDateCalendar } from "./invitation-events";
 import { InvitationHero, LetterRibbons } from "./invitation-hero";
 import { InvitationOpening } from "./invitation-opening";
 import { displayFont, scriptFont } from "./invitation-fonts";
+import creditStyles from "./invitation-credit.module.css";
 
 export function InvitationView({
   invitation,
@@ -237,8 +238,16 @@ export function InvitationView({
           <p>
             {invitation.groom} & {invitation.bride}
           </p>
-          {!removeBranding && (
-            <Link href="/">THIỆP CƯỚI ĐƯỢC CHĂM CHÚT BỞI HỶ STUDIO</Link>
+          {/* A maker's credit replaces the studio line, even on plans that
+              remove branding; it is plain text, not a link. */}
+          {invitation.madeBy ? (
+            <p className={creditStyles.credit}>
+              Thiệp cưới được chăm chút bởi {invitation.madeBy}
+            </p>
+          ) : (
+            !removeBranding && (
+              <Link href="/">THIỆP CƯỚI ĐƯỢC CHĂM CHÚT BỞI HỶ STUDIO</Link>
+            )
           )}
         </footer>
         {musicUrl && <Music url={musicUrl} />}

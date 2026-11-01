@@ -153,6 +153,8 @@ export async function saveInvitation(
     !access?.premiumTemplates
   )
     throw new WeddingError(403, "Gói hiện tại chưa hỗ trợ mẫu cao cấp");
+  // An omitted optional field (madeBy) stays undefined, which Prisma skips:
+  // updates keep the stored value and creates fall back to the column default.
   const { events, photos, weddingDate, ...fields } = input;
   const data = {
     ...fields,
@@ -221,6 +223,7 @@ export async function publishInvitation(
       brideGiftBank: invitation.brideGiftBank,
       brideGiftAccount: invitation.brideGiftAccount,
       brideGiftName: invitation.brideGiftName,
+      madeBy: invitation.madeBy,
     });
   }
   const result = await prisma.invitation.updateMany({

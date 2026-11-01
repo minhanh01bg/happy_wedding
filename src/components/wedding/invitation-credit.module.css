@@ -1,0 +1,29 @@
+/*
+ * Dòng ghi công người làm thiệp (Invitation.madeBy) ở cuối thiệp. Là chữ
+ * thường, không phải link, nhưng trông như dòng “HỶ STUDIO” (.wedding-thanks a
+ * trong globals.css): chữ nhỏ in hoa, giãn chữ, vạch mảnh phía trên.
+ * :global(.wedding-thanks) nâng độ ưu tiên để thắng rule .wedding-thanks p.
+ */
+:global(.wedding-thanks) .credit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  margin: 0 auto;
+  padding: 6px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+:global(.wedding-thanks) .credit::before {
+  content: "";
+  width: 32px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.45;
+}

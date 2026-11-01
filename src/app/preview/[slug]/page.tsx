@@ -28,6 +28,7 @@ export default async function TemplatePreview({
     weddingDate: new Date(weddingDate),
     eventsJson: JSON.stringify(events),
     photosJson: JSON.stringify(photos),
+    madeBy: "",
     status: "draft",
     isDemo: true,
     version: 1,

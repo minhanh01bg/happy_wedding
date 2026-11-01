@@ -52,6 +52,7 @@ export default async function Edit({
     brideGiftBank: invitation.brideGiftBank,
     brideGiftAccount: invitation.brideGiftAccount,
     brideGiftName: invitation.brideGiftName,
+    madeBy: invitation.madeBy,
     events: readEvents(invitation.eventsJson),
     photos: readPhotos(invitation.photosJson),
   };

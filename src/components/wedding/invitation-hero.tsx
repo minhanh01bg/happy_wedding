@@ -5,6 +5,31 @@ import { dateLabel } from "@/lib/wedding";
 import { weddingImageSource } from "@/lib/wedding-images";
 import styles from "./invitation-hero.module.css";
 
+/**
+ * `sizes` for the cover photo, matching its rendered width in
+ * invitation-hero.module.css. Lời yêu's arch is min(100%, 470px) in the first
+ * of two columns (0.95fr / 1.05fr, gap 7%) of a hero inset 6% a side, so
+ * 38.9vw up to 1209px; on phones it is min(88vw, 400px). That cover rests 4%
+ * larger (heroDepth in invitation-motion), so each width carries the 1.04.
+ * Khoảnh khắc's screen fills the hero (up to 1440px) and Lời hẹn's panorama
+ * its content box (hero up to 1280px, inset 6% a side; ≤760px: 7%); every
+ * other cover stays inside 95vw on phones and 75vw above. Widths are for the
+ * guest page, which spans the viewport; the dashboard preview sits in the
+ * narrower .workspace (at most 1200px, padded), where these only run large.
+ */
+function heroPhotoSizes(design: string) {
+  switch (design) {
+    case "loi-yeu":
+      return "(max-width:454px) 92vw, (max-width:760px) 416px, (max-width:1209px) 40.5vw, 489px";
+    case "khoanh-khac":
+      return "(max-width:1440px) 100vw, 1440px";
+    case "loi-hen":
+      return "(max-width:760px) 86vw, (max-width:1280px) 88vw, calc(1280px - 12vw)";
+    default:
+      return "(max-width: 760px) 95vw, 75vw";
+  }
+}
+
 /** Each cover has its own reading hierarchy; data and guest actions stay shared. */
 export function InvitationHero({
   invitation,
@@ -78,7 +103,7 @@ export function InvitationHero({
         )}
         alt={`${invitation.groom} và ${invitation.bride} — ảnh thiệp cưới`}
         fill
-        sizes="(max-width: 760px) 95vw, 75vw"
+        sizes={heroPhotoSizes(design)}
         priority={!secondary}
       />
     </div>

@@ -2,6 +2,43 @@ import Image from "next/image";
 import { weddingImageSource } from "@/lib/wedding-images";
 import type { Invitation } from "@prisma/client";
 
+/**
+ * `sizes` for one story print, matching its rendered width in globals.css.
+ * The section spans the page inset clamp(20px, 6vw, 100px) a side: 88vw of
+ * content up to 1666px. Lời yêu lays its prints in the first column of a
+ * 1.1fr / 1fr grid (gap 80px, at most 1000px), padded 60px on the right; on
+ * phones the prints are min(88vw, 450px) wide. The large print's 12px border
+ * leaves the column minus 84px; the small one is 43% of the column less its
+ * 8px border. Song hỷ's print sits in a 720px frame (its section bordered
+ * 4px), Ngày chung đôi's lead takes 1.5fr of 1200px, Lời hẹn's spans up to
+ * 1200px and Khoảnh khắc's fills the page; other prints stay inside 90vw on
+ * phones and 600px above. As for the cover, these are guest-page widths; the
+ * dashboard preview's .workspace is narrower, so there they only run large.
+ */
+function storyPhotoSizes(design: string, detail: boolean) {
+  const shared = "(max-width:760px) 90vw, 600px";
+  switch (design) {
+    case "loi-yeu":
+      return detail
+        ? "(max-width:511px) calc(37.9vw - 16px), (max-width:760px) 178px, (max-width:1136px) calc(19.9vw - 34px), 192px"
+        : "(max-width:511px) calc(88vw - 84px), (max-width:760px) 366px, (max-width:1136px) calc(46.1vw - 125px), 398px";
+    case "song-hy":
+      return "(max-width:827px) calc(88vw - 80px), 648px";
+    case "ngay-chung-doi":
+      return detail
+        ? shared
+        : "(max-width:760px) 88vw, (max-width:1364px) calc(52.8vw - 30px), 690px";
+    case "loi-hen":
+      return "(max-width:1364px) 88vw, 1200px";
+    case "khoanh-khac":
+      return detail
+        ? "(max-width:760px) calc(100vw - 50px), calc(42vw - 40px)"
+        : "100vw";
+    default:
+      return shared;
+  }
+}
+
 /** Each composition uses the couple's actual text; decorative chapters never invent milestones. */
 export function InvitationStory({
   invitation,
@@ -48,7 +85,7 @@ export function InvitationStory({
             : `${invitation.groom} và ${invitation.bride} — câu chuyện của chúng mình`
         }
         fill
-        sizes="(max-width:760px) 90vw, 600px"
+        sizes={storyPhotoSizes(design, detail)}
       />
       <figcaption>
         {detail

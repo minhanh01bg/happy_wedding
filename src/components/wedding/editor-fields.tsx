@@ -1,7 +1,12 @@
 "use client";
 import { DropdownField } from "@/components/kit/dropdown-field";
-import { WEDDING_MUSIC } from "@/lib/wedding-music";
-import { MAX_UPLOAD_IMAGE_MB } from "@/lib/wedding-upload";
+import { WEDDING_MUSIC, isUploadedMusicUrl } from "@/lib/wedding-music";
+import {
+  MAX_UPLOAD_IMAGE_MB,
+  MAX_UPLOAD_MUSIC_BYTES,
+  MAX_UPLOAD_MUSIC_MB,
+  UPLOAD_MUSIC_TOO_LARGE,
+} from "@/lib/wedding-upload";
 import { eventCoordinates, withMapUrl } from "@/lib/event-map";
 import { randomUUID } from "@/lib/random-id";
 import { BankSelect } from "./bank-select";
@@ -14,6 +19,7 @@ import {
 import type { WeddingTemplate } from "@prisma/client";
 import Image from "next/image";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { Plus, Upload } from "lucide-react";
 import {
   toLocalDateTime,
@@ -451,10 +457,90 @@ export function PhotoFields({
   );
 }
 
+function MusicUpload({ data, field }: Pick<FieldProps, "data" | "field">) {
+  // The editor page is /dashboard/[id]; a new draft has no id until saved.
+  const id = useParams<{ id?: string }>()?.id;
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+  async function upload(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.target;
+    const file = input.files?.[0];
+    if (!file || !id || uploading) return;
+    setError("");
+    setDone(false);
+    setUploading(true);
+    try {
+      if (file.size > MAX_UPLOAD_MUSIC_BYTES)
+        throw new Error(UPLOAD_MUSIC_TOO_LARGE);
+      const response = await fetch(
+        `/api/wedding/upload-music?invitationId=${encodeURIComponent(id)}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": file.type || "application/octet-stream" },
+          body: file,
+        },
+      ).catch(() => {
+        throw new Error("Mất kết nối khi tải nhạc. Vui lòng thử lại");
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.data?.url)
+        throw new Error(result?.message || "Chưa tải được nhạc");
+      field("musicUrl", result.data.url);
+      setDone(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Chưa tải được nhạc");
+    } finally {
+      setUploading(false);
+      input.value = "";
+    }
+  }
+  return (
+    <div className="form-stack">
+      {!id && (
+        <p className="notice">Lưu bản nháp trước để tải nhạc của bạn lên.</p>
+      )}
+      <label>
+        <span className="inline-actions">
+          <Upload size={15} />
+          {uploading ? "Đang tải nhạc lên…" : "Tải nhạc MP3 lên"}
+        </span>
+        <input
+          suppressHydrationWarning
+          type="file"
+          accept="audio/mpeg,.mp3"
+          onChange={upload}
+          disabled={!id || uploading}
+        />
+      </label>
+      {isUploadedMusicUrl(data.musicUrl) && (
+        <audio
+          controls
+          preload="none"
+          src={data.musicUrl}
+          aria-label="Nghe thử bài đã tải lên"
+          style={{ width: "100%" }}
+        />
+      )}
+      {error && (
+        <p className="notice error" role="alert">
+          {error}
+        </p>
+      )}
+      {done && (
+        <p className="notice success" role="status">
+          Đã tải nhạc lên. Hãy lưu thiệp để áp dụng.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function ExtraFields({
   data,
   field,
 }: Pick<FieldProps, "data" | "field">) {
+  const custom = !!data.musicUrl && data.musicUrl !== WEDDING_MUSIC.url;
   return (
     <section className="form-section">
       <h2>05. Một chút âm nhạc & quà mừng</h2>
@@ -487,7 +573,7 @@ export function ExtraFields({
               { value: "custom", label: "Dùng bài hát riêng" },
             ]}
           />
-          {data.musicUrl && data.musicUrl !== WEDDING_MUSIC.url && (
+          {custom && !isUploadedMusicUrl(data.musicUrl) && (
             <input
               suppressHydrationWarning
               type="url"
@@ -499,10 +585,12 @@ export function ExtraFields({
           )}
           <small>
             Nhạc phát khi khách chọn mở thiệp kèm nhạc. Khách có thể tắt hoặc
-            chỉnh âm lượng bất cứ lúc nào. Với bài riêng, dùng link HTTPS đến
-            MP3/OGG bạn có quyền sử dụng.
+            chỉnh âm lượng bất cứ lúc nào. Với bài riêng, tải tệp MP3 tối đa{" "}
+            {MAX_UPLOAD_MUSIC_MB} MB hoặc dùng link HTTPS đến MP3/OGG. Chỉ dùng
+            bài hát bạn có quyền sử dụng.
           </small>
         </label>
+        {custom && <MusicUpload data={data} field={field} />}
         <p className="fine">
           Không bắt buộc. Bạn có thể thêm riêng tài khoản nhà trai và nhà gái,
           hoặc chỉ một bên. Kiểm tra đúng chủ tài khoản trước khi gửi thiệp.

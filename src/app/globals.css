@@ -2483,14 +2483,14 @@ body:has(.invitation-opening[open]) {
 .wedding-album img {
   transition: transform 0.7s ease;
 }
-.wedding-album button span {
+.wedding-album > button > span {
   position: absolute;
-  bottom: 10px;
-  right: 10px;
+  bottom: 14px;
+  right: 14px;
   background: var(--tone);
-  padding: 6px 10px;
+  padding: 8px 12px;
   border-radius: 20px;
-  font-size: 10px;
+  font-size: 11px;
 }
 @media (hover: hover) {
   .wedding-page .button:hover,
@@ -2852,8 +2852,9 @@ body:has(.invitation-opening[open]) {
   .wedding-album {
     gap: 10px;
   }
-  .wedding-album button span {
-    font-size: 11px;
+  /* The whole print is the tap target, so the label can stay small. */
+  .wedding-album > button > span {
+    font-size: 9px;
     padding: 5px 8px;
     bottom: 8px;
     right: 8px;
@@ -6868,18 +6869,50 @@ body:has(.admin-drawer[open]) {
   min-width: 0;
   border-radius: 0;
   transform: none;
+  container: album-print / inline-size;
 }
 .wedding-page .album-composition .wedding-album > button[hidden] {
   display: none;
 }
+/* Number, words and arrow share one centre line, so "01" never sits low. */
 .album-composition .wedding-album > button > span {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 .album-composition .wedding-album > button > span b {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 400;
+  line-height: 1;
+  font-variant-numeric: lining-nums;
+}
+.album-photo-cta {
+  line-height: 1;
+}
+.album-composition .wedding-album > button > span svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+/* A narrow print shows only the number and arrow. Bên nhau's collapsed
+   strips are narrow by design and keep their vertical words. */
+@container album-print (max-width: 220px) {
+  .album-composition:not(.album-ben-nhau) .album-photo-cta {
+    display: none;
+  }
+}
+@media (max-width: 480px) {
+  .album-composition .wedding-album > button > span {
+    gap: 5px;
+  }
+  .album-composition .wedding-album > button > span b {
+    font-size: 13px;
+  }
+  .album-composition .wedding-album > button > span svg {
+    width: 11px;
+    height: 11px;
+  }
 }
 .wedding-page .album-loi-yeu .wedding-album {
   grid-template-columns: 1.1fr 0.9fr;
@@ -6916,6 +6949,26 @@ body:has(.admin-drawer[open]) {
   justify-self: center;
   width: calc((100% - var(--album-gap)) * 0.55);
   margin-top: 0;
+}
+/* A small plum tag with a cream hairline, tucked into the print's corner. */
+.album-loi-yeu .wedding-album > button > span {
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--tone) 72%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--card) 30%, transparent);
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.album-loi-yeu .wedding-album > button > span b {
+  font-family: var(--serif);
+  font-style: italic;
+  letter-spacing: 0;
+}
+/* Tracking trails the last letter; pull the arrow back to an even gap. */
+.album-loi-yeu .album-photo-cta {
+  margin-right: -0.16em;
 }
 .wedding-page .album-vuon-thuong .wedding-album {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -7047,6 +7100,9 @@ body:has(.admin-drawer[open]) {
   inset-inline: 0;
   padding: 8px;
 }
+.album-nang-thu .wedding-album > button > span b {
+  font-size: inherit;
+}
 .wedding-page .album-nang-thu .wedding-album > button:nth-child(3n + 2) {
   margin-top: 50px;
 }
@@ -7151,6 +7207,9 @@ body:has(.admin-drawer[open]) {
   background: none;
   padding: 0;
   text-shadow: 0 2px 8px black;
+}
+.wedding-page .album-ben-nhau .wedding-album > button > span svg {
+  filter: drop-shadow(0 2px 8px black);
 }
 .wedding-page
   .album-ben-nhau

@@ -3,7 +3,13 @@
 import Image from "next/image";
 import { weddingImageSource } from "@/lib/wedding-images";
 import { useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Heart, X } from "lucide-react";
+import {
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  X,
+} from "lucide-react";
 
 /**
  * `sizes` for one album print, matching its rendered width in globals.css.
@@ -171,9 +177,17 @@ export function InvitationAlbum({
                     sizes={albumPhotoSizes(design, i, isLandscape)}
                   />
                 </picture>
+                {/* An icon, not "↗": iOS draws that arrow as a colour emoji. */}
                 <span aria-hidden="true">
-                  <b>{String(i + 1).padStart(2, "0")}</b>{" "}
-                  {design === "nang-thu" ? "Một ngày thật đẹp ♡" : "Xem ảnh ↗"}
+                  <b>{String(i + 1).padStart(2, "0")}</b>
+                  {design === "nang-thu" ? (
+                    "Một ngày thật đẹp ♡"
+                  ) : (
+                    <>
+                      <span className="album-photo-cta">Xem ảnh</span>
+                      <ArrowUpRight aria-hidden="true" strokeWidth={1.75} />
+                    </>
+                  )}
                 </span>
               </button>
             );

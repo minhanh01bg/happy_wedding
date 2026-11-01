@@ -146,32 +146,18 @@ export function directionsUrl(
 }
 
 /**
- * Khóa địa điểm của tiệc: `side` (khi có), địa điểm và địa chỉ đã trim. Thẻ
- * chỉ ghi địa điểm + địa chỉ một lần, nên chỉ chữ giống hệt mới chung thẻ; NFC
- * để chữ gõ từ bàn phím macOS/iOS (NFD) vẫn khớp với chữ đã dựng sẵn.
+ * Khóa địa điểm của tiệc: bên theo `eventSide` của RSVP (`side`, thiếu thì
+ * đoán theo tên), địa điểm và địa chỉ đã trim. Khóa và nhãn bên của thẻ dùng
+ * cùng một bên, nên mọi tiệc trong thẻ cùng bên. Thẻ chỉ ghi địa điểm + địa
+ * chỉ một lần, nên chỉ chữ giống hệt mới chung thẻ; NFC để chữ gõ từ bàn phím
+ * macOS/iOS (NFD) vẫn khớp với chữ đã dựng sẵn.
  */
 function placeKey(event: MappableEvent) {
   return JSON.stringify([
-    event.side ?? null,
+    eventSide(event) ?? null,
     event.venue.normalize("NFC").trim(),
     event.address.normalize("NFC").trim(),
   ]);
-}
-
-/**
- * "Nhà trai", "Nhà gái", "Nhà trai và nhà gái"; tiệc chung thì không ghi.
- * Bên của từng tiệc theo `eventSide` của RSVP, để thiệp và form gọi giống nhau.
- */
-function venueSide(events: readonly Pick<MappableEvent, "title" | "side">[]) {
-  const sides = new Set(events.map(eventSide));
-  const groom = sides.has("groom");
-  const bride = sides.has("bride");
-  if (groom && bride) return "Nhà trai và nhà gái";
-  return groom
-    ? EVENT_SIDE_LABELS.groom
-    : bride
-      ? EVENT_SIDE_LABELS.bride
-      : undefined;
 }
 
 export type EventVenue<T extends MappableEvent> = {
@@ -181,7 +167,7 @@ export type EventVenue<T extends MappableEvent> = {
   coordinates: MapCoordinates | null;
   /** Link của tiệc đầu tiên ở đây có link, cho nút chỉ đường. */
   mapUrl?: string;
-  /** Bên tổ chức các tiệc ở đây, để ghi trên thẻ và bản đồ. */
+  /** "Nhà trai" hoặc "Nhà gái" theo `eventSide`; tiệc chung thì không ghi. */
   side?: string;
   /** Các tiệc ở địa điểm này, kèm vị trí trong mảng tiệc (eventIndex RSVP). */
   events: { event: T; index: number }[];
@@ -189,8 +175,9 @@ export type EventVenue<T extends MappableEvent> = {
 
 /**
  * Mỗi địa điểm một mục (một thẻ trên thiệp), theo thứ tự xuất hiện đầu tiên.
- * Hai tiệc chung chỗ khi cùng `side` (tiệc không ghi `side` đi với nhau), cùng
- * địa điểm và cùng địa chỉ sau khi trim. Thứ tự và `index` của tiệc giữ nguyên.
+ * Hai tiệc chung chỗ khi cùng bên theo `eventSide` (tiệc chung đi với nhau),
+ * cùng địa điểm và cùng địa chỉ sau khi trim. Thứ tự và `index` của tiệc giữ
+ * nguyên.
  */
 export function groupEventVenues<T extends MappableEvent>(
   events: readonly T[],
@@ -205,17 +192,16 @@ export function groupEventVenues<T extends MappableEvent>(
       venue.coordinates ??= point;
       venue.mapUrl ||= event.mapUrl || undefined;
     } else {
+      const side = eventSide(event);
       venues.set(key, {
         venue: event.venue.trim(),
         address: event.address.trim(),
         coordinates: point,
         mapUrl: event.mapUrl || undefined,
+        side: side && EVENT_SIDE_LABELS[side],
         events: [{ event, index }],
       });
     }
   });
-  return [...venues.values()].map((venue) => ({
-    ...venue,
-    side: venueSide(venue.events.map(({ event }) => event)),
-  }));
+  return [...venues.values()];
 }

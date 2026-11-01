@@ -716,14 +716,16 @@ Phạm vi: `main` tại `5d557ec`, chưa push lên `origin/main`. Gồm upload 4
     - `pnpm build` (Turbopack) fail sau 9 s: `Error [TurbopackInternalError]: [project]/src/app/globals.css [app-client] (css) Caused by: - reading file "/home/ccgram/happy_wedding.worktrees/ccg-worker-499cca94/.claude/scheduled_tasks.json" - Permission denied (os error 13)`.
     - `next dev` (Turbopack): `/login` trả 500 vì `reading file …/.bash_profile`, `Permission denied (os error 13)`.
   - Vì vậy build dùng `next build --webpack`, còn e2e chạy `next dev --webpack` qua config bọc `pw.local.config.ts` (không commit, đã xóa). Config này giữ nguyên env của `playwright.config.ts`, chỉ đổi lệnh webServer. Setup trong đó là bản sao của `e2e/global-setup.ts` nhưng seed bằng `node --import tsx prisma/seed.ts`, vì CLI `tsx` lỗi `listen EPERM /tmp/claude-1001/tsx-1001/16.pipe` trong sandbox. Không sửa `next.config.ts` hay `playwright.config.ts`.
-  - Kiểm chéo bằng Turbopack trên bản sao sạch `git archive 5d557ec` trong scratchpad, nơi không có dotfile bị che. Bản sao có `node_modules` symlink sang worktree và config bọc `pw.sandbox.config.ts`: Turbopack dev, `DATABASE_URL` tuyệt đối tới `prisma/e2e.db` của bản sao, `NEXT_PRIVATE_OUTPUT_TRACE_ROOT=/`. Chỉ dùng cho hai lượt t01 và t02 ghi bên dưới, đã xóa sau khi chạy.
+  - Kiểm chéo bằng Turbopack trên bản sao sạch `git archive 5d557ec` trong scratchpad, nơi không có dotfile bị che. Bản sao có `node_modules` symlink sang worktree và config bọc `pw.sandbox.config.ts`: Turbopack dev, `DATABASE_URL` tuyệt đối tới `prisma/e2e.db` của bản sao, `NEXT_PRIVATE_OUTPUT_TRACE_ROOT=/`. Chỉ dùng cho hai lượt t01 và t02 và build Turbopack ghi bên dưới, đã xóa sau khi chạy.
   - Giới hạn máy: RAM 5,9 GB, swap 2 GB đầy suốt lượt (2043–2047 MB). Mỗi lần chỉ chạy một lệnh, không song song, không watch.
     - Trước build và trước mỗi lượt e2e kiểm available ≥ 1500 MB và đĩa trống ≥ 1000 MB.
     - Build và e2e đặt `NODE_OPTIONS=--max-old-space-size=1536`; Playwright chạy `--workers=1`.
     - Mỗi lượt e2e chạy dưới watchdog: mỗi 2 s ghi available, swap, đĩa trống và RSS theo nhóm tiến trình. Watchdog tự dừng lượt nếu available dưới 500 MB, đĩa dưới 300 MB, hoặc PSI `some avg10` của `user@1001.service` vượt 15.
     - Sau mỗi lượt không còn tiến trình next hay chromium nào.
 - **`pnpm check`**: **exit 0, 83 s**. Lint 0 lỗi (còn cảnh báo ref có sẵn ở `music.tsx:55`), TypeScript qua, **29 file / 225 test qua** (vitest 58,8 s). Available trước khi chạy 3520 MB.
-- **Build.** `pnpm build` (Turbopack) fail như trên. `NODE_OPTIONS=--max-old-space-size=1536 NEXT_TELEMETRY_DISABLED=1 pnpm exec next build --webpack`: **exit 0, 62 s**. Compile 22,6 s, TypeScript 12,2 s, 14/14 trang tĩnh, không cảnh báo, đủ route kể cả `/api/wedding/upload`. Available thấp nhất 2884 MB, đĩa trống thấp nhất 2018 MB. Đã xóa `.next` (238 MB) sau khi build.
+- **Build.**
+  - Trong worktree: `pnpm build` (Turbopack) fail như trên. `NODE_OPTIONS=--max-old-space-size=1536 NEXT_TELEMETRY_DISABLED=1 pnpm exec next build --webpack`: **exit 0, 62 s**. Compile 22,6 s, TypeScript 12,2 s, 14/14 trang tĩnh, không cảnh báo, đủ route kể cả `/api/wedding/upload`. Available thấp nhất 2884 MB, đĩa trống thấp nhất 2018 MB. Đã xóa `.next` (238 MB) sau khi build.
+  - Turbopack trên bản sao sạch `git archive 12a85f7` (HEAD nhánh kiểm, chỉ khác `5d557ec` ở file này), `node_modules` symlink sang worktree như t01/t02: `NODE_OPTIONS=--max-old-space-size=1536 NEXT_TELEMETRY_DISABLED=1 NEXT_PRIVATE_OUTPUT_TRACE_ROOT=/ pnpm build` **exit 0, 24 s**. Compile 8,1 s, TypeScript 12,3 s, 14/14 trang tĩnh, không cảnh báo, có `/api/wedding/upload`. Trước khi chạy: available 3573 MB, đĩa trống 2236 MB; thấp nhất khi chạy: 2181 MB và 2107 MB. Đã xóa bản sao cùng `.next` (119 MB).
 - **E2E, mỗi file một lệnh** `pnpm exec playwright test -c pw.local.config.ts --workers=1 e2e/<file>`, webpack dev trong worktree, trừ các lượt ghi Turbopack. Thứ tự chạy như trong bảng:
 
   | Spec                           | Bài | Kết quả                                                    | Thời gian         | Available thấp nhất (MB) | Peak RSS `next-server` (MB) |
@@ -772,4 +774,4 @@ Phạm vi: `main` tại `5d557ec`, chưa push lên `origin/main`. Gồm upload 4
 - **Chưa làm.**
   - Chưa chạy được `wedding.spec.ts` hay full e2e thành một lệnh: `next dev` cộng chromium vượt RAM khi swap đã đầy.
   - Bài dòng 14 của `wedding.spec.ts` chưa xanh trên webpack dev (0/3), chỉ xanh trên Turbopack ở bản sao sạch. Bài checkout của `insecure-context-ids.spec.ts` chập chờn trên webpack dev (qua 1/3).
-  - Chưa chạy `pnpm test:e2e` nguyên bản (không qua config bọc). Chưa build được bằng Turbopack trong worktree. Chưa thử production, Safari hay điện thoại thật.
+  - Chưa chạy `pnpm test:e2e` nguyên bản (không qua config bọc). Build Turbopack chỉ qua trên bản sao sạch, chưa qua trong worktree. Chưa thử production, Safari hay điện thoại thật.

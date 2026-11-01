@@ -6687,9 +6687,20 @@ body:has(.admin-drawer[open]) {
 .wedding-page .album-loi-yeu .wedding-album > button:nth-child(even) {
   margin-top: 65px;
 }
+/* Every third print spans the album in the 3:2 a landscape print takes, so a
+   photo's orientation never changes the layout. A portrait shows under half
+   its height there; the crop keeps the top, where the faces sit in standing
+   and half-length wedding portraits. */
 .wedding-page .album-loi-yeu .wedding-album > button:nth-child(3n) {
   grid-column: 1/-1;
-  aspect-ratio: 16/9;
+  aspect-ratio: 3/2;
+}
+.wedding-page
+  .album-loi-yeu
+  .wedding-album
+  > button:nth-child(3n):not(.is-landscape)
+  img {
+  object-position: 50% 12%;
 }
 .wedding-page .album-vuon-thuong .wedding-album {
   grid-template-columns: repeat(3, minmax(0, 1fr));

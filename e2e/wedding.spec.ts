@@ -198,25 +198,34 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
   await guest
     .getByRole("button", { name: "Đóng hộp quà", exact: true })
     .click();
-  // RSVP: radio tham dự, rồi bên (thiệp mẫu có tiệc của cả hai nhà) và ngày.
+  // RSVP: chỉ hai lựa chọn tham dự, rồi bên (thiệp mẫu có tiệc của cả hai
+  // nhà) và số người. Form không còn hỏi ngày.
+  const attendance = guest.getByRole("group", {
+    name: "Bạn có thể đến chung vui không?",
+    exact: true,
+  });
+  await expect(attendance.getByRole("radio")).toHaveCount(2);
+  await expect(
+    guest.getByRole("radio", { name: "Mình sẽ xác nhận sau", exact: true }),
+  ).toHaveCount(0);
   await guest
-    .getByRole("radio", { name: "Mình sẽ xác nhận sau", exact: true })
+    .getByRole("radio", { name: "Mình rất tiếc, không thể đến", exact: true })
     .check();
   await expect(
     guest.getByRole("group", { name: "Số người tham dự", exact: true }),
+  ).not.toBeVisible();
+  await expect(
+    guest.getByRole("group", { name: "Bạn đến dự bên nào?", exact: true }),
   ).not.toBeVisible();
   await guest
     .getByRole("radio", { name: "Có, mình sẽ tham dự", exact: true })
     .check();
   await guest.getByRole("radio", { name: "Nhà gái", exact: true }).check();
-  const brideDay = guest.getByRole("radio", { name: /^Thứ bảy · 13\/02 / });
-  await expect(brideDay).toBeChecked();
-  await expect(brideDay).toHaveValue("1");
-  await expect(guest.getByRole("radio", { name: /14\/02/ })).toHaveCount(0);
   await guest.getByRole("radio", { name: "Nhà trai", exact: true }).check();
   await expect(
-    guest.getByRole("radio", { name: /^Chủ nhật · 14\/02 / }),
-  ).toBeChecked();
+    guest.getByRole("group", { name: "Bạn đến vào ngày nào?" }),
+  ).toHaveCount(0);
+  await expect(guest.getByRole("radio", { name: /1[34]\/02/ })).toHaveCount(0);
   await guest
     .getByRole("button", { name: "Thêm một người", exact: true })
     .click();
@@ -234,6 +243,10 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
   await expect(
     page.getByText("Chúc anh chị trăm năm hạnh phúc!", { exact: true }),
   ).toBeVisible();
+  // Danh sách phản hồi ghi bên khách chọn, không ghi ngày.
+  await expect(
+    page.getByRole("cell", { name: "Nhà trai", exact: true }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Duyệt lời chúc" }).click();
   await expect(page.getByText("Đã duyệt", { exact: true })).toBeVisible();
   await guest.reload();
@@ -246,7 +259,9 @@ test("customer buys, admin activates, couple publishes, personal guest responds 
     `/api/wedding/export/${invitationId}`,
   );
   expect(exported.status()).toBe(200);
-  expect(await exported.text()).toContain("Chị Lan");
+  const csv = await exported.text();
+  expect(csv).toContain("Chị Lan");
+  expect(csv).toContain('"Nhà trai"');
   // UI layouts at phone size, plus refusal of an unauthenticated mutation.
   await guest.setViewportSize({ width: 390, height: 844 });
   expect(

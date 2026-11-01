@@ -3,7 +3,8 @@ import { Prisma } from "@prisma/client";
 import { z } from "zod";
 
 import { logger } from "@/lib/logger";
-import { planSchema, templateSchema } from "@/lib/wedding";
+import { EVENT_SIDE_LABELS, eventSide } from "@/lib/rsvp-events";
+import { planSchema, readEvents, templateSchema } from "@/lib/wedding";
 import { prisma } from "@/server/db/prisma";
 import { readJsonBody } from "@/server/http/read-json-body";
 import {
@@ -319,7 +320,15 @@ export async function GET(
     if (path[0] !== "export" || !path[1])
       throw new WeddingError(404, "Không tìm thấy dữ liệu");
     const session = await customer();
-    await ownedInvitation(path[1], session.accountId);
+    const invitation = await ownedInvitation(path[1], session.accountId);
+    const events = readEvents(invitation.eventsJson);
+    // Form RSVP chỉ hỏi bên: khách đến thì ghi bên của tiệc, tiệc chung hoặc
+    // phản hồi không đến thì giữ số thứ tự tiệc như trước.
+    const party = (attendance: string, eventIndex: number) => {
+      const event = events[eventIndex];
+      const side = attendance === "attending" && event && eventSide(event);
+      return side ? EVENT_SIDE_LABELS[side] : eventIndex + 1;
+    };
     const rows = await prisma.guestResponse.findMany({
       where: { invitationId: path[1] },
       orderBy: { createdAt: "desc" },
@@ -337,7 +346,7 @@ export async function GET(
               ? "Không"
               : "Chưa rõ",
           r.partySize,
-          r.eventIndex + 1,
+          party(r.attendance, r.eventIndex),
           r.message,
           r.createdAt.toISOString(),
         ]),

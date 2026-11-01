@@ -5,10 +5,7 @@ import { randomUUID } from "@/lib/random-id";
 import {
   EVENT_SIDES,
   EVENT_SIDE_LABELS,
-  eventDayLabel,
-  eventIsoDay,
   eventSide,
-  eventTimeLabel,
   type EventSide,
 } from "@/lib/rsvp-events";
 import { post } from "./client";
@@ -17,10 +14,13 @@ import styles from "./rsvp-form.module.css";
 
 /** Khớp giới hạn `partySize` của responseSchema. */
 const MAX_PARTY_SIZE = 10;
+/**
+ * Form chỉ hỏi đến hay không. API vẫn nhận `undecided` cho phản hồi cũ và
+ * trang đã mở từ trước, nhưng form không còn gửi giá trị này.
+ */
 const ATTENDANCE = [
   { value: "attending", label: "Có, mình sẽ tham dự" },
   { value: "declined", label: "Mình rất tiếc, không thể đến" },
-  { value: "undecided", label: "Mình sẽ xác nhận sau" },
 ] as const;
 type Attendance = (typeof ATTENDANCE)[number]["value"];
 
@@ -76,34 +76,25 @@ export function RsvpForm({
   const [partySize, setPartySize] = useState(1);
   const clientId = useRef("");
   // Chỉ hỏi bên khi thiệp có tiệc của cả nhà trai lẫn nhà gái. Tiệc chung
-  // (không rõ bên) hiện ở cả hai bên. Giá trị gửi đi vẫn là chỉ số gốc.
+  // (không rõ bên) thuộc cả hai bên. Khách không chọn ngày: form gửi chỉ số
+  // gốc của tiệc đầu tiên thuộc bên đã chọn, để danh sách khách biết bên nào.
   const options = events.map((event, index) => ({
-    event,
     index,
     side: eventSide(event),
   }));
   const askSide = EVENT_SIDES.every((side) =>
     options.some((option) => option.side === side),
   );
-  const datesOf = (side: EventSide) =>
-    askSide
-      ? options.filter((option) => !option.side || option.side === side)
-      : options;
   const [side, setSide] = useState<EventSide>(
     () => options.find((option) => option.side)?.side ?? "groom",
   );
-  const dates = datesOf(side);
-  const [picked, setPicked] = useState(() => dates[0]?.index ?? 0);
-  // Danh sách tiệc có thể đổi trong bản xem thử; giữ lựa chọn luôn hợp lệ.
-  const eventIndex = dates.some((option) => option.index === picked)
-    ? picked
-    : (dates[0]?.index ?? 0);
+  // Tính lại mỗi lần render vì danh sách tiệc có thể đổi trong bản xem thử.
+  const eventIndex =
+    (askSide
+      ? options.find((option) => !option.side || option.side === side)
+      : options[0]
+    )?.index ?? 0;
   const attending = attendance === "attending";
-
-  function chooseSide(next: EventSide) {
-    setSide(next);
-    setPicked(datesOf(next)[0]?.index ?? 0);
-  }
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -192,32 +183,9 @@ export function RsvpForm({
                 name="side"
                 value={value}
                 checked={side === value}
-                onSelect={() => chooseSide(value)}
+                onSelect={() => setSide(value)}
               >
                 {EVENT_SIDE_LABELS[value]}
-              </Choice>
-            ))}
-          </div>
-        </fieldset>
-      )}
-      {attending && dates.length > 0 && (
-        <fieldset className={`${styles.group} ${styles.reveal}`}>
-          <legend className={styles.legend}>Bạn đến vào ngày nào?</legend>
-          <div className={styles.dates}>
-            {dates.map(({ event, index }) => (
-              <Choice
-                key={index}
-                name="eventIndex"
-                value={String(index)}
-                checked={eventIndex === index}
-                onSelect={() => setPicked(index)}
-              >
-                <time className={styles.day} dateTime={eventIsoDay(event)}>
-                  {eventDayLabel(event)}
-                </time>{" "}
-                <span className={styles.detail}>
-                  {eventTimeLabel(event)} · {event.title}
-                </span>
               </Choice>
             ))}
           </div>

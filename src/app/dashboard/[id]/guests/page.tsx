@@ -13,7 +13,11 @@ import {
   eventTimeLabel,
 } from "@/lib/rsvp-events";
 
-/** Tiệc khách chọn, kèm bên và ngày. Khách không đến thì không chọn tiệc. */
+/**
+ * Bên khách đến dự. Form RSVP chỉ hỏi bên, không hỏi ngày, nên tiệc có bên
+ * thì chỉ hiện bên. Tiệc chung (không rõ bên) thì vẫn hiện tên tiệc và ngày.
+ * Khách không đến thì không chọn tiệc.
+ */
 function ResponseEvent({
   attendance,
   event,
@@ -24,18 +28,11 @@ function ResponseEvent({
   if (attendance !== "attending") return <>—</>;
   if (!event) return <>Tiệc đã thay đổi</>;
   const side = eventSide(event);
+  if (side) return <>{EVENT_SIDE_LABELS[side]}</>;
   return (
     <>
       {event.title}
-      <p>
-        {[
-          side && EVENT_SIDE_LABELS[side],
-          eventDayLabel(event),
-          eventTimeLabel(event),
-        ]
-          .filter(Boolean)
-          .join(" · ")}
-      </p>
+      <p>{[eventDayLabel(event), eventTimeLabel(event)].join(" · ")}</p>
     </>
   );
 }

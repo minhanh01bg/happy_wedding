@@ -74,11 +74,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
-.form .dates {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
-  gap: 8px;
-}
 
 /* Radio thật phủ kín ô, trong suốt: chạm vào đâu trong ô cũng chọn được. */
 .form .choice {
@@ -129,13 +124,6 @@
   min-width: 0;
   line-height: 1.4;
   overflow-wrap: anywhere;
-}
-.form .day {
-  font-weight: 600;
-}
-.form .detail {
-  font-size: 14px;
-  font-weight: 400;
 }
 
 .form .radio:checked + .face {

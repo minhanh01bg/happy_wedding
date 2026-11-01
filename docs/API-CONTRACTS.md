@@ -50,7 +50,7 @@ type RSVPInput = {
 };
 ```
 
-`eventIndex` là chỉ số gốc của tiệc trong `events`. Form chọn nó qua bên (nhà trai/nhà gái) và ngày, nhưng chỉ gửi `eventIndex`, không gửi `side`. Khách không tham dự hoặc chưa chắc thì gửi `eventIndex: 0`.
+`eventIndex` là chỉ số gốc của tiệc trong `events`. Từ 01/11/2026 form chỉ hỏi bên (nhà trai/nhà gái), không hỏi ngày, và gửi chỉ số của tiệc đầu tiên thuộc bên đó; không gửi `side`. Khách không tham dự thì gửi `eventIndex: 0`. Form không còn gửi `undecided`, nhưng API vẫn nhận giá trị này.
 
 Trả data `{id: responseId}`. Thiệp phải công khai hợp lệ. Personal client identity được thay bằng guest ID; submit lại cập nhật một record và đưa lời chúc về pending.
 

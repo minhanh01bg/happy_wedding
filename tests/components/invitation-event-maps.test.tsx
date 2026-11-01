@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { act } from "react";
+import { hydrateRoot } from "react-dom/client";
+import { renderToString } from "react-dom/server";
+import { describe, expect, it, vi } from "vitest";
 import { render, within } from "@testing-library/react";
 import { InvitationEvents } from "@/components/wedding/invitation-events";
 import { invitationDesign } from "@/lib/invitation-designs";
@@ -258,6 +261,33 @@ describe("Lịch tiệc theo địa điểm", () => {
       expect(cards[1]).toHaveTextContent("Nhà gái");
     },
   );
+});
+
+describe("Lịch tiệc theo địa điểm: hydrate", () => {
+  it("hydrates quietly when the phone's browser tags each map iframe first", async () => {
+    const view = (
+      <InvitationEvents events={FOUR_AT_TWO} design="loi-yeu" couple="A & B" />
+    );
+    const root = document.createElement("div");
+    root.innerHTML = renderToString(view);
+    document.body.append(root);
+    // Chrome trên iPhone ghi token khung con của nó lên mọi iframe trước khi
+    // React hydrate; thuộc tính đó không có trong props của trang.
+    for (const frame of root.querySelectorAll("iframe")) {
+      frame.setAttribute("__gcrchildframeremotetoken", "0123456789abcdef");
+    }
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const hydrated = await act(async () => hydrateRoot(root, view));
+      expect(error.mock.calls.flat().join("\n")).not.toMatch(
+        /didn't match the client/,
+      );
+      await act(async () => hydrated.unmount());
+    } finally {
+      error.mockRestore();
+      root.remove();
+    }
+  });
 });
 
 describe("Lịch tiệc theo địa điểm: styles", () => {

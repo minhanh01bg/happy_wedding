@@ -206,6 +206,11 @@ function PlaceCard({
       Chỉ đường đến tiệc
     </a>
   );
+  // Chrome trên iPhone ghi `__gcrchildframeremotetoken` lên mọi iframe ngay
+  // khi đọc HTML, trước khi React hydrate, nên React báo lệch thuộc tính.
+  // Props của iframe đến từ Server Component, server và trình duyệt dùng chung
+  // một payload, nên chỉ trình duyệt mới làm lệch được; suppressHydrationWarning
+  // chỉ bỏ qua thuộc tính của chính iframe này.
   const map = (
     <div className={styles.mapFrame} data-event-map>
       <iframe
@@ -215,6 +220,7 @@ function PlaceCard({
         title={`Bản đồ đường đến ${place.venue}${place.side ? ` (${place.side.toLocaleLowerCase("vi")})` : ""}`}
         loading="lazy"
         referrerPolicy="no-referrer"
+        suppressHydrationWarning
       />
     </div>
   );

@@ -550,11 +550,44 @@ Phạm vi: `main` tại `6009b2d` (tạo id trên trình duyệt không cần `c
 
   Bản sao này chỉ để chạy kiểm tra đỏ, không đụng worktree hay `main`.
 
-- **Full e2e: chưa chạy hết.** Lệnh `pnpm exec playwright test -c pw.sandbox.config.ts --workers=1` (37 bài: hai bài hydration, một bài giờ bằng chữ, ba bài mới, 31 bài của `wedding.spec.ts`) **bị watchdog dừng sau 100 s, exit 143**:
+- **Full e2e một lượt: bị dừng.** Lệnh `pnpm exec playwright test -c pw.sandbox.config.ts --workers=1` (37 bài: hai bài hydration, một bài giờ bằng chữ, ba bài mới, 31 bài của `wedding.spec.ts`) **bị watchdog dừng sau 100 s, exit 143**:
   - Lúc dừng, **6/37 đã qua, 0 fail**: hai bài hydration Chrome iOS (8,0 s / 6,3 s), bài giờ bằng chữ (16,3 s) và ba bài mới (4,2 s / 5,1 s / 6,2 s). Bài thứ bảy, bài đầu tiên của `wedding.spec.ts`, đang chạy thì bị dừng. 31 bài chưa chạy.
   - Lý do: available tụt xuống **352 MB**, swap đầy **2047/2047 MB**, và `next-server` của `next dev` chiếm **RSS 2,7 GB** khi bắt đầu biên dịch các route của `wedding.spec.ts`. Giới hạn heap `--max-old-space-size=1536` không chặn được phần bộ nhớ native của Turbopack. PSI `some avg10` cao nhất chỉ 4,97%, xa ngưỡng 50% của oomd: watchdog dừng trước, **oomd không giết gì**, ccgram và các phiên khác vẫn chạy.
   - Mức RAM trước lần chạy này: available 3001 MB, nhưng swap đã dùng 1800/2047 MB. Giữa chừng có lúc available lên 1985 MB, khoảng lúc service 3200 được dừng, rồi lại tụt.
   - Theo quy tắc của lượt này, không chạy lại ngay. Ngay sau khi dừng: available 3732 MB, swap 2026/2047 MB.
+- **Full e2e chạy chia lượt: 37/37 qua.** Orchestrator đồng ý chạy chia lượt. Lý do: máy chỉ có 5,9 GB RAM, swap đã đầy (2045/2047 MB), và khi chạy một lượt thì `next dev` lên 2,7 GB. Service 3200 tắt suốt lúc chạy. Bản sao sạch là `6009b2d` cộng spec mới của `d891828`, giống trên.
+  - **Cách chạy.** Mỗi lượt là một lệnh riêng, `NODE_OPTIONS=--max-old-space-size=1536 playwright test -c pw.sandbox.config.ts --workers=1 <file hoặc file:dòng>`, với một `next dev` mới. Setup của webServer xóa và seed lại `prisma/e2e.db` ở mỗi lượt.
+  - **Giữa các lượt.** `ps` không còn next hay chromium, cổng 3201 trống, available ≥ 1500 MB.
+  - **Watchdog.** Vẫn dùng watchdog như trên, có ghi thêm RSS của `next-server`. Từ lượt p04b, watchdog ghi thêm dung lượng đĩa trống, không cho lượt bắt đầu nếu còn dưới 1000 MB, và dừng lượt nếu tụt dưới 300 MB.
+  - **Cách chia lượt.** Mỗi file spec chạy một lượt. `wedding.spec.ts` có 31 bài, không có `test.describe`, `serial` hay hook, nhưng có một phụ thuộc dữ liệu:
+    - Bài “admin sidebar, mobile drawer and order filters…” (dòng 874) lọc đơn “Đã thanh toán” của “Khách kiểm thử”. Khách và đơn này do bài đầu (dòng 14) tạo; seed chỉ có đơn đã thanh toán của “Cặp đôi minh họa”. Vì vậy hai bài chạy chung một lượt, theo thứ tự trong file.
+    - Không dùng được `--shard`, vì config để `fullyParallel: false`: với `--shard=1/3`, shard 1 nhận cả 31 bài, hai shard còn lại 0 bài. Thay vào đó chọn bài theo `file:dòng`.
+    - Trước khi chạy, đã đối chiếu `--list` của từng lượt với `--list` toàn bộ: hợp lại đúng 37 bài, không trùng, không sót.
+
+  | Lượt                                            | Bài | Kết quả                | Thời gian | Available trước / thấp nhất (MB) | Peak RSS `next-server` (MB) |
+  | ----------------------------------------------- | --- | ---------------------- | --------- | -------------------------------- | --------------------------- |
+  | p01 `chrome-ios-hydration.spec.ts`              | 2   | 2 qua                  | 28 s      | 3690 / 2485                      | 833                         |
+  | p02 `event-time-label.spec.ts`                  | 1   | 1 qua                  | 21 s      | 3648 / 2396                      | 893                         |
+  | p03 `insecure-context-ids.spec.ts`              | 3   | 3 qua                  | 29 s      | 3642 / 2348                      | 958                         |
+  | p04 `wedding` :14, :874                         | 2   | 1 qua, 1 fail (ENOSPC) | 103 s     | 3649 / 557                       | 2518                        |
+  | p04b, chạy lại p04                              | 2   | 2 qua                  | 95 s      | 3703 / 1126                      | 2120                        |
+  | p05 `wedding` :311, :347, :397                  | 3   | 3 qua                  | 34 s      | 3717 / 2088                      | 1362                        |
+  | p06 `wedding` :437 (6 viewport)                 | 6   | 6 qua                  | 67 s      | 3711 / 1637                      | 1755                        |
+  | p07 `wedding` :506, :549, :626, :650, :691      | 5   | 5 qua                  | 38 s      | 3691 / 1931                      | 1543                        |
+  | p08 `wedding` :746 (×2), :793, :812 (×2)        | 5   | 5 qua                  | 33 s      | 3609 / 2187                      | 1261                        |
+  | p09 `wedding` :986, :1017, :1078, :1192, :1221  | 5   | 5 qua                  | 45 s      | 3642 / 2139                      | 1073                        |
+  | p10 `wedding` :1260, :1340, :1379, :1416, :1438 | 5   | 5 qua                  | 54 s      | 3633 / 2137                      | 1066                        |
+  - **Tổng.** Lấy p04b thay cho p04: 2 + 1 + 3 + 2 + 3 + 6 + 5 + 5 + 5 + 5 = **37 bài, 37 qua, 0 fail**. Tên các bài qua khớp đúng 37 tên của `--list`.
+  - **Fail ở p04 là do hết đĩa, không phải lỗi app.**
+    - Bài dòng 874 fail ở `page.goto("/admin/plans")` với `net::ERR_INSUFFICIENT_RESOURCES`, kèm `ENOSPC: no space left on device` khi Playwright ghi trace. Đĩa gốc `/` (75 GB, dùng chung cả máy) lúc đó chỉ còn khoảng 1,1 GB trống.
+    - Trước khi chạy lại, xóa build output và cache của các bản sao trong scratchpad (khoảng 450 MB) để có chỗ. Chạy lại đúng hai bài đó (p04b), không sửa gì: **qua 2/2**.
+    - Log đĩa của p04b: ngay sau khi hai bài xong, mức trống tụt từ 1572 xuống 326 MB trong khoảng 6 s, rồi về lại 1573 MB. Lúc đó `next-server` giữ 2,1 GB. Có vẻ là `next dev` ghi cache Turbopack vào `.next-e2e` khi tắt (chưa xác nhận).
+  - **RAM.**
+    - Available thấp nhất 557 MB (p04). Trong các lượt tính vào 37 bài, thấp nhất 1126 MB (p04b).
+    - Swap đầy suốt lúc chạy (2045–2047/2047 MB). PSI `some avg10` cao nhất 4,22%. Watchdog không phải ra tay, oomd không giết gì.
+    - Peak `next-server` dưới 1,5 GB ở 7/10 lượt tính vào tổng. p06 và p07 nhỉnh hơn (1755 và 1543 MB). p04/p04b vượt (2,1–2,5 GB) vì hai bài customer và admin phải chạy chung, không chia nhỏ hơn được.
+  - **Sau khi chạy.** Sau mỗi lượt `ps` không còn next hay chromium. Cuối cùng available 3621 MB, swap 2045/2047 MB. Đã xóa cache `.next-e2e` của bản sao; đĩa còn 2557 MB trống.
+
 - **Bằng chứng trên server http thật.** Bước kiểm tra trước, sáng 01/11, chạy trên `http://160.250.247.137:3200` (main `6009b2d`, `isSecureContext=false`, `crypto.randomUUID` là `undefined`, `getRandomValues` có):
   - Editor `/dashboard/<id>` mở được, thêm và bỏ tiệc đều không lỗi.
   - RSVP ở `/w/thiep-mau` và checkout ở `/dashboard/orders/new?invitation=<id>` gửi `clientId` là UUID v4, không có lỗi `randomUUID`. Hai request này được chặn lại và trả 503, nên không ghi vào DB thật. Đối chiếu `prisma/dev.db` ở chế độ chỉ đọc: không có phản hồi hay đơn mới.
@@ -571,6 +604,7 @@ Phạm vi: `main` tại `6009b2d` (tạo id trên trình duyệt không cần `c
   Sau `pnpm check`, `pnpm build`, spec mới và kiểm tra đỏ, `ps` không còn tiến trình next hay chromium nào. Riêng full e2e: script đã kết thúc trước khi watchdog kịp gửi đợt SIGKILL, nên `ps` ngay lúc đó vẫn thấy `next dev`, `next-server` và process của Playwright. Các tiến trình này dừng khi lệnh sandbox kết thúc. Ngay sau đó available về 3732 MB (lúc dừng, riêng `next-server` chiếm 2,7 GB). Watchdog đã được sửa để chờ xong đợt SIGKILL, và lần kiểm tra đỏ sau đó không còn tiến trình sót.
 
 - **Chưa làm.**
-  - Chưa chạy hết full e2e trên `6009b2d`: 31 bài của `wedding.spec.ts` chưa chạy. Với swap gần đầy và một `next dev` biên dịch toàn bộ route, máy 5,9 GB không đủ chỗ an toàn. Cách có thể làm: chạy lại khi swap đã được giải phóng, hoặc chia `wedding.spec.ts` thành vài lượt, mỗi lượt một `next dev` mới. Cách sau không còn là một lượt `pnpm test:e2e` nguyên vẹn.
+  - Chưa chạy được full e2e thành một lượt nguyên vẹn trên `6009b2d`. Cả 37 bài đã qua, nhưng trong 10 lượt riêng (xem trên). Muốn chạy một lượt thì cần giải phóng swap (phải có root) hoặc máy nhiều RAM hơn.
+  - Đĩa gốc `/` chỉ còn khoảng 2,5 GB trống, mà một lượt `next dev` có thể ghi tạm hơn 1 GB.
   - Chưa chạy `pnpm test:e2e` nguyên bản (không qua config bọc), vì các lỗi sandbox đã ghi ở mục 31/10.
   - Chưa thử trên Safari hay điện thoại thật qua http.

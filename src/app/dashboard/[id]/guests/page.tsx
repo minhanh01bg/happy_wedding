@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/server/db/prisma";
 import { requireCustomerSession } from "@/server/customer-auth/session";
 import { GuestForm } from "@/components/wedding/guest-form";
-import { CopyButton, MutationButton } from "@/components/wedding/actions";
+import { CopyButton } from "@/components/wedding/actions";
 import { STATUS_LABELS } from "@/components/wedding/status";
+import { WishModeration } from "./wish-moderation";
 import { readEvents, dateLabel, type WeddingEvent } from "@/lib/wedding";
 import {
   EVENT_SIDE_LABELS,
@@ -224,27 +225,7 @@ export default async function Guests({
                       {r.message || "Không có lời nhắn"}
                     </p>
                     {r.message && (
-                      <div className="table-actions" style={{ marginTop: 10 }}>
-                        <span className={`badge ${r.wishStatus}`}>
-                          {STATUS_LABELS[r.wishStatus]}
-                        </span>
-                        {r.wishStatus !== "approved" && (
-                          <MutationButton
-                            endpoint="moderate"
-                            data={{ id: r.id, status: "approved" }}
-                          >
-                            Duyệt lời chúc
-                          </MutationButton>
-                        )}
-                        {r.wishStatus !== "hidden" && (
-                          <MutationButton
-                            endpoint="moderate"
-                            data={{ id: r.id, status: "hidden" }}
-                          >
-                            Ẩn
-                          </MutationButton>
-                        )}
-                      </div>
+                      <WishModeration id={r.id} wishStatus={r.wishStatus} />
                     )}
                   </td>
                 </tr>

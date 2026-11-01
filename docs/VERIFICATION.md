@@ -703,3 +703,75 @@ Phạm vi: `main` tại `6009b2d` (tạo id trên trình duyệt không cần `c
     - Test tệp hỏng / 8001×8001 kiểm thêm: không lấy slot.
 - **Kiểm tra đỏ.** Tạm thay route bằng bản `895c9c7`: **2/10 fail** đúng lý do. Bài PNG 16-bit: `expected 200 to be 400`, tức route cũ mã hóa ảnh. Bài tệp hỏng / 8001×8001: `expected 2 to be +0`, tức route cũ lấy slot rồi mới từ chối. Trả lại route mới (`cmp` khớp) thì 10/10 qua. Test thư viện mới không chạy được trên `895c9c7` vì chưa có `decodeCostBytes`.
 - **Gate.** `TEST_DATABASE_URL="file:$PWD/prisma/prisma/test.db" pnpm check` **exit 0**: lint 0 lỗi (còn cảnh báo có sẵn ở `music.tsx:55`), TypeScript qua, **29 file / 217 test qua**. RAM trước khi chạy: available 3652 MB. Lần chạy đầu fail typecheck (`sharp.Sharp` không có trong kiểu ESM của sharp 0.35), sửa thành `import sharp, { type Sharp }`. Theo yêu cầu review, không chạy `pnpm build`, server hay E2E, không đụng `prisma/dev.db` hay `public/uploads`; ảnh đo nằm ở scratchpad và đã xóa.
+
+## Kiểm tra trên main `5d557ec`: upload ảnh gốc, album Lời yêu, `sizes` ảnh bìa — 01/11/2026
+
+Phạm vi: `main` tại `5d557ec`, chưa push lên `origin/main`. Gồm upload 40 MiB giữ độ phân giải gốc (`a512258`, `895c9c7`, `32ad364`); hủy giữa chừng trả 499 và hàng chờ mã hóa (`aa0c3ae`, `3b3ea70`, `fcfd0ab`); khung rộng 3:2, `object-position: 50% 12%` và `albumPhotoSizes` của album Lời yêu (`8da6a3f`, `50be4b0`, spec `e2e/album-frames.spec.ts`); `sizes` cho ảnh bìa và ảnh Câu chuyện (`a48b2c2`, spec `e2e/cover-story-sizes.spec.ts`, lần đầu được chạy). Lượt này chỉ ghi kết quả, không sửa `src/` hay spec.
+
+- **Môi trường.**
+  - Worktree riêng bắt đầu từ `5d557ec`. `node_modules` là hardlink chung với checkout chính do orchestrator tạo: không symlink, không `pnpm install`, không sửa gì trong đó.
+  - `pnpm check` đặt `TEST_DATABASE_URL="file:$PWD/prisma/prisma/test.db"`.
+  - Server 3200 đã được dừng trước khi chạy. E2E dùng cổng 3201, `prisma/e2e.db` và `.next-e2e` của worktree như `playwright.config.ts`. Không đụng `prisma/dev.db` của checkout chính.
+  - Turbopack không chạy được trong worktree này. Sandbox che một số dotfile ở gốc worktree, mà Tailwind/PostCSS trong Turbopack theo dõi cả thư mục gốc:
+    - `pnpm build` (Turbopack) fail sau 9 s: `Error [TurbopackInternalError]: [project]/src/app/globals.css [app-client] (css) Caused by: - reading file "/home/ccgram/happy_wedding.worktrees/ccg-worker-499cca94/.claude/scheduled_tasks.json" - Permission denied (os error 13)`.
+    - `next dev` (Turbopack): `/login` trả 500 vì `reading file …/.bash_profile`, `Permission denied (os error 13)`.
+  - Vì vậy build dùng `next build --webpack`, còn e2e chạy `next dev --webpack` qua config bọc `pw.local.config.ts` (không commit, đã xóa). Config này giữ nguyên env của `playwright.config.ts`, chỉ đổi lệnh webServer. Setup trong đó là bản sao của `e2e/global-setup.ts` nhưng seed bằng `node --import tsx prisma/seed.ts`, vì CLI `tsx` lỗi `listen EPERM /tmp/claude-1001/tsx-1001/16.pipe` trong sandbox. Không sửa `next.config.ts` hay `playwright.config.ts`.
+  - Kiểm chéo bằng Turbopack trên bản sao sạch `git archive 5d557ec` trong scratchpad, nơi không có dotfile bị che. Bản sao có `node_modules` symlink sang worktree và config bọc `pw.sandbox.config.ts`: Turbopack dev, `DATABASE_URL` tuyệt đối tới `prisma/e2e.db` của bản sao, `NEXT_PRIVATE_OUTPUT_TRACE_ROOT=/`. Chỉ dùng cho hai lượt t01 và t02 và build Turbopack ghi bên dưới, đã xóa sau khi chạy.
+  - Giới hạn máy: RAM 5,9 GB, swap 2 GB đầy suốt lượt (2043–2047 MB). Mỗi lần chỉ chạy một lệnh, không song song, không watch.
+    - Trước build và trước mỗi lượt e2e kiểm available ≥ 1500 MB và đĩa trống ≥ 1000 MB.
+    - Build và e2e đặt `NODE_OPTIONS=--max-old-space-size=1536`; Playwright chạy `--workers=1`.
+    - Mỗi lượt e2e chạy dưới watchdog: mỗi 2 s ghi available, swap, đĩa trống và RSS theo nhóm tiến trình. Watchdog tự dừng lượt nếu available dưới 500 MB, đĩa dưới 300 MB, hoặc PSI `some avg10` của `user@1001.service` vượt 15.
+    - Sau mỗi lượt không còn tiến trình next hay chromium nào.
+- **`pnpm check`**: **exit 0, 83 s**. Lint 0 lỗi (còn cảnh báo ref có sẵn ở `music.tsx:55`), TypeScript qua, **29 file / 225 test qua** (vitest 58,8 s). Available trước khi chạy 3520 MB.
+- **Build.**
+  - Trong worktree: `pnpm build` (Turbopack) fail như trên. `NODE_OPTIONS=--max-old-space-size=1536 NEXT_TELEMETRY_DISABLED=1 pnpm exec next build --webpack`: **exit 0, 62 s**. Compile 22,6 s, TypeScript 12,2 s, 14/14 trang tĩnh, không cảnh báo, đủ route kể cả `/api/wedding/upload`. Available thấp nhất 2884 MB, đĩa trống thấp nhất 2018 MB. Đã xóa `.next` (238 MB) sau khi build.
+  - Turbopack trên bản sao sạch `git archive 12a85f7` (HEAD nhánh kiểm, chỉ khác `5d557ec` ở file này), `node_modules` symlink sang worktree như t01/t02: `NODE_OPTIONS=--max-old-space-size=1536 NEXT_TELEMETRY_DISABLED=1 NEXT_PRIVATE_OUTPUT_TRACE_ROOT=/ pnpm build` **exit 0, 24 s**. Compile 8,1 s, TypeScript 12,3 s, 14/14 trang tĩnh, không cảnh báo, có `/api/wedding/upload`. Trước khi chạy: available 3573 MB, đĩa trống 2236 MB; thấp nhất khi chạy: 2181 MB và 2107 MB. Đã xóa bản sao cùng `.next` (119 MB).
+- **E2E, mỗi file một lệnh** `pnpm exec playwright test -c pw.local.config.ts --workers=1 e2e/<file>`, webpack dev trong worktree, trừ các lượt ghi Turbopack. Thứ tự chạy như trong bảng:
+
+  | Spec                           | Bài | Kết quả                                                    | Thời gian         | Available thấp nhất (MB) | Peak RSS `next-server` (MB) |
+  | ------------------------------ | --- | ---------------------------------------------------------- | ----------------- | ------------------------ | --------------------------- |
+  | `cover-story-sizes.spec.ts`    | 5   | **5 qua**                                                  | 61 s              | 1716                     | 1354                        |
+  | `album-frames.spec.ts`         | 21  | **21 qua**                                                 | 221 s             | 776                      | 2249                        |
+  | `wedding.spec.ts`              | 31  | **31 qua**, chia 7 lượt (29 bài webpack, 2 Turbopack)      | 648 s cộng dồn    | 785                      | 2192                        |
+  | `chrome-ios-hydration.spec.ts` | 2   | **2 qua**                                                  | 39 s              | 2030                     | 1028                        |
+  | `event-time-label.spec.ts`     | 1   | **1 qua**                                                  | 50 s              | 1556                     | 1315                        |
+  | `insecure-context-ids.spec.ts` | 3   | webpack 2/3 ở cả hai lần chạy cả file; **Turbopack 3 qua** | 171 s, 75 s; 39 s | 1598                     | 1646                        |
+  - **`cover-story-sizes.spec.ts`**: năm bài ở 390 px DPR 3, 1024 px DPR 1 và 2, 1440 px DPR 1 và 2, mất 15,8 / 6,8 / 6,9 / 6,5 / 5,5 s.
+  - **`album-frames.spec.ts`**: 21 bài, gồm cả các bài khung 03 ở 1440 px cuộn nhanh/chậm. `afterAll` của spec đã xóa ảnh upload.
+
+- **`wedding.spec.ts` chạy cả file: bị watchdog dừng.** Lệnh `… e2e/wedding.spec.ts` **bị dừng sau 92 s, exit 143, 0 kết quả**, lúc bài đầu (dòng 14) đang chạy. Available còn 355 MB, swap 2047/2047 MB, `next-server` 1906 MB. Chạy riêng bài dòng 14 với trace mặc định cũng bị dừng sau 102 s: available 485 MB, runner 687 MB, chromium 1293 MB, `next-server` 1921 MB. Vì vậy chuyển sang chạy theo lượt `file:dòng`, chia giống mục `6009b2d` ở trên: dòng 14 và 874 chung một lượt, vì bài 874 lọc đơn đã thanh toán của khách do bài 14 tạo. Tổng số bài các lượt khớp 31 bài của `--list`.
+
+  | Lượt                                                  | Bài | Kết quả                 | Thời gian | Available thấp nhất (MB) | Đĩa trống thấp nhất (MB) | Peak RSS `next-server` (MB) |
+  | ----------------------------------------------------- | --- | ----------------------- | --------- | ------------------------ | ------------------------ | --------------------------- |
+  | w02, w03, w04: :14, `--trace off`, webpack            | 1   | fail cả 3 lần ở dòng 99 | 74–75 s   | 1165–1352                | 2019–2053                | 1645–1861                   |
+  | t01: :14, :874, `--trace off`, Turbopack bản sao sạch | 2   | **2 qua**               | 100 s     | 785                      | 456                      | 2192                        |
+  | w05: :311, :347, :397                                 | 3   | **3 qua**               | 54 s      | 1837                     | 2040                     | 1175                        |
+  | w06: :437 (6 viewport)                                | 6   | **6 qua**               | 193 s     | 1221                     | 1855                     | 1445                        |
+  | w07: :506, :549, :626, :650, :691                     | 5   | **5 qua**               | 56 s      | 1783                     | 1958                     | 1208                        |
+  | w08: :746 (×2), :793, :812 (×2)                       | 5   | **5 qua**               | 54 s      | 1887                     | 2016                     | 1090                        |
+  | w09: :986, :1017, :1078, :1192, :1221                 | 5   | **5 qua**               | 88 s      | 1609                     | 1916                     | 1175                        |
+  | w10: :1260, :1340, :1379, :1416, :1438                | 5   | **5 qua**               | 103 s     | 1282                     | 1886                     | 1170                        |
+
+  Tính theo bài: 2 (t01) + 3 + 6 + 5 + 5 + 5 + 5 = **31 qua**, nhưng bài dòng 14 chỉ qua trên Turbopack.
+
+- **Bài dòng 14 fail trên webpack dev.**
+  - Cả 3 lần (w02–w04) fail ở `wedding.spec.ts:99`, `expect(admin).toHaveURL(/\/admin$/)`: trang admin vẫn ở `http://127.0.0.1:3201/login`, ô mật khẩu trống.
+  - Log webServer của w04 (`DEBUG=pw:webserver`): `POST /api/auth/login 200`, rồi `GET /login` (đang biên dịch lại, 1273 ms), xen với các lần refresh trang của khách ở context khác. **Không có `GET /admin`.** Tức là đăng nhập thành công, nhưng `router.push("/admin")` rồi `router.refresh()` ở `src/components/wedding/auth-form.tsx:37-38` bị một lần refresh do HMR của webpack đè lên.
+  - Chạy tay luồng đăng nhập admin trên webpack dev khi không có gì khác chạy thì qua ở mọi cách: cold, đã hydrate, warm, có và không làm nóng API trước. Chỉ fail trong bài 14, khi các context khác làm `next dev` biên dịch route mới đúng lúc bấm.
+  - Cùng hai bài 14 và 874 trên Turbopack ở bản sao sạch: **qua 2/2** (t01). Ở mục `6009b2d` bài này cũng qua trên Turbopack.
+- **`insecure-context-ids.spec.ts` trên webpack dev.** Hai bài đầu qua ở mọi lần. Bài 3 (checkout, dòng 115) fail hai lần, mỗi lần một kiểu, đều ở bước đăng ký khách (`registerCustomer`), trước phần checkout:
+  - **Lần 1 (i01):** timeout 120 s ở `insecure-context-ids.spec.ts:37`, chờ ô “Tên của bạn”. Trace cho thấy `GET /account/register` trả **500** sau 7 s với `SyntaxError: Unexpected end of JSON input at loadManifest (next/dist/server/load-manifest.external.js:54)`: dev server đọc một manifest trong `.next-e2e` lúc webpack đang ghi dở. Bài 1 của cùng lượt vẫn đăng ký được qua đúng trang này.
+  - **Chạy lại riêng bài 3** bằng `-g "checkout creates an order"` (i02): **qua**, 30,7 s.
+  - **Chạy lại cả file (i03):** bài 3 fail ở `insecure-context-ids.spec.ts:44`, `toHaveURL(/\/dashboard$/)`, vẫn ở `/account/register` sau 20 s. Trace có `POST /api/customer-auth/register` 200, `POST /api/customer-auth/login` 200, `GET /dashboard?_rsc=…` 200. Ngay sau cú bấm có hai request `*.webpack.hot-update.json` và console “[Fast Refresh] rebuilding”, rồi trang không chuyển. Cùng cơ chế với bài dòng 14, ở nhánh `register` của `auth-form.tsx:37-38`.
+  - **Cả file trên Turbopack** ở bản sao sạch (t02): **3/3 qua, 39 s**.
+  - Trace và screenshot của các lần fail nằm trong scratchpad của phiên (`w02-14-test-results`, `i01-test-results`, `i03-test-results`), không commit.
+- **Kết luận về các fail.** Cả ba kiểu fail đều ở `next dev --webpack`: refresh do HMR đè `router.push` sau đăng nhập (bốn lần), và đọc manifest khi đang ghi dở (một lần). Không có fail nào ở code của các commit đang kiểm. Cùng các bài đó qua trên Turbopack, và bài checkout qua khi chạy lại. Không sửa code sản phẩm hay spec. Đề xuất, chưa làm:
+  - Chạy e2e bằng Turbopack mặc định ở nơi Turbopack đọc được thư mục gốc, tức checkout không có dotfile bị sandbox che.
+  - Nếu buộc phải dùng webpack dev: trong spec, làm nóng `/admin` và `/dashboard` (ví dụ `page.request.get`) trước khi bấm đăng nhập, để không còn route nào phải biên dịch giữa lúc điều hướng.
+  - Chưa kiểm trên bản production (`next start`), vì production từ chối chạy khi thiếu Redis, HMAC, proxy và origin công khai (xem đầu file). Production không có HMR, nhưng lượt này không đo.
+- **RAM và đĩa.** Swap đầy suốt lượt (2043–2047/2047 MB). Trong các lượt tính vào kết quả, available thấp nhất 776 MB (album) và 785 MB (t01). PSI `some avg10` cao nhất 2,37 (lượt cả file `wedding.spec.ts`); oomd không giết gì. Đĩa trống thấp nhất 456 MB ở cuối lượt Turbopack t01, khi `.next-e2e` của bản sao lên 498 MB; xóa xong thì về 2089 MB. Các lượt webpack thấp nhất 1710 MB.
+- **Dọn dẹp.** Đã xóa `.next`, `.next-e2e`, `playwright-report`, `test-results`, `prisma/e2e.db*`, `prisma/prisma/test.db*`, `public/uploads` do các lượt e2e tạo, `pw.local.config.ts` và bản sao sạch. Sau cùng: đĩa trống 2237 MB, available 3457 MB. Commit này chỉ có `docs/VERIFICATION.md`.
+- **Chưa làm.**
+  - Chưa chạy được `wedding.spec.ts` hay full e2e thành một lệnh: `next dev` cộng chromium vượt RAM khi swap đã đầy.
+  - Bài dòng 14 của `wedding.spec.ts` chưa xanh trên webpack dev (0/3), chỉ xanh trên Turbopack ở bản sao sạch. Bài checkout của `insecure-context-ids.spec.ts` chập chờn trên webpack dev (qua 1/3).
+  - Chưa chạy `pnpm test:e2e` nguyên bản (không qua config bọc). Build Turbopack chỉ qua trên bản sao sạch, chưa qua trong worktree. Chưa thử production, Safari hay điện thoại thật.

@@ -522,3 +522,55 @@ Phạm vi: `main` tại `4d84d68`, gồm `0dc39eb` (bỏ cảnh báo hydration d
   - **Kiểm tra đỏ.** Với ba component bản HEAD: 4/4 test component fail với “crypto.randomUUID is not a function” (chỉ bài kiểm tra môi trường qua). Khi tạm cho helper chỉ `return crypto.randomUUID()`: 6/8 fail; 2 bài qua là bài dùng `randomUUID` gốc và bài kiểm tra môi trường. Trả lại bản mới thì 8/8 qua.
 - **Gate.** `TEST_DATABASE_URL="file:$PWD/prisma/prisma/test.db" pnpm check` **exit 0**: lint 0 lỗi (còn cảnh báo ref Music có sẵn tại `music.tsx:55`), TypeScript qua, **26 file / 201 test qua**. Phải đặt `TEST_DATABASE_URL` vì `node_modules` là symlink sang checkout chính (đã ghi ở các mục trước). Không chạy `pnpm build` và E2E theo yêu cầu của bước này; bước sau chạy trên main đã merge.
 - **Chưa làm.** Chưa thử trên server 3200 thật bằng trình duyệt. Còn `navigator.clipboard` (cũng chỉ có trong secure context) ở `actions.tsx` và `gift-accounts.tsx`: hai chỗ đã bọc try/catch và hiện hướng dẫn chép tay, nên không làm hỏng trang; bước này không sửa.
+
+## Kiểm tra trên main `6009b2d`: tạo id khi chạy qua http thường — 01/11/2026
+
+Phạm vi: `main` tại `6009b2d` (tạo id trên trình duyệt không cần `crypto.randomUUID`). Lượt này chỉ thêm `e2e/insecure-context-ids.spec.ts` và ghi kết quả, không sửa `src/`.
+
+- **Môi trường.** Mọi gate chạy trên bản sao sạch các file tracked của `6009b2d` (`git archive 6009b2d` vào scratchpad), cộng spec mới, có symlink `node_modules` sang checkout chính, giống mục 31/10 ở trên. E2E chạy qua cùng config bọc `pw.sandbox.config.ts` của mục 31/10 (chỉ có trong bản sao, không commit): `DATABASE_URL` tuyệt đối tới `prisma/e2e.db` của bản sao, setup seed bằng `node --import tsx` và `NEXT_PRIVATE_OUTPUT_TRACE_ROOT=/`. Không đụng server 3200, `prisma/dev.db` hay `public/uploads`.
+- **Giới hạn RAM.** Máy có 5,9 GB RAM và 2 GB swap. Server preview 3200 (`happy-wedding.service`, khoảng 1 GB) chạy trong lúc `pnpm check`, `pnpm build` và lần chạy spec mới. Orchestrator tạm dừng nó giữa lúc chạy full e2e để lấy thêm RAM. Lượt trước của bước này (31/10, 16:59) bị systemd-oomd giết giữa lúc chạy full e2e, kéo theo cả tmux scope của ccgram. Ở máy này oomd dùng `ManagedOOMMemoryPressure=kill`, ngưỡng 50% trên `user@1001.service`; root slice để `ManagedOOMSwap=auto` nên không giết theo swap. Tiến trình test nằm chung `ccgram-tmux-*.scope` với ccgram, nên nếu oomd ra tay thì cả scope bị giết. Vì vậy lần này:
+  - Các gate chạy tuần tự, không chạy song song hai việc nặng nào (build, `next dev`, Playwright, vitest).
+  - Trước mỗi gate kiểm `free -m`, dừng nếu available dưới 1500 MB. Build và e2e đặt `NODE_OPTIONS=--max-old-space-size=1536`. Playwright chạy `--workers=1`.
+  - Trong mỗi gate có một vòng lặp ghi available và swap; các lượt e2e ghi thêm PSI. Full e2e và kiểm tra đỏ chạy dưới watchdog: nếu available dưới 500 MB, hoặc `some avg10` trong `memory.pressure` của `user@1001.service` vượt 15%, watchdog tự dừng Playwright, next và chromium trước khi oomd kịp ra tay.
+  - Sau mỗi gate kiểm bằng `ps` rằng không còn tiến trình next hay chromium nào.
+- **`pnpm check`** (`TEST_DATABASE_URL="file:$PWD/prisma/prisma/test.db" pnpm check`): **exit 0, 70 s**. Lint 0 lỗi (còn cảnh báo ref Music có sẵn tại `music.tsx:55`; spec mới không có cảnh báo), TypeScript qua, **26 file / 201 test qua** (vitest 45,2 s). Prettier qua trên spec mới.
+- **`pnpm build`** (`NODE_OPTIONS=--max-old-space-size=1536 NEXT_PRIVATE_OUTPUT_TRACE_ROOT=/ NEXT_TELEMETRY_DISABLED=1 pnpm build`): **exit 0, 23 s**. Compile 8,7 s, TypeScript 11,4 s, 14/14 trang tĩnh, không cảnh báo.
+- **Test mới: `e2e/insecure-context-ids.spec.ts`.** Trên `127.0.0.1` Chromium coi trang là secure context, nên spec dùng `page.addInitScript` xóa `Crypto.prototype.randomUUID` trước khi script của trang chạy, giống trình duyệt mở `http://<IP>:3200`. Mỗi bài kiểm tra trên chính trang rằng `typeof crypto.randomUUID` là `"undefined"` còn `getRandomValues` vẫn là `"function"`, và yêu cầu không có `pageerror` nào. Spec có ba bài:
+  - **Editor.** Đăng ký khách mới, mở `/dashboard/new?template=template-rose`. Editor phải hiện hai tiệc mẫu, bấm “Thêm một tiệc” ra Tiệc 3, điền địa điểm, và không có “Chưa tải được trang”. Lưu bản nháp, tải lại `/dashboard/<id>`: Tiệc 3 vẫn còn, thêm được Tiệc 4.
+  - **RSVP.** Khách mở `/w/thiep-mau` (thiệp mẫu đã xuất bản trong seed e2e), mở thiệp và gửi RSVP kèm lời chúc. Trang phải báo “Đã lưu phản hồi”. Body của `POST /api/wedding/rsvp/thiep-mau` có `clientId` là UUID v4, và `localStorage["rsvp:thiep-mau"]` giữ đúng id đó.
+  - **Checkout.** Khách mới lưu một bản nháp (bước chuẩn bị, lúc này chưa xóa `randomUUID`), rồi mở `/dashboard/orders/new?invitation=<id>` khi không có `randomUUID` và tạo đơn. Trang phải chuyển sang `/dashboard/orders/<id>` với trạng thái “Chờ xác nhận”. Body của `POST /api/wedding/orders` có đúng `invitationId` và `clientId` là UUID v4.
+
+  Spec chỉ ghi vào `prisma/e2e.db`, DB mà setup e2e xóa và tạo lại mỗi lần chạy. Slug và số điện thoại sinh theo thời gian. Lời chúc RSVP mặc định chờ duyệt nên không hiện trên thiệp mẫu.
+
+- **Spec mới trên `6009b2d`.** `--repeat-each=3 --workers=1`: **9/9 qua, exit 0, 72 s** (lượt đầu 13,2 s / 7,0 s / 6,2 s, khi `next dev` còn phải biên dịch; hai lượt sau 3,9–5,3 s mỗi bài).
+- **Kiểm tra đỏ trên code cũ.** Trên một bản sao sạch khác của `6009b2d`, đảo riêng phần `src/` của commit này (`git diff 6009b2d 6009b2d^ -- src | git apply`). Bản này bỏ `src/lib/random-id.ts`, và `checkout.tsx`, `editor-fields.tsx`, `rsvp-form.tsx` gọi lại `crypto.randomUUID()`. Còn lại (tests, e2e, docs) giữ nguyên. Chạy spec mới bằng cùng config bọc: **3/3 fail, exit 1, 104 s**, đúng vì lỗi đang sửa:
+  - Editor hiện “Chưa tải được trang”. Trace có `TypeError: crypto.randomUUID is not a function at EventFields.useState`. Bài fail khi chờ “Tiệc 2”.
+  - RSVP hiện `<p role="alert">crypto.randomUUID is not a function</p>` thay vì “Đã lưu phản hồi”, và không gửi request.
+  - Checkout hiện alert “crypto.randomUUID is not a function”, vẫn đứng ở `/dashboard/orders/new?invitation=…`, và không gửi `POST /api/wedding/orders`.
+
+  Bản sao này chỉ để chạy kiểm tra đỏ, không đụng worktree hay `main`.
+
+- **Full e2e: chưa chạy hết.** Lệnh `pnpm exec playwright test -c pw.sandbox.config.ts --workers=1` (37 bài: hai bài hydration, một bài giờ bằng chữ, ba bài mới, 31 bài của `wedding.spec.ts`) **bị watchdog dừng sau 100 s, exit 143**:
+  - Lúc dừng, **6/37 đã qua, 0 fail**: hai bài hydration Chrome iOS (8,0 s / 6,3 s), bài giờ bằng chữ (16,3 s) và ba bài mới (4,2 s / 5,1 s / 6,2 s). Bài thứ bảy, bài đầu tiên của `wedding.spec.ts`, đang chạy thì bị dừng. 31 bài chưa chạy.
+  - Lý do: available tụt xuống **352 MB**, swap đầy **2047/2047 MB**, và `next-server` của `next dev` chiếm **RSS 2,7 GB** khi bắt đầu biên dịch các route của `wedding.spec.ts`. Giới hạn heap `--max-old-space-size=1536` không chặn được phần bộ nhớ native của Turbopack. PSI `some avg10` cao nhất chỉ 4,97%, xa ngưỡng 50% của oomd: watchdog dừng trước, **oomd không giết gì**, ccgram và các phiên khác vẫn chạy.
+  - Mức RAM trước lần chạy này: available 3001 MB, nhưng swap đã dùng 1800/2047 MB. Giữa chừng có lúc available lên 1985 MB, khoảng lúc service 3200 được dừng, rồi lại tụt.
+  - Theo quy tắc của lượt này, không chạy lại ngay. Ngay sau khi dừng: available 3732 MB, swap 2026/2047 MB.
+- **Bằng chứng trên server http thật.** Bước kiểm tra trước, sáng 01/11, chạy trên `http://160.250.247.137:3200` (main `6009b2d`, `isSecureContext=false`, `crypto.randomUUID` là `undefined`, `getRandomValues` có):
+  - Editor `/dashboard/<id>` mở được, thêm và bỏ tiệc đều không lỗi.
+  - RSVP ở `/w/thiep-mau` và checkout ở `/dashboard/orders/new?invitation=<id>` gửi `clientId` là UUID v4, không có lỗi `randomUUID`. Hai request này được chặn lại và trả 503, nên không ghi vào DB thật. Đối chiếu `prisma/dev.db` ở chế độ chỉ đọc: không có phản hồi hay đơn mới.
+- **RAM qua các gate** (available / swap đã dùng, MB):
+
+  | Gate            | Trước khi chạy | Thấp nhất khi chạy |
+  | --------------- | -------------- | ------------------ |
+  | `pnpm check`    | 2351 / 1126    | 1734 / 1131        |
+  | `pnpm build`    | 2355 / 1138    | 1303 / 1302        |
+  | Spec mới ×3     | 2595 / 1408    | 874 / 1735         |
+  | Full e2e (dừng) | 3001 / 1800    | 352 / 2047         |
+  | Kiểm tra đỏ     | 3697 / 2025    | 1874 / 2025        |
+
+  Sau `pnpm check`, `pnpm build`, spec mới và kiểm tra đỏ, `ps` không còn tiến trình next hay chromium nào. Riêng full e2e: script đã kết thúc trước khi watchdog kịp gửi đợt SIGKILL, nên `ps` ngay lúc đó vẫn thấy `next dev`, `next-server` và process của Playwright. Các tiến trình này dừng khi lệnh sandbox kết thúc. Ngay sau đó available về 3732 MB (lúc dừng, riêng `next-server` chiếm 2,7 GB). Watchdog đã được sửa để chờ xong đợt SIGKILL, và lần kiểm tra đỏ sau đó không còn tiến trình sót.
+
+- **Chưa làm.**
+  - Chưa chạy hết full e2e trên `6009b2d`: 31 bài của `wedding.spec.ts` chưa chạy. Với swap gần đầy và một `next dev` biên dịch toàn bộ route, máy 5,9 GB không đủ chỗ an toàn. Cách có thể làm: chạy lại khi swap đã được giải phóng, hoặc chia `wedding.spec.ts` thành vài lượt, mỗi lượt một `next dev` mới. Cách sau không còn là một lượt `pnpm test:e2e` nguyên vẹn.
+  - Chưa chạy `pnpm test:e2e` nguyên bản (không qua config bọc), vì các lỗi sandbox đã ghi ở mục 31/10.
+  - Chưa thử trên Safari hay điện thoại thật qua http.

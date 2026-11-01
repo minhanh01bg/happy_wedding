@@ -92,7 +92,12 @@ export async function serveUpload(
   request: Request,
   name: string,
   {
-    root = path.join(process.cwd(), WEDDING_UPLOAD_DIR),
+    // turbopackIgnore: uploads are runtime data, not files for the build to
+    // trace; without it the build traces the whole project, public/ included.
+    root = path.join(
+      /*turbopackIgnore: true*/ process.cwd(),
+      WEDDING_UPLOAD_DIR,
+    ),
     withBody = true,
   }: ServeUploadOptions = {},
 ): Promise<Response> {
@@ -104,7 +109,7 @@ export async function serveUpload(
     // The name cannot leave `root`. O_NOFOLLOW refuses a symlink as the file
     // itself, wherever it points; the folder above may still be a symlink.
     handle = await open(
-      path.join(root, name),
+      path.join(/*turbopackIgnore: true*/ root, name),
       constants.O_RDONLY | constants.O_NOFOLLOW,
     );
     const stats = await handle.stat();

@@ -6789,7 +6789,8 @@ body:has(.admin-drawer[open]) {
 }
 .wedding-page .album-loi-yeu .wedding-album {
   grid-template-columns: 1.1fr 0.9fr;
-  gap: 35px;
+  --album-gap: 35px;
+  gap: var(--album-gap);
 }
 .wedding-page .album-loi-yeu .wedding-album > button:nth-child(even) {
   margin-top: 65px;
@@ -6808,6 +6809,19 @@ body:has(.admin-drawer[open]) {
   > button:nth-child(3n):not(.is-landscape)
   img {
   object-position: 50% 12%;
+}
+/* An album of 3n + 1 prints ends on one print after a wide one. Alone in the
+   left column it leaves half a row empty, so it is centred at that column's
+   width instead, keeping its 3:4 crop and dropping the stagger it has no
+   partner for. */
+.wedding-page
+  .album-loi-yeu
+  .wedding-album
+  > button:nth-child(3n + 1):last-child:not(.is-landscape) {
+  grid-column: 1/-1;
+  justify-self: center;
+  width: calc((100% - var(--album-gap)) * 0.55);
+  margin-top: 0;
 }
 .wedding-page .album-vuon-thuong .wedding-album {
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -6841,7 +6855,8 @@ body:has(.admin-drawer[open]) {
 }
 .wedding-page .album-ngay-chung-doi .wedding-album {
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 16px;
+  --album-gap: 16px;
+  gap: var(--album-gap);
 }
 .wedding-page .album-ngay-chung-doi .wedding-album > button {
   grid-column: span 5;
@@ -6854,6 +6869,16 @@ body:has(.admin-drawer[open]) {
 .wedding-page .album-ngay-chung-doi .wedding-album > button:nth-child(3n) {
   grid-column: 1/-1;
   aspect-ratio: 21/9;
+}
+/* The last of 3n + 1 prints, alone after a wide one, is centred at its
+   seven-track width rather than leaving five tracks empty beside it. */
+.wedding-page
+  .album-ngay-chung-doi
+  .wedding-album
+  > button:nth-child(3n + 1):last-child:not(.is-landscape) {
+  grid-column: 1/-1;
+  justify-self: center;
+  width: calc((100% - 11 * var(--album-gap)) * 7 / 12 + 6 * var(--album-gap));
 }
 .album-spotlight {
   position: relative;
@@ -7244,7 +7269,8 @@ body:has(.admin-drawer[open]) {
     font-size: 9px;
   }
   .wedding-page .album-composition .wedding-album {
-    gap: 12px;
+    --album-gap: 12px;
+    gap: var(--album-gap);
   }
   .wedding-page .album-vuon-thuong .wedding-album {
     grid-template-columns: repeat(2, minmax(0, 1fr));

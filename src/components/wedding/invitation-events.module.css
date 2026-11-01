@@ -669,3 +669,224 @@
     scale: 1;
   }
 }
+/* Đường đến tiệc: one embedded map per distinct venue, under the cards. The
+   frame has a fixed aspect ratio, so the lazy iframe never shifts the page,
+   and each design dresses it like its own cards. Nothing here animates. */
+.route {
+  margin-top: 64px;
+}
+.route > h3 {
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.3;
+  margin: 0 0 30px;
+}
+.maps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+}
+.maps[data-count="1"] {
+  grid-template-columns: minmax(0, 760px);
+  justify-content: center;
+}
+.map {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.map figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  line-height: 1.6;
+}
+.map figcaption strong {
+  font-size: 18px;
+}
+.mapSide {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent, currentColor);
+}
+.mapAddress {
+  font-size: 14px;
+  opacity: 0.85;
+}
+.mapEvents {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+.mapFrame {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  margin-top: auto;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  border-radius: 18px;
+  background: var(--card);
+}
+.maps[data-count="1"] .mapFrame {
+  aspect-ratio: 16 / 10;
+}
+.mapFrame iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+/* Lời yêu: the champagne arch, softened so map controls stay clear. */
+.loi-yeu .mapFrame {
+  padding: 9px;
+  border-color: color-mix(
+    in srgb,
+    var(--accent, currentColor) 60%,
+    transparent
+  );
+  border-radius: 36px 36px 14px 14px;
+}
+.loi-yeu .mapFrame iframe {
+  border-radius: 28px 28px 8px 8px;
+}
+.loi-yeu .mapSide {
+  font: 400 28px / 1.2 var(--script, inherit);
+  letter-spacing: 0;
+  text-transform: none;
+}
+/* Vườn thương: a garden arch like the cards. */
+.vuon-thuong .mapFrame {
+  padding: 10px;
+  border-color: currentColor;
+  border-radius: 48px 48px 10px 10px;
+}
+.vuon-thuong .mapFrame iframe {
+  border-radius: 38px 38px 4px 4px;
+}
+/* Song hỷ: the double rule and outer outline of the ceremony cards. */
+.song-hy .mapFrame {
+  border: double 5px currentColor;
+  border-radius: 4px;
+  outline: 1px solid currentColor;
+  outline-offset: 6px;
+}
+.song-hy .mapFrame iframe {
+  border-radius: 2px;
+}
+/* Ngày chung đôi: a newspaper plate between two heavy rules. */
+.ngay-chung-doi .map,
+.loi-hen .map,
+.khoanh-khac .map,
+.ben-nhau .map {
+  text-align: left;
+}
+.ngay-chung-doi .mapFrame {
+  padding: 12px 0;
+  border: 0;
+  border-block: 2px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+}
+.ngay-chung-doi .mapFrame iframe {
+  border-radius: 4px;
+}
+/* Đêm sao: a soft halo, ringed twice like the date orbit. */
+.dem-sao .mapFrame {
+  border-color: #ffffff50;
+  border-radius: 24px;
+  outline: 1px solid #ffffff20;
+  outline-offset: 6px;
+  background: radial-gradient(ellipse at top, #ffffff0d, transparent 70%);
+}
+.dem-sao .mapFrame iframe {
+  border-radius: 18px;
+}
+/* Nắng thu: a journal page with a strip of tape, laid flat. */
+.nang-thu .mapFrame {
+  padding: 12px;
+  border: 0;
+  border-radius: 6px;
+  background: #fff9ec;
+  box-shadow: 8px 12px 0 #6e463510;
+}
+.nang-thu .mapFrame::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: -12px;
+  left: calc(50% - 45px);
+  width: 90px;
+  height: 24px;
+  background: #c3a47465;
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+.nang-thu .mapFrame iframe {
+  border-radius: 4px;
+}
+/* Lời hẹn: a quiet row between hairlines, as the event rows. */
+.loi-hen .mapFrame {
+  padding: 14px 0;
+  border: 0;
+  border-block: 1px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+}
+.loi-hen .mapFrame iframe {
+  border-radius: 8px;
+}
+/* Thư tình: letter paper. */
+.thu-tinh .mapFrame {
+  padding: 10px;
+  border: 0;
+  border-radius: 14px;
+  background: #fffaf4;
+  box-shadow: 0 10px 30px #88556112;
+}
+.thu-tinh .mapFrame iframe {
+  border-radius: 8px;
+}
+/* Khoảnh khắc: a frame of film, sprockets above and below. */
+.khoanh-khac .mapFrame {
+  padding: 22px 8px;
+  border-color: #fff3;
+  border-radius: 10px;
+  background:
+    repeating-linear-gradient(90deg, #ffffff1f 0 10px, transparent 10px 22px)
+      top 6px left 8px / calc(100% - 16px) 8px no-repeat,
+    repeating-linear-gradient(90deg, #ffffff1f 0 10px, transparent 10px 22px)
+      bottom 6px left 8px / calc(100% - 16px) 8px no-repeat,
+    #111820;
+}
+.khoanh-khac .mapFrame iframe {
+  border-radius: 4px;
+}
+/* Bên nhau: the tinted half of the cards. */
+.ben-nhau .mapFrame {
+  padding: 10px;
+  border: 0;
+  border-radius: 4px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+.ben-nhau .mapFrame iframe {
+  border-radius: 2px;
+}
+@media (max-width: 760px) {
+  .route {
+    margin-top: 48px;
+  }
+  .maps {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .maps[data-count="1"] .mapFrame {
+    aspect-ratio: 4 / 3;
+  }
+}

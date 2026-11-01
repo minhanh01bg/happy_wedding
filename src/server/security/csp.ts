@@ -6,6 +6,8 @@ export interface CspOptions {
   nonce?: string;
   sentryDsn?: string;
   extraImageOrigins?: string[];
+  /** Origins pages may embed in an iframe, e.g. the Google Maps embed. */
+  extraFrameOrigins?: readonly string[];
   reportUri?: string;
 }
 
@@ -104,11 +106,20 @@ export function buildCspHeader(options?: CspOptions): CspHeaderResult {
   }
   directives["img-src"] = imgSrc;
 
-  // 4. Font sources
+  // 4. Frame sources: without this, frames fall back to default-src 'self'.
+  const frameSrc: string[] = ["'self'"];
+  for (const origin of options?.extraFrameOrigins ?? []) {
+    if (origin && origin !== "*" && origin !== "'*'") {
+      frameSrc.push(origin.trim());
+    }
+  }
+  directives["frame-src"] = frameSrc;
+
+  // 5. Font sources
   directives["font-src"] = ["'self'", "data:"];
   directives["media-src"] = ["'self'", "https:"];
 
-  // 5. Connect sources (same origin plus the allowlisted Sentry origin)
+  // 6. Connect sources (same origin plus the allowlisted Sentry origin)
   const connectSrc: string[] = ["'self'"];
 
   const dsn = options?.sentryDsn ?? process.env.NEXT_PUBLIC_SENTRY_DSN;
@@ -122,7 +133,7 @@ export function buildCspHeader(options?: CspOptions): CspHeaderResult {
   }
   directives["connect-src"] = connectSrc;
 
-  // 6. Safe report-uri endpoint
+  // 7. Safe report-uri endpoint
   const reportUri = options?.reportUri ?? "/api/csp-report";
   if (reportUri) {
     directives["report-uri"] = [reportUri];

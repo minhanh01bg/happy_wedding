@@ -2,6 +2,7 @@
 import { DropdownField } from "@/components/kit/dropdown-field";
 import { WEDDING_MUSIC } from "@/lib/wedding-music";
 import { MAX_UPLOAD_IMAGE_MB } from "@/lib/wedding-upload";
+import { eventCoordinates, withMapUrl } from "@/lib/event-map";
 import { randomUUID } from "@/lib/random-id";
 import { BankSelect } from "./bank-select";
 import {
@@ -315,6 +316,33 @@ export function EventFields({
               value={event.address}
               onChange={(e) => eventField(i, "address", e.target.value)}
             />
+          </label>
+          <label>
+            Link Google Maps (tùy chọn)
+            <input
+              suppressHydrationWarning
+              type="url"
+              inputMode="url"
+              maxLength={2000}
+              placeholder="https://maps.app.goo.gl/…"
+              value={event.mapUrl ?? ""}
+              onChange={(e) =>
+                field(
+                  "events",
+                  data.events.map((item, index) =>
+                    index === i ? withMapUrl(item, e.target.value) : item,
+                  ),
+                )
+              }
+            />
+            <small>
+              Google Maps → Chia sẻ → Sao chép đường liên kết.{" "}
+              {!event.mapUrl
+                ? "Để trống thì bản đồ tìm theo địa điểm và địa chỉ."
+                : eventCoordinates(event)
+                  ? "Đã đọc được vị trí ghim, bản đồ trên thiệp ghim đúng chỗ này."
+                  : "Link này chưa có vị trí ghim (link rút gọn thường không có), nên bản đồ tìm theo địa điểm và địa chỉ; nút chỉ đường vẫn mở đúng link. Muốn ghim đúng chỗ, mở link rồi dán đường dẫn dài trên thanh địa chỉ của trình duyệt."}
+            </small>
           </label>
         </fieldset>
       ))}

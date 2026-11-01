@@ -1,6 +1,7 @@
 import { CalendarPlus, MapPin, Heart } from "lucide-react";
 import { dateLabel, type WeddingEvent } from "@/lib/wedding";
 import { weddingCalendarUrl } from "@/lib/wedding-calendar";
+import { directionsUrl, groupEventVenues, mapEmbedUrl } from "@/lib/event-map";
 import {
   weddingDateParts,
   weddingEventDays,
@@ -118,6 +119,54 @@ export function InvitationDateCalendar({
   );
 }
 
+/**
+ * “Đường đến tiệc”: mỗi địa điểm khác nhau đúng một bản đồ nhúng, ghi bên,
+ * tên địa điểm, địa chỉ và các tiệc ở đó. Iframe không gửi referrer, để token
+ * khách mời trên URL thiệp không lọt sang Google.
+ */
+function InvitationEventMaps({
+  events,
+  design,
+}: {
+  events: WeddingEvent[];
+  design: string;
+}) {
+  const venues = groupEventVenues(events);
+  return (
+    <div className={`${styles.route} ${styles[design] || ""}`} data-event-maps>
+      <h3>Đường đến tiệc</h3>
+      <div className={styles.maps} data-count={venues.length}>
+        {venues.map(({ venue, address, coordinates, side, events: here }) => (
+          <figure className={styles.map} data-event-map key={here[0].index}>
+            <figcaption>
+              {side && <span className={styles.mapSide}>{side}</span>}
+              <strong>{venue}</strong>
+              <span className={styles.mapAddress}>{address}</span>
+              <ul className={styles.mapEvents}>
+                {here.map(({ event, index }) => (
+                  <li key={index}>
+                    {event.title}:{" "}
+                    {event.timeLabel || weddingDateParts(event.date).time} ·{" "}
+                    {dateLabel(event.date)}
+                  </li>
+                ))}
+              </ul>
+            </figcaption>
+            <div className={styles.mapFrame}>
+              <iframe
+                src={mapEmbedUrl(coordinates ?? `${venue}, ${address}`)}
+                title={`Bản đồ đường đến ${venue}${side ? ` (${side.toLocaleLowerCase("vi")})` : ""}`}
+                loading="lazy"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+          </figure>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function InvitationEvents({
   events,
   design,
@@ -177,7 +226,7 @@ export function InvitationEvents({
           const actions = (
             <footer className={styles.actions}>
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${event.venue}, ${event.address}`)}`}
+                href={directionsUrl(event)}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -365,6 +414,7 @@ export function InvitationEvents({
           );
         })}
       </div>
+      <InvitationEventMaps events={events} design={design} />
     </section>
   );
 }

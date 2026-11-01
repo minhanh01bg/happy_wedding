@@ -41,7 +41,7 @@ SePay tùy chọn:
 
 Bản này chạy Node với SQLite và ảnh local; cần máy chủ/container có volume bền vững. Không chạy nhiều instance cùng SQLite, không đưa DB lên disk tạm của serverless.
 
-Site thật chạy `next build` + `next start` từ checkout chính, dưới systemd user unit `happy-wedding.service`, chỉ nghe `127.0.0.1:3200`; nginx phục vụ HTTPS và chuyển vào. `scripts/deploy-prod.sh` build bundle mới bên cạnh server đang chạy rồi đổi sang nó với vài giây downtime. **Không chạy `pnpm build` trong checkout chính:** nó ghi đè `.next` của server đang chạy. Cũng không dùng `pnpm start`: script đó nghe `0.0.0.0`, cho phép bỏ qua nginx và tự đặt X-Real-IP.
+Site thật chạy `next build` + `next start` từ checkout chính, dưới systemd user unit `happy-wedding.service`, chỉ nghe `127.0.0.1:3200`; nginx phục vụ HTTPS và chuyển vào. `scripts/deploy-prod.sh` build bundle mới bên cạnh server đang chạy rồi đổi sang nó với vài giây downtime. **Không chạy `pnpm build` trong checkout chính:** nó ghi đè `.next` của server đang chạy. `pnpm start` cũng chỉ nghe `127.0.0.1:3200` và chỉ dùng để thử tay; site thật chạy qua unit. Đừng cho `next start` nghe `0.0.0.0`: ai vào thẳng port 3200 sẽ bỏ qua nginx và tự đặt X-Real-IP.
 
 ### Cấu hình
 
@@ -167,13 +167,14 @@ So với cấu hình chạy `next dev`: bỏ hai header WebSocket, thêm `locati
 
 1. Kiểm tra tài nguyên: `df -h .` (script cần ≥ 400 MB trống, upload cũng cần chỗ) và `free -m` (available ≥ 1800 MB trong lúc dev server vẫn chạy).
 2. Tạo `.env.production.local` (`chmod 600`) với các biến ở bảng trên, rồi chạy lệnh kiểm tra ở mục Cấu hình tới khi nó in `DATABASE_URL=...`.
-3. Chạy thử: `scripts/deploy-prod.sh --build-only`. Nó kiểm tra cấu hình, migration và Prisma client, build vào `.next-staging` rồi khởi động thử trên `127.0.0.1:3290`; server thật không bị đụng tới.
+3. Chạy thử: `scripts/deploy-prod.sh --build-only`. Nó kiểm tra cấu hình, migration, Prisma client và dependency, build vào `.next-staging` rồi khởi động thử trên `127.0.0.1:3290`; server thật không bị đụng tới.
 4. Sao lưu unit hiện tại: `cp ~/.config/systemd/user/happy-wedding.service ~/happy_wedding-backups/happy-wedding.service.dev`.
 5. Thay nội dung unit bằng bản ở trên, rồi `systemctl --user daemon-reload`. Lệnh này không khởi động lại dev server đang chạy, nhưng nếu dev server tự dừng sau đó, systemd sẽ chạy `next start` trên `.next` của dev và lỗi. Vì vậy làm bước 6 ngay.
-6. `scripts/deploy-prod.sh`. `.next` của dev (khoảng 1 GB) thành `.next-prev`; cache ảnh đã tối ưu được chuyển sang bundle mới.
+6. `scripts/deploy-prod.sh`. Cache ảnh đã tối ưu được chuyển sang bundle mới.
 7. Kiểm tra qua domain: trang thiệp đã xuất bản, đăng nhập khách và admin, tải một ảnh rồi mở nó, `journalctl --user -u happy-wedding.service -n 50`.
 8. Đổi nginx theo mục trên, `sudo nginx -t && sudo systemctl reload nginx`. Có thể đóng port 3200 trên firewall: app không còn nghe ở địa chỉ public.
-9. Khi đã chắc không quay lại dev: `rm -rf .next-prev` để lấy lại khoảng 1 GB.
+
+**`.next-prev` sau lần đầu:** lần deploy đầu đổi tên `.next` của `next dev` (khoảng 1 GB, không phải bundle production) thành `.next-prev`. Nó chỉ dùng để quay về `next dev` (mục Rollback). Khi bản mới đã kiểm xong ở bước 7 và 8, xóa nó bằng `rm -rf .next-prev` để lấy lại chỗ trên đĩa; nếu không, lần deploy sau cũng xóa nó trước khi build.
 
 ### Deploy thường lệ
 

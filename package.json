@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev --turbopack -H 0.0.0.0 -p 3200",
     "build": "next build",
-    "start": "next start -H 0.0.0.0 -p 3200",
+    "start": "next start -H 127.0.0.1 -p 3200",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

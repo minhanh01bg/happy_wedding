@@ -6,6 +6,8 @@ import {
   type Locator,
   type Page,
 } from "@playwright/test";
+import { rm } from "node:fs/promises";
+import path from "node:path";
 import sharp from "sharp";
 
 // The Lời yêu album sets prints two by two, then one across the album. A
@@ -72,6 +74,10 @@ const SCREENS = [
   { width: 1440, height: 900, dpr: 1 },
 ];
 const DEMO = "/w/thiep-mau";
+/** Where the dev server, run from the checkout root, stores uploads. */
+const UPLOADS = path.join(__dirname, "..", "public", "uploads", "weddings");
+/** File names of the portraits this spec uploaded, for afterAll to delete. */
+const createdUploads: string[] = [];
 let draft = "";
 let session: Awaited<ReturnType<BrowserContext["storageState"]>>;
 
@@ -94,11 +100,13 @@ test.beforeAll(async ({ browser }) => {
   await page.goto("/dashboard/new?template=template-rose");
   await page.getByLabel("Đường dẫn thiệp").fill(`album-doc-${Date.now()}`);
   // The new form starts with the demo album; this couple brings their own.
-  const removeFirst = page.getByRole("button", {
-    name: "Xóa ảnh 1",
-    exact: true,
-  });
-  while (await removeFirst.count()) await removeFirst.click();
+  // Each click waits for the album to shrink, so a click never lands on a
+  // print React has not taken away yet.
+  const removeButtons = page.getByRole("button", { name: /^Xóa ảnh \d+$/ });
+  for (let left = await removeButtons.count(); left > 0; left--) {
+    await page.getByRole("button", { name: "Xóa ảnh 1", exact: true }).click();
+    await expect(removeButtons).toHaveCount(left - 1);
+  }
   const count = page.getByText(/^\d+\/\d+ ảnh ·/);
   await expect(count).toHaveText(/^0\//);
   await page.getByRole("button", { name: "Lưu bản nháp" }).click();
@@ -106,11 +114,22 @@ test.beforeAll(async ({ browser }) => {
   draft = `/dashboard/${page.url().split("/").at(-1)}/preview`;
 
   for (let index = 0; index < PORTRAITS; index++) {
+    const uploaded = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/wedding/upload") &&
+        response.request().method() === "POST",
+    );
     await page.locator('input[type="file"]').setInputFiles({
       name: `chan-dung-${index + 1}.jpg`,
       mimeType: "image/jpeg",
       buffer: await syntheticPortrait(index),
     });
+    const response = await uploaded;
+    if (response.ok()) {
+      const { data } = (await response.json()) as { data: { url: string } };
+      const name = /^\/uploads\/weddings\/([a-f0-9-]+\.webp)$/.exec(data.url);
+      if (name) createdUploads.push(name[1]);
+    }
     await expect(count).toHaveText(new RegExp(`^${index + 1}/`), {
       timeout: 60_000,
     });
@@ -119,6 +138,14 @@ test.beforeAll(async ({ browser }) => {
   await expect(page.getByRole("status")).toContainText("Đã lưu thiệp");
   session = await context.storageState();
   await context.close();
+});
+
+// The upload route writes into the checkout's public/uploads/weddings, where
+// real couples' photos also live, so only the files this spec made go.
+test.afterAll(async () => {
+  await Promise.all(
+    createdUploads.map((name) => rm(path.join(UPLOADS, name), { force: true })),
+  );
 });
 
 async function onScreen(

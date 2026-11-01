@@ -88,7 +88,10 @@ export function GiftAccounts({
           >
             <X size={22} />
           </button>
-          <div className="gift-celebration" aria-hidden="true">
+          <div
+            className={`gift-celebration ${styles.celebration}`}
+            aria-hidden="true"
+          >
             <span className="gift-burst-glow" />
             <GiftArt />
             {Array.from({ length: 40 }, (_, index) => {

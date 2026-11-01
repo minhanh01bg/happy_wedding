@@ -249,6 +249,35 @@ test("guests copy account numbers over http and zoom a QR drawn in the page", as
   await page.keyboard.press("Escape");
   await expect(modal).not.toBeVisible();
   await expect(trigger).toBeFocused();
+
+  // Có hiệu ứng: nắp hộp bật lên vẫn nằm trọn trong hộp quà, không bị mép
+  // trên cắt mất, ở cả điện thoại lẫn máy tính.
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  for (const viewport of [
+    { width: 390, height: 844 },
+    { width: 1440, height: 900 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await trigger.scrollIntoViewIfNeeded();
+    await trigger.click();
+    await expect(modal).toBeVisible();
+    await modal.evaluate((dialog) =>
+      Promise.all(
+        dialog.getAnimations({ subtree: true }).map((run) => run.finished),
+      ),
+    );
+    const lid = await modal
+      .locator(".gift-celebration .gift-box-lid")
+      .boundingBox();
+    const box = await modal.boundingBox();
+    // Nơ (::before/::after) nhô cao hơn nắp nghiêng khoảng 9px.
+    expect(lid!.y).toBeGreaterThanOrEqual(box!.y + 10);
+    expect(lid!.x).toBeGreaterThanOrEqual(box!.x);
+    expect(lid!.x + lid!.width).toBeLessThanOrEqual(box!.x + box!.width);
+    await page.keyboard.press("Escape");
+    await expect(modal).not.toBeVisible();
+  }
+
   expect(vietQrRequests).toEqual([]);
   expect(errors).toEqual([]);
 });

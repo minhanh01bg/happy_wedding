@@ -5,6 +5,21 @@
  * .gift-card cũ trong globals.css mà không phải sửa file đó.
  */
 
+/*
+ * Khi mở hộp, nắp và nơ bật lên (gift-lid-launch trong globals.css) cao hơn
+ * đỉnh .gift-celebration khoảng 68px, mà .gift-modal-surface cắt phần tràn
+ * (overflow: hidden) nên nắp bị mất nửa trên. Chừa sẵn chỗ phía trên để nắp
+ * nằm trọn trong hộp quà ở mọi bề rộng (lề trên của surface chỉ 16–24px).
+ * Khoảng này cũng đưa hộp xuống dưới nút đóng (float phải), nên hộp không bị
+ * đẩy lệch trái mà thẳng hàng với tiêu đề. Khi giảm chuyển động nắp đứng yên
+ * trên hộp, không cần chừa chỗ.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .celebration {
+    margin-top: 64px;
+  }
+}
+
 /* Header gọn: một tiêu đề, một dòng phụ. */
 .header {
   margin: -6px auto 18px;

@@ -26,6 +26,11 @@ const imageSchema = z
   );
 export const eventSchema = z.strictObject({
   title: z.string().trim().min(2).max(80),
+  /**
+   * Tiệc của nhà trai hay nhà gái; bỏ trống là tiệc chung. Không bắt buộc,
+   * nên JSON cũ vẫn hợp lệ. Thiếu trường này thì `eventSide` đoán theo tên.
+   */
+  side: z.enum(["groom", "bride"]).optional(),
   date: z.iso.datetime({ offset: true }),
   /**
    * Giờ ghi bằng chữ, ví dụ "Buổi sáng", hiện thay cho giờ của `date`.

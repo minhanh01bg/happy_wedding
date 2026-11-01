@@ -83,6 +83,8 @@ Chủ thiệp tạo tối đa 2.000 lời mời cá nhân, mỗi lời mời có
 
 RSVP gồm UUID client, tên, attendance (`attending`, `declined`, `undecided`), số người 1–10, tiệc theo index và lời nhắn tối đa 1.000 ký tự. Index phải trỏ đến tiệc tồn tại. Không attending thì lưu partySize bằng 0. Có token riêng thì dùng guest ID làm khóa ổn định qua thiết bị; không có token thì dùng client UUID, không bảo đảm dedupe khi đổi trình duyệt/xóa dữ liệu local.
 
+Từ 01/11/2026, form RSVP là một cột radio thật (`fieldset` + `legend`), không còn danh sách tên tiệc: khách chọn có tham dự không, rồi chọn bên (Nhà trai/Nhà gái, chỉ hỏi khi thiệp có tiệc của cả hai nhà) và ngày; chip ngày ghi thứ và ngày theo giờ Việt Nam, kèm giờ (hoặc `timeLabel`) và tên tiệc. Bên lấy từ trường tùy chọn `side` của tiệc, thiếu thì đoán theo tên (“nhà trai”; “nhà gái” hoặc “vu quy”); tiệc chung hiện ở cả hai bên. Payload vẫn chỉ gửi `eventIndex` gốc (0 khi không tham dự); số người chọn bằng nút −/+ từ 1 đến 10.
+
 Unique `(invitationId, clientId)` khiến retry cập nhật một phản hồi. Mọi lần gửi/cập nhật đặt lời chúc về pending. Chủ thiệp duyệt approved hoặc hidden; công khai chỉ thấy approved. Chủ thiệp xem danh sách có phân trang và xuất tối đa 10.000 phản hồi CSV; escape dấu nháy và vô hiệu prefix công thức. CSV xuất phản hồi, không phải toàn bộ khách chưa RSVP.
 
 ## 5. Trạng thái và điều kiện truy cập

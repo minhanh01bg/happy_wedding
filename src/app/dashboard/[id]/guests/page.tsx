@@ -5,7 +5,40 @@ import { requireCustomerSession } from "@/server/customer-auth/session";
 import { GuestForm } from "@/components/wedding/guest-form";
 import { CopyButton, MutationButton } from "@/components/wedding/actions";
 import { STATUS_LABELS } from "@/components/wedding/status";
-import { readEvents, dateLabel } from "@/lib/wedding";
+import { readEvents, dateLabel, type WeddingEvent } from "@/lib/wedding";
+import {
+  EVENT_SIDE_LABELS,
+  eventDayLabel,
+  eventSide,
+  eventTimeLabel,
+} from "@/lib/rsvp-events";
+
+/** Tiệc khách chọn, kèm bên và ngày. Khách không đến thì không chọn tiệc. */
+function ResponseEvent({
+  attendance,
+  event,
+}: {
+  attendance: string;
+  event: WeddingEvent | undefined;
+}) {
+  if (attendance !== "attending") return <>—</>;
+  if (!event) return <>Tiệc đã thay đổi</>;
+  const side = eventSide(event);
+  return (
+    <>
+      {event.title}
+      <p>
+        {[
+          side && EVENT_SIDE_LABELS[side],
+          eventDayLabel(event),
+          eventTimeLabel(event),
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      </p>
+    </>
+  );
+}
 export default async function Guests({
   params,
   searchParams,
@@ -178,7 +211,12 @@ export default async function Guests({
                     <span className="badge">{STATUS_LABELS[r.attendance]}</span>
                     <p>{r.partySize} người</p>
                   </td>
-                  <td>{events[r.eventIndex]?.title || "Tiệc đã thay đổi"}</td>
+                  <td>
+                    <ResponseEvent
+                      attendance={r.attendance}
+                      event={events[r.eventIndex]}
+                    />
+                  </td>
                   <td style={{ maxWidth: 350 }}>
                     <p
                       style={{

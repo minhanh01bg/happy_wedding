@@ -19,6 +19,21 @@ import {
   fromLocalDateTime,
   type InvitationInput,
 } from "@/lib/wedding";
+import { EVENT_SIDE_LABELS, eventSide } from "@/lib/rsvp-events";
+
+const EVENT_SIDE_OPTIONS = [
+  { value: "groom", label: EVENT_SIDE_LABELS.groom },
+  { value: "bride", label: EVENT_SIDE_LABELS.bride },
+  { value: "shared", label: "Chung" },
+];
+function eventSideHint(event: InvitationInput["events"][number]) {
+  if (event.side)
+    return "Khi thiệp có tiệc của cả hai nhà, khách chọn bên trước rồi chọn ngày.";
+  const guessed = eventSide(event);
+  return guessed
+    ? `Đang nhận theo tên tiệc: ${EVENT_SIDE_LABELS[guessed]}.`
+    : "Tiệc chung hiện cho khách của cả hai nhà.";
+}
 
 type FieldProps = {
   data: InvitationInput;
@@ -228,6 +243,26 @@ export function EventFields({
               value={event.title}
               onChange={(e) => eventField(i, "title", e.target.value)}
             />
+          </label>
+          <label>
+            Tiệc của
+            <DropdownField
+              aria-label="Tiệc của"
+              value={event.side ?? "shared"}
+              onValueChange={(value) => {
+                if (value === null) return;
+                const side =
+                  value === "groom" || value === "bride" ? value : undefined;
+                field(
+                  "events",
+                  data.events.map((item, index) =>
+                    index === i ? { ...item, side } : item,
+                  ),
+                );
+              }}
+              options={EVENT_SIDE_OPTIONS}
+            />
+            <small>{eventSideHint(event)}</small>
           </label>
           <label>
             Ngày giờ (giờ Việt Nam)

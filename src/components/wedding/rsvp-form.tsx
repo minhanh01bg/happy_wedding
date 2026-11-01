@@ -1,10 +1,61 @@
 "use client";
-import { DropdownField } from "@/components/kit/dropdown-field";
-import { useState, useRef } from "react";
+import { useState, useRef, type ReactNode } from "react";
+import { Minus, Plus } from "lucide-react";
 import { randomUUID } from "@/lib/random-id";
+import {
+  EVENT_SIDES,
+  EVENT_SIDE_LABELS,
+  eventDayLabel,
+  eventIsoDay,
+  eventSide,
+  eventTimeLabel,
+  type EventSide,
+} from "@/lib/rsvp-events";
 import { post } from "./client";
 import type { WeddingEvent } from "@/lib/wedding";
-const PARTY_SIZES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+import styles from "./rsvp-form.module.css";
+
+/** Khớp giới hạn `partySize` của responseSchema. */
+const MAX_PARTY_SIZE = 10;
+const ATTENDANCE = [
+  { value: "attending", label: "Có, mình sẽ tham dự" },
+  { value: "declined", label: "Mình rất tiếc, không thể đến" },
+  { value: "undecided", label: "Mình sẽ xác nhận sau" },
+] as const;
+type Attendance = (typeof ATTENDANCE)[number]["value"];
+
+/** Một lựa chọn: radio thật, nhãn bọc ngoài để bấm vào đâu cũng chọn được. */
+function Choice({
+  name,
+  value,
+  checked,
+  onSelect,
+  children,
+}: {
+  name: string;
+  value: string;
+  checked: boolean;
+  onSelect: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <label className={styles.choice}>
+      <input
+        suppressHydrationWarning
+        className={styles.radio}
+        type="radio"
+        name={name}
+        value={value}
+        checked={checked}
+        onChange={onSelect}
+      />
+      <span className={styles.face}>
+        <span className={styles.text}>{children}</span>
+      </span>
+    </label>
+  );
+}
+
 export function RsvpForm({
   slug,
   events,
@@ -21,8 +72,39 @@ export function RsvpForm({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [attendance, setAttendance] = useState("attending");
+  const [attendance, setAttendance] = useState<Attendance>("attending");
+  const [partySize, setPartySize] = useState(1);
   const clientId = useRef("");
+  // Chỉ hỏi bên khi thiệp có tiệc của cả nhà trai lẫn nhà gái. Tiệc chung
+  // (không rõ bên) hiện ở cả hai bên. Giá trị gửi đi vẫn là chỉ số gốc.
+  const options = events.map((event, index) => ({
+    event,
+    index,
+    side: eventSide(event),
+  }));
+  const askSide = EVENT_SIDES.every((side) =>
+    options.some((option) => option.side === side),
+  );
+  const datesOf = (side: EventSide) =>
+    askSide
+      ? options.filter((option) => !option.side || option.side === side)
+      : options;
+  const [side, setSide] = useState<EventSide>(
+    () => options.find((option) => option.side)?.side ?? "groom",
+  );
+  const dates = datesOf(side);
+  const [picked, setPicked] = useState(() => dates[0]?.index ?? 0);
+  // Danh sách tiệc có thể đổi trong bản xem thử; giữ lựa chọn luôn hợp lệ.
+  const eventIndex = dates.some((option) => option.index === picked)
+    ? picked
+    : (dates[0]?.index ?? 0);
+  const attending = attendance === "attending";
+
+  function chooseSide(next: EventSide) {
+    setSide(next);
+    setPicked(datesOf(next)[0]?.index ?? 0);
+  }
+
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setBusy(true);
@@ -43,8 +125,8 @@ export function RsvpForm({
         clientId: clientId.current,
         name: String(form.get("name")),
         attendance,
-        partySize: Number(form.get("partySize") || 1),
-        eventIndex: Number(form.get("eventIndex")),
+        partySize: attending ? partySize : 1,
+        eventIndex: attending ? eventIndex : 0,
         message: String(form.get("message") || ""),
         ...(guestToken ? { guestToken } : {}),
       });
@@ -60,7 +142,7 @@ export function RsvpForm({
   return (
     <form
       suppressHydrationWarning
-      className="wedding-rsvp form-stack"
+      className={`wedding-rsvp ${styles.form}`}
       onSubmit={submit}
     >
       {disabled && (
@@ -69,10 +151,11 @@ export function RsvpForm({
           được xuất bản.
         </div>
       )}
-      <label>
-        Tên của bạn
+      <label className={styles.field}>
+        <span className={styles.label}>Tên của bạn</span>
         <input
           suppressHydrationWarning
+          className={styles.input}
           name="name"
           defaultValue={guestName}
           placeholder="Tên bạn muốn được gọi"
@@ -81,54 +164,101 @@ export function RsvpForm({
           required
         />
       </label>
-      <label>
-        Bạn có thể đến chung vui không?
-        <DropdownField
-          aria-label="Bạn có thể đến chung vui không?"
-          name="attendance"
-          value={attendance}
-          onValueChange={(value) => {
-            if (value !== null) setAttendance(value);
-          }}
-          options={[
-            { value: "attending", label: "Có, mình sẽ tham dự" },
-            { value: "declined", label: "Mình rất tiếc, không thể đến" },
-            { value: "undecided", label: "Mình sẽ xác nhận sau" },
-          ]}
-        />
-      </label>
-      <div className="grid-two">
-        <label>
-          Bạn đến tiệc nào?
-          <DropdownField
-            aria-label="Bạn đến tiệc nào?"
-            name="eventIndex"
-            defaultValue="0"
-            options={events.map((event, index) => ({
-              value: String(index),
-              label: event.title,
-            }))}
-          />
-        </label>
-        {attendance === "attending" && (
-          <label>
-            Số người tham dự
-            <DropdownField
-              aria-label="Số người tham dự"
-              name="partySize"
-              defaultValue="1"
-              options={PARTY_SIZES.map((size) => ({
-                value: String(size),
-                label: `${size} người`,
-              }))}
-            />
-          </label>
-        )}
-      </div>
-      <label>
-        Gửi đôi lời chúc
+      <fieldset className={styles.group}>
+        <legend className={styles.legend}>
+          Bạn có thể đến chung vui không?
+        </legend>
+        <div className={styles.stack}>
+          {ATTENDANCE.map((option) => (
+            <Choice
+              key={option.value}
+              name="attendance"
+              value={option.value}
+              checked={attendance === option.value}
+              onSelect={() => setAttendance(option.value)}
+            >
+              {option.label}
+            </Choice>
+          ))}
+        </div>
+      </fieldset>
+      {attending && askSide && (
+        <fieldset className={`${styles.group} ${styles.reveal}`}>
+          <legend className={styles.legend}>Bạn đến dự bên nào?</legend>
+          <div className={styles.sides}>
+            {EVENT_SIDES.map((value) => (
+              <Choice
+                key={value}
+                name="side"
+                value={value}
+                checked={side === value}
+                onSelect={() => chooseSide(value)}
+              >
+                {EVENT_SIDE_LABELS[value]}
+              </Choice>
+            ))}
+          </div>
+        </fieldset>
+      )}
+      {attending && dates.length > 0 && (
+        <fieldset className={`${styles.group} ${styles.reveal}`}>
+          <legend className={styles.legend}>Bạn đến vào ngày nào?</legend>
+          <div className={styles.dates}>
+            {dates.map(({ event, index }) => (
+              <Choice
+                key={index}
+                name="eventIndex"
+                value={String(index)}
+                checked={eventIndex === index}
+                onSelect={() => setPicked(index)}
+              >
+                <time className={styles.day} dateTime={eventIsoDay(event)}>
+                  {eventDayLabel(event)}
+                </time>{" "}
+                <span className={styles.detail}>
+                  {eventTimeLabel(event)} · {event.title}
+                </span>
+              </Choice>
+            ))}
+          </div>
+        </fieldset>
+      )}
+      {attending && (
+        <fieldset className={`${styles.group} ${styles.reveal}`}>
+          <legend className={styles.legend}>Số người tham dự</legend>
+          <div className={styles.stepper}>
+            {/* aria-disabled thay cho disabled để nút không mất focus ở giới hạn. */}
+            <button
+              type="button"
+              className={styles.step}
+              aria-label="Bớt một người"
+              aria-disabled={partySize <= 1}
+              onClick={() => setPartySize((size) => Math.max(1, size - 1))}
+            >
+              <Minus size={20} aria-hidden />
+            </button>
+            <span className={styles.count} aria-live="polite">
+              {partySize} người
+            </span>
+            <button
+              type="button"
+              className={styles.step}
+              aria-label="Thêm một người"
+              aria-disabled={partySize >= MAX_PARTY_SIZE}
+              onClick={() =>
+                setPartySize((size) => Math.min(MAX_PARTY_SIZE, size + 1))
+              }
+            >
+              <Plus size={20} aria-hidden />
+            </button>
+          </div>
+        </fieldset>
+      )}
+      <label className={styles.field}>
+        <span className={styles.label}>Gửi đôi lời chúc</span>
         <textarea
           suppressHydrationWarning
+          className={styles.input}
           name="message"
           maxLength={1000}
           placeholder="Một lời chúc cho ngày chung đôi…"
@@ -145,7 +275,11 @@ export function RsvpForm({
           {error}
         </p>
       )}
-      <button type="submit" disabled={busy || disabled}>
+      <button
+        type="submit"
+        className={styles.submit}
+        disabled={busy || disabled}
+      >
         {busy ? "Đang gửi…" : "Gửi xác nhận & lời chúc"}
       </button>
       <p className="fine">

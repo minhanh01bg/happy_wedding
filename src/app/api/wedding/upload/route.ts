@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import sharp, { type Sharp } from "sharp";
+import sharp from "sharp";
 
 import { logger } from "@/lib/logger";
 import {
@@ -74,24 +74,31 @@ async function inspect(input: Buffer) {
   // of 32 MP needed about 950 MB. 8-bit RGB up to 64 MP stays under budget.
   if (decodeCostBytes(metadata) > MAX_UPLOAD_DECODE_BYTES)
     throw new WeddingError(400, UPLOAD_IMAGE_DECODE_TOO_LARGE);
-  return image;
+  return { image, format, width, height, bytes: input.byteLength };
 }
 
-async function encode(image: Sharp) {
+async function encode({
+  image,
+  ...source
+}: Awaited<ReturnType<typeof inspect>>) {
   try {
     // Keep full resolution. Re-encoding drops EXIF/GPS/XMP and converts ICC
     // to sRGB, because /uploads is public. effort 2 matches effort 4 in size
     // and quality on a 45 MP photo at about 1/5 of the time and half the RAM.
     return await image.rotate().webp({ quality: 90, effort: 2 }).toBuffer();
   } catch (error) {
-    // The header passed, so the pixel data is broken or libvips failed. Log
-    // only the error's class and code: no image bytes, names or cookies.
+    // The header passed, so the pixel data is broken or libvips failed.
+    // Sharp throws a plain Error, so its message is what says why. The input
+    // is a buffer, so the message holds no file name; never log the bytes.
     const code =
       error instanceof Error && "code" in error ? error.code : undefined;
     logger.warn("wedding_upload_encode_failed", {
       correlationId: randomUUID(),
+      ...source,
       errorClass: error instanceof Error ? error.name : "Unknown",
       errorCode: typeof code === "string" ? code : undefined,
+      errorMessage:
+        error instanceof Error ? error.message.slice(0, 200) : undefined,
     });
     throw new WeddingError(400, UPLOAD_IMAGE_INVALID);
   }
@@ -128,7 +135,7 @@ export async function POST(request: Request) {
     // One contiguous copy from here on; the chunk list would double the RAM.
     const input = Buffer.concat(chunks, bytes);
     chunks.length = 0;
-    const image = await inspect(input);
+    const source = await inspect(input);
     const release = await encodeSlots
       .acquire(request.signal)
       .catch((error: unknown) => {
@@ -141,7 +148,7 @@ export async function POST(request: Request) {
     try {
       // The client may have left after the grant, before this line ran.
       if (request.signal.aborted) throw aborted();
-      output = await encode(image);
+      output = await encode(source);
     } finally {
       release();
     }
@@ -167,7 +174,13 @@ export async function POST(request: Request) {
       ok: true,
       data: { url: `/uploads/weddings/${filename}` },
     });
-  } catch (error) {
+  } catch (caught) {
+    // A client that leaves mid-body makes reader.read() reject (ECONNRESET),
+    // with request.signal already aborted: a cancel, not a server failure.
+    const error =
+      caught instanceof WeddingError || !request.signal.aborted
+        ? caught
+        : aborted();
     if (error instanceof WeddingError)
       return Response.json(
         { ok: false, message: error.message },

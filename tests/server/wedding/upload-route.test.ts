@@ -510,11 +510,51 @@ describe("POST /api/wedding/upload", () => {
     // Exactly these keys: no image bytes, cookies, tokens or file names.
     expect(meta).toStrictEqual({
       correlationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+      format: "jpeg",
+      width: 1200,
+      height: 800,
+      bytes: photo.length >> 1,
       errorClass: "Error",
       errorCode: undefined,
+      errorMessage: expect.stringMatching(/^VipsJpeg: premature end/),
     });
     expect(stored.files).toHaveLength(0);
     expect(stored.reserved).toHaveLength(0);
     expect([slots.encode?.active, slots.encode?.waiting]).toEqual([0, 0]);
+  });
+
+  it("khách hủy giữa lúc gửi body thì trả 499, không log lỗi", async () => {
+    const error = vi.spyOn(logger, "error").mockImplementation(() => {});
+    const header = await jpeg(16, 16).toBuffer();
+    const controller = new AbortController();
+    let sent = false;
+    const body = new ReadableStream<Uint8Array>(
+      {
+        pull(stream) {
+          if (!sent) {
+            sent = true;
+            stream.enqueue(new Uint8Array(header));
+            return;
+          }
+          // What Node does when the socket closes mid-body: the response
+          // closes, which aborts the signal, then the body fails.
+          controller.abort();
+          stream.error(
+            Object.assign(new Error("aborted"), { code: "ECONNRESET" }),
+          );
+        },
+      },
+      { highWaterMark: 0 },
+    );
+    const response = await upload(body, "image/jpeg", controller.signal);
+    expect(response.status).toBe(499);
+    expect(await response.json()).toEqual({
+      ok: false,
+      message: "Đã hủy tải ảnh",
+    });
+    expect(error).not.toHaveBeenCalled();
+    expect(slots.acquired).toBe(0);
+    expect(stored.files).toHaveLength(0);
+    expect(stored.reserved).toHaveLength(0);
   });
 });

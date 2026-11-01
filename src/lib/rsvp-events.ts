@@ -39,12 +39,16 @@ const WEEKDAYS = [
 ];
 const pad = (value: number) => String(value).padStart(2, "0");
 
+/** Thứ theo giờ Việt Nam, ví dụ "Chủ nhật". */
+export function eventWeekday(event: Pick<WeddingEvent, "date">) {
+  const { day, month, year } = weddingDateParts(event.date);
+  return WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
+}
+
 /** Thứ và ngày theo giờ Việt Nam, ví dụ "Chủ nhật · 08/11". */
 export function eventDayLabel(event: Pick<WeddingEvent, "date">) {
-  const { day, month, year } = weddingDateParts(event.date);
-  const weekday =
-    WEEKDAYS[new Date(Date.UTC(year, month - 1, day)).getUTCDay()];
-  return `${weekday} · ${pad(day)}/${pad(month)}`;
+  const { day, month } = weddingDateParts(event.date);
+  return `${eventWeekday(event)} · ${pad(day)}/${pad(month)}`;
 }
 
 /** Ngày theo giờ Việt Nam dạng YYYY-MM-DD, cho thuộc tính `dateTime`. */

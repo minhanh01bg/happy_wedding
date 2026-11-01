@@ -1,7 +1,13 @@
 import { CalendarPlus, MapPin, Heart } from "lucide-react";
 import { dateLabel, type WeddingEvent } from "@/lib/wedding";
 import { weddingCalendarUrl } from "@/lib/wedding-calendar";
-import { directionsUrl, groupEventVenues, mapEmbedUrl } from "@/lib/event-map";
+import {
+  directionsUrl,
+  groupEventVenues,
+  mapEmbedUrl,
+  type EventVenue,
+} from "@/lib/event-map";
+import { eventIsoDay, eventTimeLabel, eventWeekday } from "@/lib/rsvp-events";
 import {
   weddingDateParts,
   weddingEventDays,
@@ -119,54 +125,23 @@ export function InvitationDateCalendar({
   );
 }
 
-/**
- * “Đường đến tiệc”: mỗi địa điểm khác nhau đúng một bản đồ nhúng, ghi bên,
- * tên địa điểm, địa chỉ và các tiệc ở đó. Iframe không gửi referrer, để token
- * khách mời trên URL thiệp không lọt sang Google.
- */
-function InvitationEventMaps({
-  events,
-  design,
-}: {
-  events: WeddingEvent[];
-  design: string;
-}) {
-  const venues = groupEventVenues(events);
-  return (
-    <div className={`${styles.route} ${styles[design] || ""}`} data-event-maps>
-      <h3>Đường đến tiệc</h3>
-      <div className={styles.maps} data-count={venues.length}>
-        {venues.map(({ venue, address, coordinates, side, events: here }) => (
-          <figure className={styles.map} data-event-map key={here[0].index}>
-            <figcaption>
-              {side && <span className={styles.mapSide}>{side}</span>}
-              <strong>{venue}</strong>
-              <span className={styles.mapAddress}>{address}</span>
-              <ul className={styles.mapEvents}>
-                {here.map(({ event, index }) => (
-                  <li key={index}>
-                    {event.title}:{" "}
-                    {event.timeLabel || weddingDateParts(event.date).time} ·{" "}
-                    {dateLabel(event.date)}
-                  </li>
-                ))}
-              </ul>
-            </figcaption>
-            <div className={styles.mapFrame}>
-              <iframe
-                src={mapEmbedUrl(coordinates ?? `${venue}, ${address}`)}
-                title={`Bản đồ đường đến ${venue}${side ? ` (${side.toLocaleLowerCase("vi")})` : ""}`}
-                loading="lazy"
-                referrerPolicy="no-referrer"
-              />
-            </div>
-          </figure>
-        ))}
-      </div>
-    </div>
-  );
+const pad = (value: number) => String(value).padStart(2, "0");
+
+/** `dateTime` của dòng giờ: cả ngày khi giờ ghi bằng chữ, không thì giờ ISO. */
+function eventDateTime(event: WeddingEvent) {
+  return event.timeLabel
+    ? eventIsoDay(event)
+    : new Date(event.date).toISOString();
 }
 
+/**
+ * Lịch tiệc: mỗi địa điểm một thẻ, theo thứ tự xuất hiện đầu tiên (gộp ở
+ * `groupEventVenues`). Thẻ một tiệc giữ đúng dáng cũ của từng mẫu; thẻ nhiều
+ * tiệc là một khung: bên + tên địa điểm, mỗi tiệc một dòng kẻ mảnh có link
+ * thêm vào lịch, bản đồ, rồi địa chỉ và nút chỉ đường. Bản đồ nằm trong mọi
+ * thẻ; iframe không gửi referrer, để token khách mời trên URL thiệp không lọt
+ * sang Google. Thứ tự và chỉ số tiệc (eventIndex của RSVP) không đổi.
+ */
 export function InvitationEvents({
   events,
   design,
@@ -176,6 +151,14 @@ export function InvitationEvents({
   design: string;
   couple: string;
 }) {
+  const places = groupEventVenues(events);
+  const calendarUrl = (event: WeddingEvent) =>
+    weddingCalendarUrl(
+      event.date,
+      `${event.title} — ${couple}`,
+      `${event.venue}, ${event.address}`,
+      event.timeLabel,
+    );
   return (
     <section
       className={`wedding-section ${styles.events}`}
@@ -184,237 +167,335 @@ export function InvitationEvents({
     >
       <p className="eyebrow">TRÂN TRỌNG KÍNH MỜI</p>
       <h2>Ngày vui, có bạn.</h2>
-      <div className={`${styles.grid} ${styles[design] || ""}`}>
-        {events.map((event, index) => {
-          const {
-            day,
-            month,
-            year,
-            time: clock,
-          } = weddingDateParts(event.date);
-          // Giờ ghi bằng chữ (vd "Buổi sáng") thay giờ ở mọi chỗ; ngày vẫn hiện.
-          const time = event.timeLabel || clock;
-          const stamp = (
-            <div className={styles.stamp}>
-              <span>{String(day).padStart(2, "0")}</span>
-              <small>
-                {String(month).padStart(2, "0")} / {year}
-              </small>
-            </div>
-          );
-          const title = (
-            <header className={styles.title}>
-              <p className="eyebrow">0{index + 1} / LỊCH TIỆC</p>
-              <h3>{event.title}</h3>
-              <time
-                dateTime={
-                  event.timeLabel
-                    ? `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
-                    : new Date(event.date).toISOString()
-                }
-              >
-                {time} · {dateLabel(event.date)}
-              </time>
-            </header>
-          );
-          const venue = (
-            <div className={styles.venue}>
-              <strong>{event.venue}</strong>
-              <p>{event.address}</p>
-            </div>
-          );
-          const actions = (
-            <footer className={styles.actions}>
-              <a
-                href={directionsUrl(event)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <MapPin size={16} aria-hidden="true" />
-                Chỉ đường đến tiệc
-              </a>
-              <a
-                href={weddingCalendarUrl(
-                  event.date,
-                  `${event.title} — ${couple}`,
-                  `${event.venue}, ${event.address}`,
-                  event.timeLabel,
-                )}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <CalendarPlus size={16} aria-hidden="true" />
-                Thêm tiệc này vào lịch
-              </a>
-            </footer>
-          );
-          let content;
-          switch (design) {
-            case "vuon-thuong":
-              content = (
-                <>
-                  <div className={styles.gardenMark} aria-hidden="true">
-                    ❦
-                  </div>
-                  {title}
-                  <div className={styles.archDate}>{stamp}</div>
-                  {venue}
-                  {actions}
-                </>
-              );
-              break;
-            case "song-hy":
-              content = (
-                <>
-                  <div className={styles.ceremonyHeader}>
-                    <span aria-hidden="true">囍</span>
-                    <p>TRÂN TRỌNG KÍNH MỜI</p>
-                  </div>
-                  {title}
-                  <div className={styles.ceremonyDate}>
-                    {stamp}
-                    <span>{time}</span>
-                  </div>
-                  {venue}
-                  {actions}
-                </>
-              );
-              break;
-            case "ngay-chung-doi":
-              content = (
-                <>
-                  <aside className={styles.issue}>
-                    {stamp}
-                    <span>ĐỊA ĐIỂM HẸN</span>
-                  </aside>
-                  <div className={styles.column}>
-                    {title}
-                    {venue}
-                    {actions}
-                  </div>
-                </>
-              );
-              break;
-            case "dem-sao":
-              content = (
-                <>
-                  <span className={styles.star} aria-hidden="true">
-                    ✧
-                  </span>
-                  {title}
-                  <div className={styles.orbit}>{stamp}</div>
-                  {venue}
-                  <div className={styles.nightFoot}>{actions}</div>
-                </>
-              );
-              break;
-            case "nang-thu":
-              content = (
-                <>
-                  <span className={styles.tape} aria-hidden="true" />
-                  <div className={styles.journalTop}>
-                    {stamp}
-                    <span>Hẹn bạn nhé ♡</span>
-                  </div>
-                  {title}
-                  {venue}
-                  {actions}
-                </>
-              );
-              break;
-            case "loi-hen":
-              content = (
-                <>
-                  <div className={styles.rowHeading}>
-                    {stamp}
-                    {title}
-                  </div>
-                  <dl className={styles.details}>
-                    <div>
-                      <dt>Địa điểm</dt>
-                      <dd>{event.venue}</dd>
-                    </div>
-                    <div>
-                      <dt>Địa chỉ</dt>
-                      <dd>{event.address}</dd>
-                    </div>
-                  </dl>
-                  {actions}
-                </>
-              );
-              break;
-            case "thu-tinh":
-              content = (
-                <>
-                  <header className={styles.letterHeader}>
-                    <span>Gửi bạn, lời mời ngày vui</span>
-                    {stamp}
-                  </header>
-                  <div className={styles.letterBody}>
-                    {title}
-                    {venue}
-                  </div>
-                  {actions}
-                  <span className={styles.letterFold} aria-hidden="true">
-                    ♡
-                  </span>
-                </>
-              );
-              break;
-            case "khoanh-khac":
-              content = (
-                <>
-                  <header className={styles.scene}>
-                    <span>CẢNH {String(index + 1).padStart(2, "0")}</span>
-                    <span>{time}</span>
-                  </header>
-                  <div className={styles.frame}>
-                    {title}
-                    {stamp}
-                  </div>
-                  {venue}
-                  {actions}
-                </>
-              );
-              break;
-            case "ben-nhau":
-              content = (
-                <>
-                  <div className={styles.dateHalf}>
-                    {stamp}
-                    <span>{time}</span>
-                  </div>
-                  <div className={styles.infoHalf}>
-                    {title}
-                    {venue}
-                    {actions}
-                  </div>
-                </>
-              );
-              break;
-            default:
-              content = (
-                <>
-                  <div className={styles.ribbon}>Một ngày chung vui</div>
-                  {title}
-                  {stamp}
-                  {venue}
-                  {actions}
-                </>
-              );
-          }
-          return (
-            <article
-              className={`event-card ${styles.card}`}
-              data-event-card
-              key={`${event.title}-${event.date}-${event.venue}`}
-            >
-              {content}
-            </article>
-          );
-        })}
+      <div
+        className={`${styles.grid} ${styles[design] || ""}`}
+        data-count={places.length}
+        data-grouped={
+          places.some((place) => place.events.length > 1) || undefined
+        }
+      >
+        {places.map((place, index) => (
+          <PlaceCard
+            key={place.events[0].index}
+            place={place}
+            number={index + 1}
+            design={design}
+            calendarUrl={calendarUrl}
+          />
+        ))}
       </div>
-      <InvitationEventMaps events={events} design={design} />
     </section>
+  );
+}
+
+function PlaceCard({
+  place,
+  number,
+  design,
+  calendarUrl,
+}: {
+  place: EventVenue<WeddingEvent>;
+  number: number;
+  design: string;
+  calendarUrl: (event: WeddingEvent) => string;
+}) {
+  const eyebrow = <p className="eyebrow">{pad(number)} / LỊCH TIỆC</p>;
+  const directions = (
+    <a href={directionsUrl(place)} target="_blank" rel="noopener noreferrer">
+      <MapPin size={16} aria-hidden="true" />
+      Chỉ đường đến tiệc
+    </a>
+  );
+  const map = (
+    <div className={styles.mapFrame} data-event-map>
+      <iframe
+        src={mapEmbedUrl(
+          place.coordinates ?? `${place.venue}, ${place.address}`,
+        )}
+        title={`Bản đồ đường đến ${place.venue}${place.side ? ` (${place.side.toLocaleLowerCase("vi")})` : ""}`}
+        loading="lazy"
+        referrerPolicy="no-referrer"
+      />
+    </div>
+  );
+  // Nét riêng của từng mẫu, dùng chung cho thẻ một tiệc và thẻ nhiều tiệc.
+  const gardenMark = (
+    <div className={styles.gardenMark} aria-hidden="true">
+      ❦
+    </div>
+  );
+  const ceremonyHeader = (
+    <div className={styles.ceremonyHeader}>
+      <span aria-hidden="true">囍</span>
+      <p>TRÂN TRỌNG KÍNH MỜI</p>
+    </div>
+  );
+  const star = (
+    <span className={styles.star} aria-hidden="true">
+      ✧
+    </span>
+  );
+  const tape = <span className={styles.tape} aria-hidden="true" />;
+  const letterFold = (
+    <span className={styles.letterFold} aria-hidden="true">
+      ♡
+    </span>
+  );
+  const scene = (time?: string) => (
+    <header className={styles.scene}>
+      <span>CẢNH {pad(number)}</span>
+      {time && <span>{time}</span>}
+    </header>
+  );
+
+  if (place.events.length > 1) {
+    const ornament = {
+      "vuon-thuong": gardenMark,
+      "song-hy": ceremonyHeader,
+      "dem-sao": star,
+      "nang-thu": tape,
+      "khoanh-khac": scene(),
+    }[design];
+    return (
+      <article
+        className={`event-card ${styles.card} ${styles.place}`}
+        data-event-card
+        data-event-count={place.events.length}
+      >
+        {ornament}
+        <header className={styles.placeHead}>
+          {eyebrow}
+          <h3>
+            {place.side && <span className={styles.side}>{place.side}</span>}
+            <span className={styles.placeName}>{place.venue}</span>
+          </h3>
+        </header>
+        <ul className={styles.agenda}>
+          {place.events.map(({ event, index }) => (
+            <li key={index} data-event-row>
+              <time dateTime={eventDateTime(event)}>
+                {eventWeekday(event)} · {dateLabel(event.date)} ·{" "}
+                {eventTimeLabel(event)}
+              </time>
+              <h4>{event.title}</h4>
+              <a
+                href={calendarUrl(event)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <CalendarPlus size={14} aria-hidden="true" />
+                Thêm vào lịch
+                <span className={styles.srOnly}>: {event.title}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+        {map}
+        <footer className={styles.placeFoot}>
+          <p>{place.address}</p>
+          <div className={styles.actions}>{directions}</div>
+        </footer>
+        {design === "thu-tinh" && letterFold}
+      </article>
+    );
+  }
+
+  const [{ event }] = place.events;
+  const { day, month, year } = weddingDateParts(event.date);
+  // Giờ ghi bằng chữ (vd "Buổi sáng") thay giờ ở mọi chỗ; ngày vẫn hiện.
+  const time = eventTimeLabel(event);
+  const stamp = (
+    <div className={styles.stamp}>
+      <span>{pad(day)}</span>
+      <small>
+        {pad(month)} / {year}
+      </small>
+    </div>
+  );
+  const title = (
+    <header className={styles.title}>
+      {eyebrow}
+      <h3>{event.title}</h3>
+      <time dateTime={eventDateTime(event)}>
+        {time} · {dateLabel(event.date)}
+      </time>
+    </header>
+  );
+  const venue = (
+    <div className={styles.venue}>
+      <strong>{event.venue}</strong>
+      <p>{event.address}</p>
+    </div>
+  );
+  const actions = (
+    <footer className={styles.actions}>
+      {directions}
+      <a href={calendarUrl(event)} target="_blank" rel="noopener noreferrer">
+        <CalendarPlus size={16} aria-hidden="true" />
+        Thêm tiệc này vào lịch
+      </a>
+    </footer>
+  );
+  let content;
+  switch (design) {
+    case "vuon-thuong":
+      content = (
+        <>
+          {gardenMark}
+          {title}
+          <div className={styles.archDate}>{stamp}</div>
+          {venue}
+          {actions}
+          {map}
+        </>
+      );
+      break;
+    case "song-hy":
+      content = (
+        <>
+          {ceremonyHeader}
+          {title}
+          <div className={styles.ceremonyDate}>
+            {stamp}
+            <span>{time}</span>
+          </div>
+          {venue}
+          {actions}
+          {map}
+        </>
+      );
+      break;
+    case "ngay-chung-doi":
+      content = (
+        <>
+          <aside className={styles.issue}>
+            {stamp}
+            <span>ĐỊA ĐIỂM HẸN</span>
+          </aside>
+          <div className={styles.column}>
+            {title}
+            {venue}
+            {actions}
+          </div>
+          {map}
+        </>
+      );
+      break;
+    case "dem-sao":
+      content = (
+        <>
+          {star}
+          {title}
+          <div className={styles.orbit}>{stamp}</div>
+          {venue}
+          <div className={styles.nightFoot}>{actions}</div>
+          {map}
+        </>
+      );
+      break;
+    case "nang-thu":
+      content = (
+        <>
+          {tape}
+          <div className={styles.journalTop}>
+            {stamp}
+            <span>Hẹn bạn nhé ♡</span>
+          </div>
+          {title}
+          {venue}
+          {actions}
+          {map}
+        </>
+      );
+      break;
+    case "loi-hen":
+      content = (
+        <>
+          <div className={styles.rowHeading}>
+            {stamp}
+            {title}
+          </div>
+          <dl className={styles.details}>
+            <div>
+              <dt>Địa điểm</dt>
+              <dd>{event.venue}</dd>
+            </div>
+            <div>
+              <dt>Địa chỉ</dt>
+              <dd>{event.address}</dd>
+            </div>
+          </dl>
+          {actions}
+          {map}
+        </>
+      );
+      break;
+    case "thu-tinh":
+      content = (
+        <>
+          <header className={styles.letterHeader}>
+            <span>Gửi bạn, lời mời ngày vui</span>
+            {stamp}
+          </header>
+          <div className={styles.letterBody}>
+            {title}
+            {venue}
+          </div>
+          {actions}
+          {map}
+          {letterFold}
+        </>
+      );
+      break;
+    case "khoanh-khac":
+      content = (
+        <>
+          {scene(time)}
+          <div className={styles.frame}>
+            {title}
+            {stamp}
+          </div>
+          {venue}
+          {actions}
+          {map}
+        </>
+      );
+      break;
+    case "ben-nhau":
+      content = (
+        <>
+          <div className={styles.dateHalf}>
+            {stamp}
+            <span>{time}</span>
+          </div>
+          <div className={styles.infoHalf}>
+            {title}
+            {venue}
+            {actions}
+          </div>
+          {map}
+        </>
+      );
+      break;
+    default:
+      content = (
+        <>
+          <div className={styles.ribbon}>Một ngày chung vui</div>
+          {title}
+          {stamp}
+          {venue}
+          {actions}
+          {map}
+        </>
+      );
+  }
+  return (
+    <article
+      className={`event-card ${styles.card}`}
+      data-event-card
+      data-event-count={1}
+    >
+      {content}
+    </article>
   );
 }

@@ -269,52 +269,66 @@ describe("groupEventVenues", () => {
     expect(venues[0].events.map(({ index }) => index)).toEqual([0, 1]);
   });
 
-  it("matches venue + address after normalizing when a pin is missing", () => {
+  it("joins the same venue + address after trimming, nothing looser", () => {
     const venues = groupEventVenues([
       party,
       {
         ...ceremony,
-        venue: "  nhà hàng   MINH HOẠ ",
-        address: "So 1 Duong Minh Hoạ - Ha Noi, địa chỉ minh hoạ",
+        venue: `  ${party.venue} `,
+        // NFD, as macOS/iOS keyboards send it: the same text once composed.
+        address: `${party.address.normalize("NFD")}\n`,
         ...GROOM_POINT,
       },
+      { ...ceremony, venue: "nhà hàng MINH HOẠ" },
     ]);
-    expect(venues).toHaveLength(1);
-    expect(venues[0].coordinates).toEqual(GROOM_POINT);
+    expect(venues.map(({ events }) => events.map(({ index }) => index))).toEqual(
+      [[0, 1], [2]],
+    );
+    expect(venues[0]).toMatchObject({
+      venue: party.venue,
+      address: party.address,
+      coordinates: GROOM_POINT,
+    });
   });
 
-  it("keeps the groom's and the bride's places apart, each with its side", () => {
-    const venues = groupEventVenues([
-      { ...party, mapUrl: GROOM_SHORT, ...GROOM_POINT },
-      bride,
-      { ...ceremony, mapUrl: GROOM_SHORT, ...GROOM_POINT },
+  it("joins one name at two pins and keeps two names at one pin apart", () => {
+    const [joined, ...rest] = groupEventVenues([
+      { ...party, mapUrl: GROOM_SHORT },
+      { ...ceremony, mapUrl: GROOM_PLACE, ...BRIDE_POINT },
+      { ...ceremony, ...GROOM_POINT },
     ]);
-    expect(
-      venues.map(({ side, venue, coordinates }) => ({
-        side,
-        venue,
-        coordinates,
-      })),
-    ).toEqual([
-      { side: "Nhà trai", venue: party.venue, coordinates: GROOM_POINT },
-      { side: "Nhà gái", venue: bride.venue, coordinates: BRIDE_POINT },
-    ]);
-    expect(venues[0].events.map(({ index }) => index)).toEqual([0, 2]);
-  });
-
-  it("splits one name at two pins and joins two names at one pin", () => {
-    expect(
-      groupEventVenues([
-        { ...party, ...GROOM_POINT },
-        { ...ceremony, ...BRIDE_POINT },
-      ]),
-    ).toHaveLength(2);
+    expect(rest).toEqual([]);
+    // The first pin and the first saved link stand for the place.
+    expect(joined.coordinates).toEqual(BRIDE_POINT);
+    expect(joined.mapUrl).toBe(GROOM_SHORT);
     expect(
       groupEventVenues([
         { ...party, ...GROOM_POINT },
         { ...ceremony, venue: "Nhà văn hóa thôn", ...GROOM_POINT },
       ]),
-    ).toHaveLength(1);
+    ).toHaveLength(2);
+  });
+
+  it("keeps the same place apart when the families differ", () => {
+    const venues = groupEventVenues([
+      { ...party, side: "groom" as const },
+      { ...ceremony, side: "bride" as const },
+      { ...ceremony, side: "groom" as const },
+      { ...party, title: "Tiệc báo hỷ" },
+    ]);
+    expect(
+      venues.map(({ side, events }) => [side, events.map(({ index }) => index)]),
+    ).toEqual([
+      ["Nhà trai", [0, 2]],
+      ["Nhà gái", [1]],
+      [undefined, [3]],
+    ]);
+  });
+
+  it("leaves the link empty when no party at the place saved one", () => {
+    const [venue] = groupEventVenues([party, { ...ceremony, mapUrl: "" }]);
+    expect(venue.mapUrl).toBeUndefined();
+    expect(new URL(directionsUrl(venue)).hostname).toBe("www.google.com");
   });
 
   it("names the side from `side`, then the title, else leaves it out", () => {

@@ -8,6 +8,11 @@
   margin-top: 50px;
   text-align: center;
 }
+/* A lone card sits in the middle at the width of one column. */
+.grid[data-count="1"] {
+  grid-template-columns: minmax(0, 560px);
+  justify-content: center;
+}
 :global(.wedding-page) .events .card[data-event-card] {
   position: relative;
   display: block;
@@ -194,8 +199,9 @@
   line-height: 1;
   margin-bottom: 20px;
 }
+/* The arch keeps one height however tall the card grows with its map. */
 .vuon-thuong .card {
-  border-radius: 48% 48% 8px 8px !important;
+  border-radius: 48% 48% 8px 8px / 300px 300px 8px 8px !important;
   padding-top: 60px !important;
 }
 .archDate {
@@ -322,7 +328,8 @@
   font-style: italic;
   font-size: 18px;
 }
-.loi-hen {
+/* Lời hẹn lists single parties as full-width rows; place cards pair up. */
+.loi-hen.grid:not([data-grouped]) {
   grid-template-columns: 1fr;
   gap: 0;
 }
@@ -709,224 +716,208 @@
     scale: 1;
   }
 }
-/* Đường đến tiệc: one embedded map per distinct venue, under the cards. The
-   frame has a fixed aspect ratio, so the lazy iframe never shifts the page,
-   and each design dresses it like its own cards. Nothing here animates. */
-.route {
-  margin-top: 64px;
+/* Thẻ địa điểm: several parties at one place share one calm frame. The card
+   keeps its template's border, background and ornament; inside there are no
+   boxes, only hairlines: head (side + venue), one row per party with a quiet
+   calendar link, the map at full inner width, then the address and the one
+   directions button. Nothing here animates. */
+:global(.wedding-page) .grid .card.place[data-event-card] {
+  display: flex !important;
+  flex-direction: column;
 }
-.route > h3 {
-  font-size: clamp(24px, 3vw, 32px);
+.placeHead h3 {
+  margin: 14px 0 0;
+  font-size: clamp(25px, 2.6vw, 30px);
   line-height: 1.3;
-  margin: 0 0 30px;
 }
-.maps {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 32px;
-}
-.maps[data-count="1"] {
-  grid-template-columns: minmax(0, 760px);
-  justify-content: center;
-}
-.map {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-.map figcaption {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  line-height: 1.6;
-}
-.map figcaption strong {
-  font-size: 18px;
-}
-.mapSide {
-  font-size: 11px;
+.side {
+  display: block;
+  margin-bottom: 4px;
+  font-family: var(--sans, inherit);
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.16em;
+  line-height: 1.6;
   text-transform: uppercase;
-  color: var(--accent, currentColor);
 }
-.mapAddress {
-  font-size: 14px;
-  opacity: 0.85;
+.placeName {
+  display: block;
 }
-.mapEvents {
-  margin: 4px 0 0;
+.agenda {
+  margin: 26px 0 24px;
   padding: 0;
   list-style: none;
+  text-align: start;
+  border-top: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+}
+.agenda > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "when when"
+    "what add";
+  align-items: center;
+  column-gap: 12px;
+  padding: 10px 0 2px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+}
+.agenda time {
+  grid-area: when;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+.agenda h4 {
+  grid-area: what;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1.35;
+}
+/* "Thêm vào lịch": a quiet text link, still a 44px target. */
+:global(.wedding-page) .events .agenda a {
+  grid-area: add;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 2px;
   font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-decoration: underline 1px transparent;
+  text-underline-offset: 4px;
 }
-.mapFrame {
-  position: relative;
-  aspect-ratio: 4 / 3;
+:global(.wedding-page) .events .agenda a svg {
+  color: var(--accent, currentColor);
+}
+@media (hover: hover) {
+  :global(.wedding-page) .events .agenda a:hover {
+    text-decoration-color: currentColor;
+  }
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* With the cards side by side, extra height goes above the map, so the maps
+   and the directions line up across both cards. */
+.place .mapFrame {
   margin-top: auto;
-  padding: 8px;
-  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
-  border-radius: 18px;
-  background: var(--card);
 }
-.maps[data-count="1"] .mapFrame {
-  aspect-ratio: 16 / 10;
+.placeFoot p {
+  margin: 16px 0 0;
+  color: inherit;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.placeFoot .actions {
+  margin-top: 16px;
+}
+.loi-yeu .agenda,
+.loi-yeu .agenda > li {
+  border-color: color-mix(
+    in srgb,
+    var(--accent, currentColor) 55%,
+    transparent
+  );
+}
+.loi-yeu .side {
+  margin-bottom: 0;
+  font: 400 40px / 1.15 var(--script, inherit);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.ngay-chung-doi .placeFoot .actions,
+.ben-nhau .placeFoot .actions {
+  align-items: flex-start;
+}
+/* Bên nhau draws no card of its own; a place card takes its hairlines. */
+:global(.wedding-page) .ben-nhau .card.place {
+  padding: 28px 0 !important;
+  border-block: 1px solid currentColor !important;
+}
+.thu-tinh .card.place {
+  padding-top: 36px !important;
+}
+/* Song hỷ staggers stacked single cards by 35px; place cards sit level so the
+   pair keeps equal heights (the grid gap spaces them when stacked). */
+.song-hy .card.place {
+  margin-top: 0 !important;
+}
+.khoanh-khac .placeFoot .actions {
+  padding-top: 0;
+  border-top: 0;
+}
+.khoanh-khac .agenda,
+.khoanh-khac .agenda > li {
+  border-color: #fff3;
+}
+
+/* Bản đồ trong thẻ: the map is the body of the card, at its full inner width,
+   with only the template's corner shape. The aspect ratio is fixed so the lazy
+   iframe never shifts the page. */
+.mapFrame {
+  aspect-ratio: 4 / 3;
+  min-height: 220px;
+  margin-top: 28px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: color-mix(in srgb, currentColor 8%, transparent);
 }
 .mapFrame iframe {
   display: block;
   width: 100%;
   height: 100%;
   border: 0;
-  border-radius: 12px;
-  background: color-mix(in srgb, currentColor 8%, transparent);
+  border-radius: inherit;
 }
-/* Lời yêu: the champagne arch, softened so map controls stay clear. */
 .loi-yeu .mapFrame {
-  padding: 9px;
-  border-color: color-mix(
-    in srgb,
-    var(--accent, currentColor) 60%,
-    transparent
-  );
-  border-radius: 36px 36px 14px 14px;
+  border-radius: 30px 30px 8px 8px;
 }
-.loi-yeu .mapFrame iframe {
-  border-radius: 28px 28px 8px 8px;
-}
-.loi-yeu .mapSide {
-  font: 400 28px / 1.2 var(--script, inherit);
-  letter-spacing: 0;
-  text-transform: none;
-}
-/* Vườn thương: a garden arch like the cards. */
 .vuon-thuong .mapFrame {
-  padding: 10px;
-  border-color: currentColor;
-  border-radius: 48px 48px 10px 10px;
+  border-radius: 40px 40px 6px 6px;
 }
-.vuon-thuong .mapFrame iframe {
-  border-radius: 38px 38px 4px 4px;
-}
-/* Song hỷ: the double rule and outer outline of the ceremony cards. */
 .song-hy .mapFrame {
-  border: double 5px currentColor;
-  border-radius: 4px;
-  outline: 1px solid currentColor;
-  outline-offset: 6px;
-}
-.song-hy .mapFrame iframe {
   border-radius: 2px;
 }
-/* Ngày chung đôi: a newspaper plate between two heavy rules. */
-.ngay-chung-doi .map,
-.loi-hen .map,
-.khoanh-khac .map,
-.ben-nhau .map {
-  text-align: left;
+/* Single-party cards on a two-column grid let the map span both columns. */
+.ngay-chung-doi .mapFrame,
+.ben-nhau .mapFrame {
+  grid-column: 1 / -1;
 }
 .ngay-chung-doi .mapFrame {
-  padding: 12px 0;
-  border: 0;
-  border-block: 2px solid currentColor;
-  border-radius: 0;
-  background: transparent;
-}
-.ngay-chung-doi .mapFrame iframe {
-  border-radius: 4px;
-}
-/* Đêm sao: a soft halo, ringed twice like the date orbit. */
-.dem-sao .mapFrame {
-  border-color: #ffffff50;
-  border-radius: 24px;
-  outline: 1px solid #ffffff20;
-  outline-offset: 6px;
-  background: radial-gradient(ellipse at top, #ffffff0d, transparent 70%);
-}
-.dem-sao .mapFrame iframe {
-  border-radius: 18px;
-}
-/* Nắng thu: a journal page with a strip of tape, laid flat. */
-.nang-thu .mapFrame {
-  padding: 12px;
-  border: 0;
-  border-radius: 6px;
-  background: #fff9ec;
-  box-shadow: 8px 12px 0 #6e463510;
-}
-.nang-thu .mapFrame::before {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  top: -12px;
-  left: calc(50% - 45px);
-  width: 90px;
-  height: 24px;
-  background: #c3a47465;
-  transform: rotate(-4deg);
-  pointer-events: none;
-}
-.nang-thu .mapFrame iframe {
-  border-radius: 4px;
-}
-/* Lời hẹn: a quiet row between hairlines, as the event rows. */
-.loi-hen .mapFrame {
-  padding: 14px 0;
-  border: 0;
-  border-block: 1px solid currentColor;
-  border-radius: 0;
-  background: transparent;
-}
-.loi-hen .mapFrame iframe {
-  border-radius: 8px;
-}
-/* Thư tình: letter paper. */
-.thu-tinh .mapFrame {
-  padding: 10px;
-  border: 0;
-  border-radius: 14px;
-  background: #fffaf4;
-  box-shadow: 0 10px 30px #88556112;
-}
-.thu-tinh .mapFrame iframe {
-  border-radius: 8px;
-}
-/* Khoảnh khắc: a frame of film, sprockets above and below. */
-.khoanh-khac .mapFrame {
-  padding: 22px 8px;
-  border-color: #fff3;
-  border-radius: 10px;
-  background:
-    repeating-linear-gradient(90deg, #ffffff1f 0 10px, transparent 10px 22px)
-      top 6px left 8px / calc(100% - 16px) 8px no-repeat,
-    repeating-linear-gradient(90deg, #ffffff1f 0 10px, transparent 10px 22px)
-      bottom 6px left 8px / calc(100% - 16px) 8px no-repeat,
-    #111820;
-}
-.khoanh-khac .mapFrame iframe {
-  border-radius: 4px;
-}
-/* Bên nhau: the tinted half of the cards. */
-.ben-nhau .mapFrame {
-  padding: 10px;
-  border: 0;
-  border-radius: 4px;
-  background: color-mix(in srgb, currentColor 8%, transparent);
-}
-.ben-nhau .mapFrame iframe {
   border-radius: 2px;
 }
-@media (max-width: 760px) {
-  .route {
-    margin-top: 48px;
-  }
-  .maps {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-  .maps[data-count="1"] .mapFrame {
-    aspect-ratio: 4 / 3;
-  }
+.dem-sao .mapFrame {
+  border-radius: 18px;
+}
+.nang-thu .mapFrame {
+  border-radius: 4px;
+}
+.loi-hen .mapFrame {
+  border-radius: 6px;
+}
+/* A full-width Lời hẹn row keeps its map to a readable size. */
+.loi-hen .card:not(.place) .mapFrame {
+  width: min(100%, 560px);
+  aspect-ratio: 16 / 9;
+}
+.thu-tinh .mapFrame {
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+.khoanh-khac .mapFrame {
+  border-radius: 4px;
+}
+.ben-nhau .mapFrame {
+  border-radius: 10px;
 }

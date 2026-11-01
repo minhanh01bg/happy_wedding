@@ -18,10 +18,15 @@ const CATALOG = DESIGNS.filter((design) => !LAYOUTS.includes(design as never));
 
 /* Dữ liệu giả, cùng dạng link Google Maps thật. */
 const GROOM_SHORT = "https://maps.app.goo.gl/TestGroom123";
-const BRIDE_PIN =
-  "https://maps.google.com/?q=10.7769,106.7009&entry=gps&g_st=ic";
+const BRIDE_SHORT = "https://maps.app.goo.gl/TestBride456";
+const GROOM_EMBED =
+  "https://maps.google.com/maps?q=21.0285,105.8542&z=16&hl=vi&output=embed";
+const BRIDE_EMBED =
+  "https://maps.google.com/maps?q=10.7769,106.7009&z=16&hl=vi&output=embed";
+
 const groomParty: WeddingEvent = {
   title: "Tiệc cưới nhà trai",
+  side: "groom",
   date: "2026-11-08T09:00:00.000Z",
   venue: "Nhà hàng Minh Họa",
   address: "Số 1 đường Minh Họa, Hà Nội — địa chỉ minh họa",
@@ -37,133 +42,225 @@ const groomCeremony: WeddingEvent = {
 };
 const brideParty: WeddingEvent = {
   title: "Tiệc cưới nhà gái",
-  date: "2026-11-07T09:00:00.000Z",
-  venue: "Tư gia nhà gái",
-  address: "Địa chỉ minh họa",
-  mapUrl: BRIDE_PIN,
+  side: "bride",
+  date: "2026-11-08T05:00:00.000Z",
+  venue: "Tư gia Minh Họa",
+  address: "Số 2 đường Minh Họa, TP.HCM — địa chỉ minh họa",
+  mapUrl: BRIDE_SHORT,
+  lat: 10.7769,
+  lng: 106.7009,
 };
+const brideCeremony: WeddingEvent = {
+  ...brideParty,
+  title: "Lễ vu quy nhà gái",
+  date: "2026-11-09T00:00:00.000Z",
+};
+/** Hai bên, mỗi bên hai tiệc ở cùng một nơi — đúng dáng thiệp cần gộp. */
+const FOUR_AT_TWO = [groomParty, groomCeremony, brideParty, brideCeremony];
 
 function renderEvents(events: WeddingEvent[], design = "loi-yeu") {
   const { container } = render(
     <InvitationEvents events={events} design={design} couple="A & B" />,
   );
-  const block = container.querySelector<HTMLElement>("[data-event-maps]")!;
+  const section = container.querySelector<HTMLElement>("#lich-tiec")!;
   return {
-    container,
-    block,
-    maps: [...block.querySelectorAll<HTMLElement>("[data-event-map]")],
-    frames: [...block.querySelectorAll("iframe")],
+    section,
+    cards: [...section.querySelectorAll<HTMLElement>("[data-event-card]")],
+    frames: [...section.querySelectorAll("iframe")],
   };
 }
 
-describe("Đường đến tiệc", () => {
-  it("draws one map for two parties at the same place", () => {
-    const { block, maps, frames } = renderEvents([groomParty, groomCeremony]);
-    expect(within(block).getByRole("heading", { level: 3 })).toHaveTextContent(
-      "Đường đến tiệc",
-    );
-    expect(maps).toHaveLength(1);
-    expect(frames).toHaveLength(1);
-    const [frame] = frames;
-    expect(frame).toHaveAttribute("referrerpolicy", "no-referrer");
-    expect(frame).toHaveAttribute("loading", "lazy");
-    expect(frame).not.toHaveAttribute("allowfullscreen");
-    expect(frame).not.toHaveAttribute("allow");
-    expect(frame).toHaveAttribute(
-      "src",
-      "https://maps.google.com/maps?q=21.0285,105.8542&z=16&hl=vi&output=embed",
-    );
-    expect(frame).toHaveAttribute(
-      "title",
-      "Bản đồ đường đến Nhà hàng Minh Họa (nhà trai)",
-    );
-    const caption = within(maps[0]);
-    expect(caption.getByText("Nhà trai")).toBeInTheDocument();
-    expect(caption.getByText("Nhà hàng Minh Họa")).toBeInTheDocument();
+describe("Lịch tiệc theo địa điểm", () => {
+  it("shows four parties at two places as two cards, each with its own map", () => {
+    const { section, cards, frames } = renderEvents(FOUR_AT_TWO);
+    expect(cards).toHaveLength(2);
+    expect(frames).toHaveLength(2);
     expect(
-      caption.getByText("Số 1 đường Minh Họa, Hà Nội — địa chỉ minh họa"),
-    ).toBeInTheDocument();
+      within(section).getAllByRole("link", { name: /^Thêm vào lịch/ }),
+    ).toHaveLength(4);
     expect(
-      caption.getAllByRole("listitem").map((item) => item.textContent),
-    ).toEqual([
-      "Tiệc cưới nhà trai: 16:00 · 08/11/2026",
-      "Lễ thành hôn nhà trai: Buổi sáng · 09/11/2026",
-    ]);
-  });
+      within(section).getAllByRole("link", { name: "Chỉ đường đến tiệc" }),
+    ).toHaveLength(2);
+    // Không còn khối "Đường đến tiệc" riêng dưới các thẻ.
+    expect(section.querySelector("[data-event-maps]")).toBeNull();
+    expect(section).not.toHaveTextContent("Đường đến tiệc");
 
-  it("draws a labelled map for each side when the families are apart", () => {
-    const { maps, frames } = renderEvents([
-      brideParty,
-      groomParty,
-      groomCeremony,
-    ]);
-    expect(maps).toHaveLength(2);
     expect(
-      maps.map((map) => [
-        map.querySelector("figcaption span")?.textContent,
-        map.querySelector("figcaption strong")?.textContent,
-        within(map).getAllByRole("listitem").length,
+      cards.map((card) => [
+        card.querySelector("p.eyebrow")?.textContent,
+        within(card).getByRole("heading", { level: 3 }).textContent,
+        card.querySelectorAll("[data-event-row]").length,
       ]),
     ).toEqual([
-      ["Nhà gái", "Tư gia nhà gái", 1],
-      ["Nhà trai", "Nhà hàng Minh Họa", 2],
+      ["01 / LỊCH TIỆC", "Nhà traiNhà hàng Minh Họa", 2],
+      ["02 / LỊCH TIỆC", "Nhà gáiTư gia Minh Họa", 2],
     ]);
+    cards.forEach((card, index) => {
+      expect(card).toContainElement(frames[index]);
+      expect(card).toHaveAttribute("data-event-count", "2");
+    });
     expect(frames.map((frame) => frame.getAttribute("src"))).toEqual([
-      "https://maps.google.com/maps?q=10.7769,106.7009&z=16&hl=vi&output=embed",
-      "https://maps.google.com/maps?q=21.0285,105.8542&z=16&hl=vi&output=embed",
+      GROOM_EMBED,
+      BRIDE_EMBED,
     ]);
     expect(frames.map((frame) => frame.getAttribute("title"))).toEqual([
-      "Bản đồ đường đến Tư gia nhà gái (nhà gái)",
       "Bản đồ đường đến Nhà hàng Minh Họa (nhà trai)",
+      "Bản đồ đường đến Tư gia Minh Họa (nhà gái)",
     ]);
     for (const frame of frames) {
       expect(frame).toHaveAttribute("referrerpolicy", "no-referrer");
+      expect(frame).toHaveAttribute("loading", "lazy");
+      expect(frame).not.toHaveAttribute("allowfullscreen");
+      expect(frame).not.toHaveAttribute("allow");
     }
   });
 
-  it("searches the venue text when there is no pin (the demo invitation)", () => {
-    const { frames } = renderEvents([
-      {
-        title: "Tiệc cưới",
-        date: "2027-02-14T04:00:00.000Z",
-        venue: "Nhà hàng The Garden",
-        address: "Hà Nội — địa điểm minh họa",
-      },
+  it("lists each party on a thin row: day, time, title and a quiet calendar link", () => {
+    const { cards } = renderEvents(FOUR_AT_TWO);
+    const rows = [...cards[0].querySelectorAll<HTMLElement>("[data-event-row]")];
+    expect(
+      rows.map((row) => [
+        row.querySelector("time")?.textContent,
+        row.querySelector("time")?.getAttribute("datetime"),
+        within(row).getByRole("heading", { level: 4 }).textContent,
+      ]),
+    ).toEqual([
+      [
+        "Chủ nhật · 08/11/2026 · 16:00",
+        "2026-11-08T09:00:00.000Z",
+        "Tiệc cưới nhà trai",
+      ],
+      [
+        "Thứ hai · 09/11/2026 · Buổi sáng",
+        "2026-11-09",
+        "Lễ thành hôn nhà trai",
+      ],
     ]);
-    const src = new URL(frames[0].getAttribute("src")!);
+    const add = within(rows[1]).getByRole("link", {
+      name: "Thêm vào lịch: Lễ thành hôn nhà trai",
+    });
+    expect(add).toHaveAttribute("target", "_blank");
+    expect(add).toHaveAttribute("rel", "noopener noreferrer");
+    const entry = new URL(add.getAttribute("href")!);
+    // Giờ ghi bằng chữ → sự kiện cả ngày, như nút cũ.
+    expect(entry.searchParams.get("dates")).toBe("20261109/20261110");
+    expect(entry.searchParams.get("text")).toBe("Lễ thành hôn nhà trai — A & B");
+    expect(entry.searchParams.get("location")).toBe(
+      "Nhà hàng Minh Họa, Số 1 đường Minh Họa, Hà Nội — địa chỉ minh họa",
+    );
+    // Không có hộp con trong thẻ: địa điểm và địa chỉ chỉ hiện một lần.
+    expect(within(cards[0]).getAllByText("Nhà hàng Minh Họa")).toHaveLength(1);
+    expect(
+      within(cards[0]).getAllByText(
+        "Số 1 đường Minh Họa, Hà Nội — địa chỉ minh họa",
+      ),
+    ).toHaveLength(1);
+    // Ngày lớn bỏ ở thẻ nhiều tiệc: lịch tháng phía trên đã khoanh ngày.
+    expect(cards[0].textContent).not.toMatch(/11 \/ 2026/);
+  });
+
+  it("puts map, address, then directions in that order inside the card", () => {
+    const { cards } = renderEvents(FOUR_AT_TWO);
+    const card = cards[1];
+    const parts = [
+      card.querySelector("ul"),
+      card.querySelector("[data-event-map]"),
+      within(card).getByText("Số 2 đường Minh Họa, TP.HCM — địa chỉ minh họa"),
+      within(card).getByRole("link", { name: "Chỉ đường đến tiệc" }),
+    ];
+    for (let i = 1; i < parts.length; i++) {
+      expect(
+        parts[i - 1]!.compareDocumentPosition(parts[i]!) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    }
+    expect(
+      within(card).getByRole("link", { name: "Chỉ đường đến tiệc" }),
+    ).toHaveAttribute("href", BRIDE_SHORT);
+  });
+
+  it("keeps one card per party when every party has its own place", () => {
+    const elsewhere: WeddingEvent = {
+      title: "Tiệc báo hỷ",
+      date: "2026-11-15T05:00:00.000Z",
+      venue: "Trung tâm tiệc cưới Minh Họa",
+      address: "Địa chỉ minh họa",
+    };
+    const { cards, frames } = renderEvents([groomParty, brideParty, elsewhere]);
+    expect(cards).toHaveLength(3);
+    expect(frames).toHaveLength(3);
+    cards.forEach((card, index) => {
+      expect(card).toHaveAttribute("data-event-count", "1");
+      expect(card).toContainElement(frames[index]);
+      expect(card.querySelector("p.eyebrow")).toHaveTextContent(
+        `0${index + 1} / LỊCH TIỆC`,
+      );
+      // Thẻ một tiệc giữ nút cũ.
+      expect(
+        within(card).getByRole("link", { name: "Thêm tiệc này vào lịch" }),
+      ).toBeInTheDocument();
+    });
+    expect(
+      cards.map(
+        (card) => within(card).getByRole("heading", { level: 3 }).textContent,
+      ),
+    ).toEqual(["Tiệc cưới nhà trai", "Tiệc cưới nhà gái", "Tiệc báo hỷ"]);
+    // Không có ghim: bản đồ tìm theo tên + địa chỉ.
+    const src = new URL(frames[2].getAttribute("src")!);
     expect(src.searchParams.get("q")).toBe(
-      "Nhà hàng The Garden, Hà Nội — địa điểm minh họa",
+      "Trung tâm tiệc cưới Minh Họa, Địa chỉ minh họa",
     );
     expect(src.searchParams.get("output")).toBe("embed");
   });
 
+  it("keeps the rows in the saved event order (RSVP eventIndex)", () => {
+    const { cards } = renderEvents([
+      groomParty,
+      brideParty,
+      groomCeremony,
+      brideCeremony,
+    ]);
+    expect(
+      cards.map((card) =>
+        [...card.querySelectorAll("[data-event-row] h4")].map(
+          (title) => title.textContent,
+        ),
+      ),
+    ).toEqual([
+      ["Tiệc cưới nhà trai", "Lễ thành hôn nhà trai"],
+      ["Tiệc cưới nhà gái", "Lễ vu quy nhà gái"],
+    ]);
+  });
+
   it.each(DESIGNS)(
-    "%s keeps directions on the saved link and renders the map block",
+    "%s renders one card per place with its map and directions inside",
     (design) => {
-      const { container, frames } = renderEvents(
-        [groomParty, { ...brideParty, mapUrl: undefined }],
+      const { cards, frames } = renderEvents(
+        [...FOUR_AT_TWO, { ...brideParty, venue: "Nhà hàng khác", mapUrl: "" }],
         design,
       );
-      const links = [...container.querySelectorAll("[data-event-card]")].map(
-        (card) =>
-          within(card as HTMLElement).getByRole("link", {
-            name: /Chỉ đường đến tiệc/,
-          }),
+      expect(cards).toHaveLength(3);
+      expect(frames).toHaveLength(3);
+      const links = cards.map((card) =>
+        within(card).getByRole("link", { name: /Chỉ đường đến tiệc/ }),
       );
       expect(links[0]).toHaveAttribute("href", GROOM_SHORT);
-      expect(new URL(links[1].getAttribute("href")!).hostname).toBe(
+      expect(links[1]).toHaveAttribute("href", BRIDE_SHORT);
+      expect(new URL(links[2].getAttribute("href")!).hostname).toBe(
         "www.google.com",
       );
-      for (const link of links) {
-        expect(link).toHaveAttribute("target", "_blank");
-        expect(link).toHaveAttribute("rel", "noopener noreferrer");
-      }
-      expect(frames).toHaveLength(2);
+      cards.forEach((card, index) => {
+        expect(card).toContainElement(frames[index]);
+        expect(links[index]).toHaveAttribute("target", "_blank");
+        expect(links[index]).toHaveAttribute("rel", "noopener noreferrer");
+      });
+      expect(cards[0]).toHaveTextContent("Nhà trai");
+      expect(cards[1]).toHaveTextContent("Nhà gái");
     },
   );
 });
 
-describe("Đường đến tiệc styles", () => {
+describe("Lịch tiệc theo địa điểm: styles", () => {
   const css = readFileSync(
     path.resolve(
       __dirname,
@@ -171,25 +268,55 @@ describe("Đường đến tiệc styles", () => {
     ),
     "utf8",
   );
-  const rule = (selector: string) => {
-    const start = css.indexOf(`${selector} {`);
-    return start < 0 ? "" : css.slice(start, css.indexOf("}", start));
+  /** Every rule whose selector list ends with `selector`, joined. */
+  const rules = (selector: string) => {
+    const found: string[] = [];
+    let start = css.indexOf(`${selector} {`);
+    while (start >= 0) {
+      found.push(css.slice(start, css.indexOf("}", start)));
+      start = css.indexOf(`${selector} {`, start + 1);
+    }
+    return found.join("\n");
   };
+  const section = (from: string, to?: string) =>
+    css.slice(css.indexOf(from), to ? css.indexOf(to) : undefined);
 
-  it("gives every map a rounded frame with a fixed aspect ratio", () => {
-    expect(rule("\n.mapFrame")).toMatch(/aspect-ratio: 4 \/ 3/);
-    expect(rule("\n.mapFrame")).toMatch(/border-radius: \d+px/);
-    expect(rule("\n.mapFrame iframe")).toMatch(/border-radius: \d+px/);
-    expect(rule('.maps[data-count="1"] .mapFrame')).toMatch(/aspect-ratio/);
+  it("gives every map a fixed shape at least 220px tall", () => {
+    expect(rules("\n.mapFrame")).toMatch(/aspect-ratio: 4 \/ 3/);
+    expect(rules("\n.mapFrame")).toMatch(/min-height: 220px/);
+    expect(rules("\n.mapFrame")).toMatch(/border-radius: \d+px/);
+    expect(rules("\n.mapFrame iframe")).toMatch(/border-radius: inherit/);
+    expect(rules("\n.mapFrame iframe")).toMatch(/width: 100%/);
   });
 
   it.each(CATALOG)("dresses the map frame for %s", (design) => {
-    expect(rule(`.${design} .mapFrame`)).not.toBe("");
-    expect(rule(`.${design} .mapFrame iframe`)).toMatch(/border-radius: \d+px/);
+    expect(rules(`.${design} .mapFrame`)).toMatch(/border-radius: \d+px/);
   });
 
-  it("does not animate the map block", () => {
-    const block = css.slice(css.indexOf("Đường đến tiệc"));
-    expect(block).not.toMatch(/animation|transition/);
+  it("draws no box inside a place card", () => {
+    const inside = section("Thẻ địa điểm");
+    expect(inside).not.toMatch(/box-shadow/);
+    expect(rules("\n.mapFrame")).not.toMatch(/border:|box-shadow/);
+    expect(rules("\n.agenda > li")).not.toMatch(/background|border:/);
+  });
+
+  it("keeps the rows' calendar link a 44px target", () => {
+    expect(rules(".events .agenda a")).toMatch(/min-height: 44px/);
+  });
+
+  it("stacks the cards on phones and pairs them on wide screens", () => {
+    expect(rules("\n.grid")).toMatch(
+      /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/,
+    );
+    expect(css).toMatch(
+      /@media \(max-width: 760px\) \{\s*\.grid \{\s*grid-template-columns: 1fr;/,
+    );
+  });
+
+  it("does not animate the place card or its map", () => {
+    expect(section("Thẻ địa điểm", "Bản đồ trong thẻ")).not.toMatch(
+      /animation|transition/,
+    );
+    expect(section("Bản đồ trong thẻ")).not.toMatch(/animation|transition/);
   });
 });

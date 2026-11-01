@@ -44,8 +44,9 @@ export function inVietnam(lat: number, lng: number) {
 
 /**
  * Chỉ https, không user/password/cổng, và chỉ host Google Maps:
- * `maps.app.goo.gl`, `maps.google.com`, `goo.gl/maps…`,
- * `www.google.com/maps…`, `google.com/maps…`.
+ * `maps.app.goo.gl`, `maps.google.com/` và `maps.google.com/maps…`,
+ * `goo.gl/maps…`, `www.google.com/maps…`, `google.com/maps…`. Path khác của
+ * `maps.google.com` (vd. `/url?q=…` chuyển hướng ra ngoài) bị từ chối.
  */
 export function isGoogleMapsUrl(value: string) {
   let url: URL;
@@ -62,7 +63,7 @@ export function isGoogleMapsUrl(value: string) {
     case "maps.app.goo.gl":
       return url.pathname.length > 1;
     case "maps.google.com":
-      return true;
+      return url.pathname === "/" || mapsPath;
     case "goo.gl":
     case "www.google.com":
     case "google.com":

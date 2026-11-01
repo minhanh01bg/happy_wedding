@@ -68,6 +68,9 @@ describe("Google Maps link in the event schema", () => {
     "https://www.google.com/mapsx",
     "https://maps.app.goo.gl/",
     "maps.app.goo.gl/TestGroom123",
+    "https://maps.google.com/url?q=https://phish.example",
+    "https://maps.google.com/search?q=21.03,105.85",
+    "https://maps.google.com/mapsx",
   ])("rejects %s with a Vietnamese message", (mapUrl) => {
     expect(isGoogleMapsUrl(mapUrl)).toBe(false);
     const result = eventSchema.safeParse({ ...party, mapUrl });
@@ -163,6 +166,7 @@ describe("parseMapCoordinates", () => {
       "https://maps.google.com/?q=Nh%C3%A0+h%C3%A0ng",
       "https://example.com/maps/@21.03,105.85,15z",
       "http://maps.google.com/?q=21.03,105.85",
+      "https://maps.google.com/url?q=21.03,105.85",
       "https://www.google.com/maps/place/x/data=!3d48.8566!4d2.3522",
       "https://maps.google.com/?q=48.8566,2.3522",
     ]) {

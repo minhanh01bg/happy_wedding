@@ -2991,17 +2991,6 @@ body:has(.invitation-opening[open]) {
   font-weight: 600;
   letter-spacing: 1px;
 }
-.gift-actions {
-  display: grid;
-  justify-items: center;
-  gap: 12px;
-}
-.wedding-page .gift-actions button {
-  background: var(--tone);
-  color: var(--card);
-  border-color: var(--tone);
-  max-width: 100%;
-}
 .gift-preview {
   padding: 28px;
   margin-top: 24px;
@@ -3432,8 +3421,7 @@ a.stat-card:focus-visible {
   border-radius: 2px;
 }
 /* Secondary actions: an outline in the colour of the text around them. */
-.wedding-countdown .text-link,
-.gift-actions .text-link {
+.wedding-countdown .text-link {
   gap: 9px;
   padding: 0 22px;
   border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
@@ -3489,7 +3477,6 @@ a.stat-card:focus-visible {
     color: var(--tone);
   }
   .wedding-countdown .text-link:hover,
-  .gift-actions .text-link:hover,
   .wedding-page .opening-skip:hover {
     border-color: currentColor;
     background: color-mix(in srgb, currentColor 10%, transparent);
@@ -3502,7 +3489,7 @@ a.stat-card:focus-visible {
 }
 @media (prefers-reduced-motion: no-preference) {
   .wedding-page :is(.wedding-top, .wedding-shortcuts) a,
-  .wedding-page :is(.wedding-countdown, .gift-actions) .text-link,
+  .wedding-page .wedding-countdown .text-link,
   .wedding-page .opening-skip {
     transition:
       background-color 0.2s ease,

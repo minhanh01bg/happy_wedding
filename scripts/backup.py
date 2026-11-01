@@ -7,8 +7,14 @@ import sys
 import tarfile
 
 root = Path(__file__).resolve().parent.parent
-if len(sys.argv) != 2:
-    raise SystemExit("Usage: python3 scripts/backup.py <backup-directory>")
+args = sys.argv[1:]
+# --db-only skips the photo/MP3 archive, e.g. right before a migration
+# (scripts/deploy-prod.sh): the uploads do not change and may not fit on disk.
+db_only = "--db-only" in args
+if db_only:
+    args.remove("--db-only")
+if len(args) != 1:
+    raise SystemExit("Usage: python3 scripts/backup.py [--db-only] <backup-directory>")
 url = os.environ.get("DATABASE_URL")
 if not url:
     for line in (root / ".env").read_text().splitlines():
@@ -21,7 +27,7 @@ if not source.is_absolute():
     source = root / "prisma" / source
 if not source.exists():
     raise SystemExit("Database does not exist")
-folder = Path(sys.argv[1]).resolve()
+folder = Path(args[0]).resolve()
 if folder.is_relative_to(root / "public"):
     raise SystemExit("Backup directory must not be publicly served")
 folder.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -32,7 +38,7 @@ with sqlite3.connect(f"file:{source}?mode=ro", uri=True) as src:
         src.backup(dest)
 target.chmod(0o600)
 uploads = root / "public/uploads/weddings"
-if uploads.exists():
+if uploads.exists() and not db_only:
     archive = folder / f"wedding-uploads-{stamp}.tar.gz"
     with tarfile.open(archive, "w:gz") as tar:
         tar.add(uploads, arcname="weddings")

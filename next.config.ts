@@ -22,6 +22,11 @@ const nextConfig: NextConfig = {
   // The live invitation runs under `next dev`, so guests would see the
   // Dev Tools "N" button. Compile and runtime errors still surface.
   devIndicators: false,
+  experimental: {
+    // scripts/deploy-prod.sh builds into a fresh NEXT_DIST_DIR each time, so
+    // the Turbopack build cache (~100 MB) is never reused, only written.
+    turbopackFileSystemCacheForBuild: false,
+  },
   images: {
     // Default list minus 3840. Uploads keep full resolution (up to 64 MP), and a
     // 3840-wide variant of a 45 MP photo took 6 s against the optimizer's 7 s

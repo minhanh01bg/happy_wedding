@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   allowedDevOrigins: ["127.0.0.1", "160.250.247.137"],
   images: {
+    // Default list minus 3840. Uploads keep full resolution (up to 64 MP), and a
+    // 3840-wide variant of a 45 MP photo took 6 s against the optimizer's 7 s
+    // timeout, after which Next serves the whole original file (ADR 0008).
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     remotePatterns: [{ protocol: "https", hostname: "img.vietqr.io" }],
   },
   async headers() {

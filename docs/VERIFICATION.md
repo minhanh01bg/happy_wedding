@@ -639,3 +639,29 @@ Phạm vi: `main` tại `6009b2d` (tạo id trên trình duyệt không cần `c
   - `pnpm build` trên bản sao sạch (file tracked cùng ba file mới, `diff -rq src` không khác, `node_modules` symlink, `NEXT_PRIVATE_OUTPUT_TRACE_ROOT=/`) **thành công**, có `/api/wedding/upload`. RAM trước khi chạy: available 3701 MB. Đã xóa bản sao sau khi build.
   - Không chạy E2E. Không đụng dev server 3200, `prisma/dev.db` hay `public/uploads`. Không có ảnh thật trong repo; ảnh đo nằm ở scratchpad và đã xóa.
 - **Chưa làm.** Chưa upload ảnh qua editor trên trình duyệt hay server đã build. Reverse proxy production phải cho body 40 MB (nginx mặc định 1 MB). Ảnh 3840 px của `next/image` mất 6 s, gần timeout 7 s; quá giờ thì khách nhận file gốc khoảng 19 MB. Bước này không đổi cấu hình hiển thị.
+
+### Review vòng 1 — giới hạn mã hóa đồng thời, định dạng thật, `deviceSizes` — 01/11/2026
+
+- **Semaphore.** `src/server/wedding/slots.ts` (`createSlots`, hàng FIFO có giới hạn, slot nhả ra chuyển thẳng cho request chờ lâu nhất, nhả hai lần không tính hai). Route tạo ở cấp module `{ slots: 2, queue: 10, waitMs: 60_000 }`, lấy slot sau khi đọc xong body, trước Sharp, nhả trong `finally`. Hàng đầy hoặc chờ quá 60 giây trả 503 “Máy chủ đang bận, vui lòng thử lại sau” và log `wedding_upload_busy`. Editor gửi từng ảnh một: `<input type="file">` không có `multiple`, chỉ lấy `files?.[0]`, bỏ qua khi `uploading`, input bị khóa trong lúc tải (`editor-fields.tsx`, `invitation-editor.tsx`), nên không cần sửa editor.
+- **Định dạng thật.** Sau `metadata()`, `format` khác jpeg/png/webp trả 400 “Chỉ nhận ảnh JPEG, PNG hoặc WebP” (chuỗi dùng chung `UPLOAD_IMAGE_TYPE_INVALID`).
+- **Bộ nhớ body.** `Buffer.concat(chunks, bytes)` rồi `chunks.length = 0` trước khi chờ slot.
+- **`next.config.ts`.** `images.deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048]`. Tính srcset bằng `getImgProps` của Next 16.3.8 với cấu hình này: ảnh bìa (`(max-width: 760px) 95vw, 75vw`) và lightbox (`95vw`) đều ra 640w…2048w; thumbnail editor (`fill`, `200px`) ra 32w…2048w, trình duyệt chọn 256–640. `optimizeImage` trên WebP 5464×8192 19 MiB: 1920 → 2,8 s, 692 KiB; 2048 → 3,0 s, 846 KiB; peak RSS 349 MB. Chưa thử `/_next/image` trên server chạy thật.
+- **Trường hợp xấu về RAM** (`sharp` 0.35.5, cùng pipeline `limitInputPixels 64e6`, `rotate(90)`, WebP q90 effort 2, mỗi lần một tiến trình mới):
+
+  | Input                                  | Thời gian | Peak RSS |
+  | -------------------------------------- | --------- | -------- |
+  | PNG RGBA 16-bit 8 MP (1,6 MiB)         | 0,9 s     | 287 MB   |
+  | PNG RGBA 16-bit 16 MP (2,6 MiB)        | 1,6 s     | 505 MB   |
+  | PNG RGBA 16-bit 32 MP (8,5 MiB)        | 3,5 s     | 944 MB   |
+  | JPEG 8-bit 8192×5464 xoay 90° (29 MiB) | 6,3 s     | 472 MB   |
+
+  Khoảng 27 MB mỗi megapixel với PNG 16-bit, nên 64 MP ngoại suy khoảng 1,8 GB; không đo trực tiếp vì máy thử chỉ còn khoảng 3,6 GB trống. Ghi vào ADR 0008 và OPERATIONS.
+
+- **Test mới.**
+  - `tests/server/wedding/slots.test.ts`: 3 test, fake timers. Thứ tự FIFO; nhả hai lần chỉ tính một; hàng đầy bị từ chối ngay; hết 60 s bị từ chối và rời hàng.
+  - `upload-route.test.ts` thêm 3 test (bọc `sharp` để đếm pipeline của route, có cổng giữ mã hóa; bọc `createSlots` để đọc số request đang chờ):
+    1. TIFF khai báo `image/jpeg` và SVG khai báo `image/png` → 400; PNG và WebP vẫn 200.
+    2. 4 upload cùng lúc: 2 mã hóa, 2 chờ; mở cổng thì cả 4 trả 200, tối đa 2 pipeline chạy cùng lúc.
+    3. 12 upload giữ ở cổng (2 chạy, 10 chờ); upload thứ 13 → 503 `{ok:false,message:"Máy chủ đang bận, vui lòng thử lại sau"}`; mở cổng thì 12 upload trước đều 200.
+- **Kiểm tra đỏ.** Tạm thay route bằng bản `a512258`: 3/9 fail đúng lý do. TIFF nhận 200. Bài 4 upload: `expected 4 to be 2`, tức route cũ chạy cả 4 pipeline cùng lúc. Bài 503: không có hàng chờ. Trả lại route mới thì 9/9 qua.
+- **Gate.** `TEST_DATABASE_URL="file:$PWD/prisma/prisma/test.db" pnpm check` **exit 0**: lint 0 lỗi (còn cảnh báo có sẵn ở `music.tsx:55`), TypeScript qua, **28 file / 213 test qua**. RAM trước khi chạy: available 3669 MB. Theo yêu cầu review, vòng này không chạy `pnpm build` (bước sau build main đã merge), không chạy server, không chạy E2E, không đụng `prisma/dev.db` hay `public/uploads`.

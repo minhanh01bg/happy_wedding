@@ -1,11 +1,54 @@
 // @vitest-environment node
 import sharp from "sharp";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const stored = vi.hoisted(() => ({
   files: [] as Buffer[],
   reserved: [] as number[],
 }));
+const encodes = vi.hoisted(() => ({
+  started: 0,
+  active: 0,
+  peak: 0,
+  gate: undefined as Promise<void> | undefined,
+  open: () => {},
+}));
+const slots = vi.hoisted(() => ({
+  encode: undefined as { active: number; waiting: number } | undefined,
+}));
+
+// Count the route's own Sharp pipelines (the only caller that passes
+// limitInputPixels) from decode to finished WebP, and let a test hold them.
+vi.mock("sharp", async (importOriginal) => {
+  const real = (await importOriginal<{ default: typeof sharp }>()).default;
+  function tracked(input?: unknown, options?: { limitInputPixels?: unknown }) {
+    const image = real(input as never, options as never);
+    if (options?.limitInputPixels === undefined) return image;
+    encodes.started++;
+    encodes.active++;
+    encodes.peak = Math.max(encodes.peak, encodes.active);
+    const toBuffer = image.toBuffer.bind(image) as () => Promise<Buffer>;
+    image.toBuffer = (async () => {
+      try {
+        await encodes.gate;
+        return await toBuffer();
+      } finally {
+        encodes.active--;
+      }
+    }) as typeof image.toBuffer;
+    return image;
+  }
+  return { default: Object.assign(tracked, real) };
+});
+vi.mock("@/server/wedding/slots", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/server/wedding/slots")>();
+  return {
+    ...actual,
+    createSlots: (options: Parameters<typeof actual.createSlots>[0]) =>
+      (slots.encode = actual.createSlots(options)),
+  };
+});
 
 vi.mock("node:fs/promises", () => ({
   mkdir: async () => undefined,
@@ -79,6 +122,12 @@ function padJpeg(source: Buffer, totalBytes: number) {
   ]);
 }
 
+function holdEncodes() {
+  encodes.gate = new Promise<void>((resolve) => {
+    encodes.open = resolve;
+  });
+}
+
 async function storedImage() {
   expect(stored.files).toHaveLength(1);
   expect(stored.reserved).toEqual([stored.files[0].byteLength]);
@@ -89,6 +138,14 @@ describe("POST /api/wedding/upload", () => {
   beforeEach(() => {
     stored.files.length = 0;
     stored.reserved.length = 0;
+    Object.assign(encodes, { started: 0, active: 0, peak: 0 });
+    encodes.gate = undefined;
+  });
+
+  afterEach(() => {
+    // A failed test must not leave uploads holding the module's slots.
+    encodes.open();
+    vi.restoreAllMocks();
   });
 
   it(
@@ -213,6 +270,90 @@ describe("POST /api/wedding/upload", () => {
         );
       }
       expect(stored.files).toHaveLength(0);
+    },
+    SLOW,
+  );
+
+  it("từ chối TIFF hoặc SVG khai báo là JPEG/PNG, vẫn nhận PNG và WebP", async () => {
+    const plain = () =>
+      sharp({
+        create: { width: 64, height: 48, channels: 3, background: "#c88f6a" },
+      });
+    const svg = Buffer.from(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="48"><rect width="64" height="48" fill="#c88f6a"/></svg>',
+    );
+    for (const [body, type] of [
+      [await plain().tiff().toBuffer(), "image/jpeg"],
+      [svg, "image/png"],
+    ] as const) {
+      const response = await upload(body, type);
+      expect(response.status).toBe(400);
+      expect((await response.json()).message).toBe(
+        "Chỉ nhận ảnh JPEG, PNG hoặc WebP",
+      );
+    }
+    expect(stored.files).toHaveLength(0);
+
+    for (const [body, type] of [
+      [await plain().png().toBuffer(), "image/png"],
+      [await plain().webp().toBuffer(), "image/webp"],
+    ] as const) {
+      expect((await upload(body, type)).status).toBe(200);
+    }
+    expect(stored.files).toHaveLength(2);
+  });
+
+  it(
+    "4 ảnh tải cùng lúc đều thành công, mỗi lúc chỉ mã hóa 2 ảnh",
+    async () => {
+      const photo = await jpeg(1200, 800).toBuffer();
+      holdEncodes();
+      const responses = Promise.all(
+        Array.from({ length: 4 }, () => upload(photo)),
+      );
+      // Every upload has either started its encode or joined the queue.
+      await vi.waitFor(
+        () => expect(encodes.started + (slots.encode?.waiting ?? 0)).toBe(4),
+        { timeout: 10_000 },
+      );
+      expect(encodes.started).toBe(2);
+      expect(slots.encode?.waiting).toBe(2);
+      encodes.open();
+      const results = await responses;
+      expect(results.map((response) => response.status)).toEqual([
+        200, 200, 200, 200,
+      ]);
+      expect(encodes.started).toBe(4);
+      expect(encodes.peak).toBe(2);
+      expect(stored.files).toHaveLength(4);
+      expect([slots.encode?.active, slots.encode?.waiting]).toEqual([0, 0]);
+    },
+    SLOW,
+  );
+
+  it(
+    "trả 503 tiếng Việt khi 2 ảnh đang mã hóa và 10 ảnh đã xếp hàng",
+    async () => {
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      const photo = await jpeg(64, 64).toBuffer();
+      holdEncodes();
+      const queued = Promise.all(
+        Array.from({ length: 12 }, () => upload(photo)),
+      );
+      await vi.waitFor(() => expect(slots.encode?.waiting).toBe(10), {
+        timeout: 10_000,
+      });
+      const busy = await upload(photo);
+      expect(busy.status).toBe(503);
+      expect(await busy.json()).toEqual({
+        ok: false,
+        message: "Máy chủ đang bận, vui lòng thử lại sau",
+      });
+      encodes.open();
+      const results = await queued;
+      expect(results.every((response) => response.status === 200)).toBe(true);
+      expect(stored.files).toHaveLength(12);
+      expect(encodes.peak).toBe(2);
     },
     SLOW,
   );

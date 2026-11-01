@@ -10,6 +10,8 @@ import {
   MAX_UPLOAD_IMAGE_SIDE,
   UPLOAD_IMAGE_SIDE_TOO_LARGE,
   UPLOAD_IMAGE_TOO_LARGE,
+  UPLOAD_IMAGE_TYPE_INVALID,
+  UPLOAD_SERVER_BUSY,
 } from "@/lib/wedding-upload";
 import { customer, mutationLimit, safeOrigin } from "@/server/wedding/guards";
 import { prisma } from "@/server/db/prisma";
@@ -18,6 +20,39 @@ import {
   reserveUpload,
   WeddingError,
 } from "@/server/wedding/service";
+import { createSlots, SlotsBusyError } from "@/server/wedding/slots";
+
+const IMAGE_FORMATS = ["jpeg", "png", "webp"];
+
+/**
+ * A full-resolution encode takes about 6 s and 350-470 MB of RAM for a 45 MP
+ * 8-bit JPEG, and far more for a 16-bit PNG, so this process runs at most two
+ * at once. Later uploads wait their turn; only a full queue or a long wait
+ * gets 503. The editor sends one photo at a time.
+ */
+const encodeSlots = createSlots({ slots: 2, queue: 10, waitMs: 60_000 });
+
+async function encode(input: Buffer) {
+  try {
+    const image = sharp(input, {
+      limitInputPixels: MAX_UPLOAD_IMAGE_PIXELS,
+      animated: false,
+    });
+    const { format, width = 0, height = 0 } = await image.metadata();
+    // Content-Type is only a label; Sharp also reads TIFF, GIF, SVG, HEIF...
+    if (!format || !IMAGE_FORMATS.includes(format))
+      throw new WeddingError(400, UPLOAD_IMAGE_TYPE_INVALID);
+    if (Math.max(width, height) > MAX_UPLOAD_IMAGE_SIDE)
+      throw new WeddingError(400, UPLOAD_IMAGE_SIDE_TOO_LARGE);
+    // Keep full resolution. Re-encoding drops EXIF/GPS/XMP and converts ICC
+    // to sRGB, because /uploads is public. effort 2 matches effort 4 in size
+    // and quality on a 45 MP photo at about 1/5 of the time and half the RAM.
+    return await image.rotate().webp({ quality: 90, effort: 2 }).toBuffer();
+  } catch (error) {
+    if (error instanceof WeddingError) throw error;
+    throw new WeddingError(400, "Tệp ảnh không hợp lệ hoặc quá lớn");
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -33,7 +68,7 @@ export async function POST(request: Request) {
         request.headers.get("content-type") || "",
       )
     )
-      throw new WeddingError(400, "Chỉ nhận ảnh JPEG, PNG hoặc WebP");
+      throw new WeddingError(400, UPLOAD_IMAGE_TYPE_INVALID);
     const chunks: Uint8Array[] = [];
     let bytes = 0;
     const reader = request.body.getReader();
@@ -47,22 +82,19 @@ export async function POST(request: Request) {
       }
       chunks.push(value);
     }
+    // One contiguous copy from here on; the chunk list would double the RAM.
+    const input = Buffer.concat(chunks, bytes);
+    chunks.length = 0;
+    const release = await encodeSlots.acquire().catch((error: unknown) => {
+      if (!(error instanceof SlotsBusyError)) throw error;
+      logger.warn("wedding_upload_busy", { waiting: encodeSlots.waiting });
+      throw new WeddingError(503, UPLOAD_SERVER_BUSY);
+    });
     let output: Buffer;
     try {
-      const image = sharp(Buffer.concat(chunks), {
-        limitInputPixels: MAX_UPLOAD_IMAGE_PIXELS,
-        animated: false,
-      });
-      const { width = 0, height = 0 } = await image.metadata();
-      if (Math.max(width, height) > MAX_UPLOAD_IMAGE_SIDE)
-        throw new WeddingError(400, UPLOAD_IMAGE_SIDE_TOO_LARGE);
-      // Keep full resolution. Re-encoding drops EXIF/GPS/XMP and converts ICC
-      // to sRGB, because /uploads is public. effort 2 matches effort 4 in size
-      // and quality on a 45 MP photo at about 1/5 of the time and half the RAM.
-      output = await image.rotate().webp({ quality: 90, effort: 2 }).toBuffer();
-    } catch (error) {
-      if (error instanceof WeddingError) throw error;
-      throw new WeddingError(400, "Tệp ảnh không hợp lệ hoặc quá lớn");
+      output = await encode(input);
+    } finally {
+      release();
     }
     const dir = path.join(process.cwd(), "public/uploads/weddings");
     await mkdir(dir, { recursive: true });

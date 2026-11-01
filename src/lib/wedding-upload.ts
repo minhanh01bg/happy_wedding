@@ -12,3 +12,5 @@ export const MAX_UPLOAD_IMAGE_PIXELS = 64_000_000;
 export const MAX_UPLOAD_IMAGE_SIDE = 16_383;
 export const UPLOAD_IMAGE_SIDE_TOO_LARGE =
   "Ảnh có cạnh dài hơn 16.383 px. Vui lòng chọn ảnh nhỏ hơn";
+export const UPLOAD_IMAGE_TYPE_INVALID = "Chỉ nhận ảnh JPEG, PNG hoặc WebP";
+export const UPLOAD_SERVER_BUSY = "Máy chủ đang bận, vui lòng thử lại sau";

@@ -24,6 +24,33 @@ export function demonstrationPhotos(
     : photos;
 }
 
+/** Cover each look shows on a demonstration invitation that kept the stock cover. */
+const DEMO_COVERS: Record<string, string> = {
+  "song-hy": "/images/wedding-couple-traditional.jpg",
+  "ngay-chung-doi": "/images/wedding-couple-riverside.jpg",
+  "nang-thu": "/images/wedding-couple-riverside.jpg",
+  "loi-hen": "/images/wedding-couple-journey.jpg",
+  "thu-tinh": "/images/wedding-couple-highfive.jpg",
+  "khoanh-khac": "/images/wedding-couple-moment.jpg",
+};
+
+/**
+ * The cover photo of the invitation hero, before `weddingImageSource`. The
+ * link preview (og:image) uses the same pick, so the shared card matches the
+ * page.
+ */
+export function heroCover(
+  invitation: { isDemo: boolean; coverUrl: string },
+  design: string,
+  photos: string[],
+): string {
+  return invitation.isDemo &&
+    invitation.coverUrl === "/images/couple.jpg" &&
+    photos.includes(DEMO_COVERS[design])
+    ? DEMO_COVERS[design]
+    : invitation.coverUrl;
+}
+
 /** Resolve bundled demonstration photos without changing uploaded images. */
 export function weddingImageSource(source: string): string {
   if (source === "/images/couple.jpg")

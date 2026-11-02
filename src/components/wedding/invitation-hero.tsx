@@ -2,7 +2,7 @@ import { Fragment, useId, type CSSProperties } from "react";
 import Image from "next/image";
 import type { Invitation } from "@prisma/client";
 import { dateLabel } from "@/lib/wedding";
-import { weddingImageSource } from "@/lib/wedding-images";
+import { heroCover, weddingImageSource } from "@/lib/wedding-images";
 import styles from "./invitation-hero.module.css";
 
 /**
@@ -42,20 +42,7 @@ export function InvitationHero({
   photos: string[];
   guestName?: string;
 }) {
-  const demoCovers: Record<string, string> = {
-    "song-hy": "/images/wedding-couple-traditional.jpg",
-    "ngay-chung-doi": "/images/wedding-couple-riverside.jpg",
-    "nang-thu": "/images/wedding-couple-riverside.jpg",
-    "loi-hen": "/images/wedding-couple-journey.jpg",
-    "thu-tinh": "/images/wedding-couple-highfive.jpg",
-    "khoanh-khac": "/images/wedding-couple-moment.jpg",
-  };
-  const cover =
-    invitation.isDemo &&
-    invitation.coverUrl === "/images/couple.jpg" &&
-    photos.includes(demoCovers[design])
-      ? demoCovers[design]
-      : invitation.coverUrl;
+  const cover = heroCover(invitation, design, photos);
   // Lời yêu writes each name by hand, so its heading plays its own entrance.
   const signed = design === "loi-yeu";
   const names = signed ? (

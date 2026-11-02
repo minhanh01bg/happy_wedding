@@ -76,3 +76,6 @@ prisma/*.db
 .playwright-cli/
 
 /.next-e2e/
+
+# og:image cards derived from covers (src/server/wedding/share-image.ts)
+/.cache/

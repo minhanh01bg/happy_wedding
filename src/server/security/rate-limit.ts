@@ -2,6 +2,7 @@ import { createHmac } from "node:crypto";
 import { Redis } from "@upstash/redis";
 
 import { env } from "@/config/env";
+import { logger } from "@/lib/logger";
 import type { RateLimitPolicy } from "./rate-limit-policy";
 
 export interface RateLimitStore {
@@ -66,36 +67,139 @@ return { current, ttl }
   }
 }
 
-class MemoryRateLimitStore implements RateLimitStore {
-  private map = new Map<string, { count: number; expiresAt: number }>();
+/**
+ * Most keys the in-process store holds. A key with its counter takes about
+ * 240 bytes of heap (measured with HMAC'd keys), so a full store is about
+ * 12 MB. Normal traffic for one wedding site stays far below this; only a
+ * flood of distinct clients reaches it. See ADR 0012.
+ */
+export const MEMORY_STORE_MAX_KEYS = 50_000;
+/** Expired entries are dropped on access at most this often. */
+export const MEMORY_STORE_SWEEP_INTERVAL_MS = 60_000;
+/** While full, a refused new key may trigger a sweep at most this often. */
+export const MEMORY_STORE_FULL_SWEEP_INTERVAL_MS = 1_000;
+/** While full, onFull is reported at most this often. */
+export const MEMORY_STORE_FULL_REPORT_INTERVAL_MS = 60_000;
+
+/** Thrown for a new key while the store already holds maxKeys live keys. */
+export class RateLimitStoreFullError extends Error {
+  constructor() {
+    super("In-process rate-limit store is full");
+    this.name = "RateLimitStoreFullError";
+  }
+}
+
+export interface MemoryRateLimitStoreOptions {
+  maxKeys?: number;
+  /** Called when a new key is refused, at most once per report interval. */
+  onFull?: (keys: number) => void;
+}
+
+/**
+ * Fixed-window counters in this process's memory, bounded in size.
+ *
+ * Expired entries are swept on access (at most once a minute, and at most
+ * once a second while full). With maxKeys live entries, a NEW key is refused
+ * with RateLimitStoreFullError while existing keys keep counting. Nothing is
+ * evicted early, so no counter is ever reset before its window ends: the
+ * limiter treats the refusal as "limiter unavailable", so a fail-closed
+ * policy denies the uncounted client and a fail-open policy lets it through.
+ */
+export class MemoryRateLimitStore implements RateLimitStore {
+  private readonly entries = new Map<
+    string,
+    { count: number; expiresAt: number }
+  >();
+  private readonly maxKeys: number;
+  private readonly onFull?: (keys: number) => void;
+  private lastSweepAt = Number.NEGATIVE_INFINITY;
+  private lastFullReportAt = Number.NEGATIVE_INFINITY;
+
+  constructor(options: MemoryRateLimitStoreOptions = {}) {
+    this.maxKeys = options.maxKeys ?? MEMORY_STORE_MAX_KEYS;
+    this.onFull = options.onFull;
+  }
+
+  /** Entries held now, including expired ones not yet swept. */
+  get size(): number {
+    return this.entries.size;
+  }
 
   async incrementAndGetTtl(
     key: string,
     windowSeconds: number,
     now = Date.now(),
   ): Promise<{ count: number; ttlSeconds: number }> {
-    const entry = this.map.get(key);
-    if (!entry || entry.expiresAt <= now) {
-      const expiresAt = now + windowSeconds * 1000;
-      this.map.set(key, { count: 1, expiresAt });
-      return { count: 1, ttlSeconds: windowSeconds };
+    const entry = this.entries.get(key);
+    if (entry && entry.expiresAt > now) {
+      entry.count += 1;
+      const ttlSeconds = Math.max(1, Math.ceil((entry.expiresAt - now) / 1000));
+      return { count: entry.count, ttlSeconds };
     }
-    entry.count += 1;
-    const ttlSeconds = Math.max(1, Math.ceil((entry.expiresAt - now) / 1000));
-    return { count: entry.count, ttlSeconds };
+
+    if (this.sweepDue(now, MEMORY_STORE_SWEEP_INTERVAL_MS)) this.sweep(now);
+    // An expired entry still in the map is reused in place: no new slot.
+    if (!this.entries.has(key) && this.entries.size >= this.maxKeys) {
+      if (this.sweepDue(now, MEMORY_STORE_FULL_SWEEP_INTERVAL_MS))
+        this.sweep(now);
+      if (this.entries.size >= this.maxKeys) {
+        this.reportFull(now);
+        throw new RateLimitStoreFullError();
+      }
+    }
+
+    this.entries.set(key, { count: 1, expiresAt: now + windowSeconds * 1000 });
+    return { count: 1, ttlSeconds: windowSeconds };
   }
 
   async delete(key: string): Promise<void> {
-    this.map.delete(key);
+    this.entries.delete(key);
+  }
+
+  private sweepDue(now: number, intervalMs: number): boolean {
+    // A clock that went backwards also sweeps, so it cannot stall sweeping.
+    return now < this.lastSweepAt || now - this.lastSweepAt >= intervalMs;
+  }
+
+  private sweep(now: number): void {
+    for (const [key, entry] of this.entries) {
+      if (entry.expiresAt <= now) this.entries.delete(key);
+    }
+    this.lastSweepAt = now;
+  }
+
+  private reportFull(now: number): void {
+    if (
+      now >= this.lastFullReportAt &&
+      now - this.lastFullReportAt < MEMORY_STORE_FULL_REPORT_INTERVAL_MS
+    )
+      return;
+    this.lastFullReportAt = now;
+    this.onFull?.(this.entries.size);
   }
 }
 
-let devMemoryStore: MemoryRateLimitStore | null = null;
-function getGlobalDevMemoryStore(): RateLimitStore {
-  if (!devMemoryStore) {
-    devMemoryStore = new MemoryRateLimitStore();
+// One in-process store per process: development and tests always, production
+// only with RATE_LIMIT_STORE=memory.
+let memoryStore: MemoryRateLimitStore | null = null;
+function getGlobalMemoryStore(): RateLimitStore {
+  if (!memoryStore) {
+    memoryStore = new MemoryRateLimitStore({
+      onFull: (keys) =>
+        logger.warn("rate_limit_memory_store_full", {
+          keys,
+          maxKeys: MEMORY_STORE_MAX_KEYS,
+        }),
+    });
+    if (process.env.NODE_ENV === "production") {
+      logger.info("rate_limit_store_in_process", {
+        store: "memory",
+        validFor: "a single instance only",
+        maxKeys: MEMORY_STORE_MAX_KEYS,
+      });
+    }
   }
-  return devMemoryStore;
+  return memoryStore;
 }
 
 // One Upstash client per process: the REST client is stateless and safe to
@@ -107,6 +211,26 @@ function getGlobalUpstashStore(): RateLimitStore {
     upstashStore = new UpstashRedisStore();
   }
   return upstashStore;
+}
+
+/**
+ * The store this process uses when none is injected: in-process outside
+ * production, and in production only with RATE_LIMIT_STORE=memory (env.ts
+ * never defaults to it); Upstash otherwise. Null when production has no
+ * usable store, so the caller applies the policy's fail-closed rule.
+ */
+function resolveDefaultStore(): RateLimitStore | null {
+  if (
+    process.env.NODE_ENV !== "production" ||
+    env.RATE_LIMIT_STORE === "memory"
+  )
+    return getGlobalMemoryStore();
+  if (!env.UPSTASH_REDIS_REST_URL || !env.UPSTASH_REDIS_REST_TOKEN) return null;
+  try {
+    return getGlobalUpstashStore();
+  } catch {
+    return null;
+  }
 }
 
 async function withTimeout<T>(
@@ -209,47 +333,23 @@ export function createRateLimiter(
       const timeoutMs = options.timeoutMs ?? policy.timeoutMs ?? 1500;
 
       // Lazy instantiate production store if not provided
-      let store = options.store;
+      const store = options.store ?? resolveDefaultStore();
       if (!store) {
-        if (process.env.NODE_ENV !== "production") {
-          store = getGlobalDevMemoryStore();
-        } else if (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
-          try {
-            store = getGlobalUpstashStore();
-          } catch {
-            if (policy.failClosed) {
-              return {
-                allowed: false,
-                reason: "limiter_unavailable",
-                retryAfterSeconds: 60,
-                limit: 0,
-                remaining: 0,
-              };
-            }
-            return {
-              allowed: true,
-              remaining: 1,
-              limit: 1,
-              resetInSeconds: 60,
-            };
-          }
-        } else {
-          if (policy.failClosed) {
-            return {
-              allowed: false,
-              reason: "limiter_unavailable",
-              retryAfterSeconds: 60,
-              limit: 0,
-              remaining: 0,
-            };
-          }
+        if (policy.failClosed) {
           return {
-            allowed: true,
-            remaining: 1,
-            limit: 1,
-            resetInSeconds: 60,
+            allowed: false,
+            reason: "limiter_unavailable",
+            retryAfterSeconds: 60,
+            limit: 0,
+            remaining: 0,
           };
         }
+        return {
+          allowed: true,
+          remaining: 1,
+          limit: 1,
+          resetInSeconds: 60,
+        };
       }
 
       try {
@@ -356,20 +456,8 @@ export function createRateLimiter(
       policy: RateLimitPolicy,
       target: RateLimitTarget,
     ): Promise<void> {
-      let store = options.store;
-      if (!store) {
-        if (process.env.NODE_ENV !== "production") {
-          store = getGlobalDevMemoryStore();
-        } else if (env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN) {
-          try {
-            store = getGlobalUpstashStore();
-          } catch {
-            return;
-          }
-        } else {
-          return;
-        }
-      }
+      const store = options.store ?? resolveDefaultStore();
+      if (!store) return;
       if (typeof store.delete === "function") {
         const key = deriveRateLimitKey(
           "v1",

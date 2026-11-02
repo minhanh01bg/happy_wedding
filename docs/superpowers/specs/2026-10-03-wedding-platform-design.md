@@ -146,7 +146,7 @@ Schema dùng String cho trạng thái, không có enum/check constraint DB cho c
 
 ## 7. Hợp đồng và an toàn
 
-Hợp đồng request, response và quyền tại [API-CONTRACTS](../../API-CONTRACTS.md). HTTP guards chặn origin không tin cậy, JSON body quá lớn, thiếu phiên, truy cập chéo chủ thiệp và rate-limit. Không tin price/status/ownerId từ browser. Production yêu cầu Redis/HMAC/origin/proxy hợp lệ, fail closed; build placeholder không dùng làm runtime cấu hình.
+Hợp đồng request, response và quyền tại [API-CONTRACTS](../../API-CONTRACTS.md). HTTP guards chặn origin không tin cậy, JSON body quá lớn, thiếu phiên, truy cập chéo chủ thiệp và rate-limit. Không tin price/status/ownerId từ browser. Production yêu cầu store rate limit/HMAC/origin/proxy hợp lệ, fail closed. Store là Redis (Upstash), trừ khi đặt rõ `RATE_LIMIT_STORE=memory` cho site chỉ chạy một instance ([ADR 0012](../../adr/0012-single-instance-memory-rate-limit.md)); không bao giờ là mặc định. Build placeholder không dùng làm runtime cấu hình.
 
 Không đưa hash/token/API key/nội dung riêng vào log. UI thông báo lỗi miền bằng tiếng Việt; lỗi ngoài dự kiến chỉ trả thông báo chung/correlationId. Secret chỉ nằm môi trường, không trong admin settings hoặc Git.
 
@@ -172,13 +172,13 @@ Kết quả test/build đã ghi ở [VERIFICATION](../../VERIFICATION.md), thu�
 
 ## 9. Việc còn cần trước mở bán
 
-| Việc                         | Người cung cấp/quyết định     | Điều kiện hoàn thành                                                              |
-| ---------------------------- | ----------------------------- | --------------------------------------------------------------------------------- |
-| Nội dung cưới thật           | Chủ dự án/cặp đôi             | Tên, gia đình, lịch/địa chỉ và ảnh được phép dùng; gia đình duyệt trên điện thoại |
-| Thương hiệu, giá, chính sách | Chủ dịch vụ                   | Chốt tên/giá/hạn lưu/hoàn tiền, thay trang chính sách dự thảo                     |
-| Ngân hàng dịch vụ/mừng cưới  | Hai chủ tài khoản tương ứng   | Đúng BIN, số tài khoản và tên; QR được đọc bằng app ngân hàng                     |
-| SePay tùy chọn               | Chủ tài khoản ngân hàng/SePay | Sandbox đúng/sai/retry; đối soát tiền và audit                                    |
-| Production                   | Chủ hạ tầng                   | Domain/HTTPS, secret, Redis, volume, backup/restore và smoke test                 |
+| Việc                         | Người cung cấp/quyết định     | Điều kiện hoàn thành                                                                                            |
+| ---------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Nội dung cưới thật           | Chủ dự án/cặp đôi             | Tên, gia đình, lịch/địa chỉ và ảnh được phép dùng; gia đình duyệt trên điện thoại                               |
+| Thương hiệu, giá, chính sách | Chủ dịch vụ                   | Chốt tên/giá/hạn lưu/hoàn tiền, thay trang chính sách dự thảo                                                   |
+| Ngân hàng dịch vụ/mừng cưới  | Hai chủ tài khoản tương ứng   | Đúng BIN, số tài khoản và tên; QR được đọc bằng app ngân hàng                                                   |
+| SePay tùy chọn               | Chủ tài khoản ngân hàng/SePay | Sandbox đúng/sai/retry; đối soát tiền và audit                                                                  |
+| Production                   | Chủ hạ tầng                   | Domain/HTTPS, secret, Redis hoặc `RATE_LIMIT_STORE=memory` (một instance), volume, backup/restore và smoke test |
 
 Những việc này chưa đánh dấu hoàn tất và không được quảng cáo đã hoạt động. Kế hoạch tiếp tục nằm tại [plans](../plans/2026-10-03-catalog-editor-plan.md), [commerce](../plans/2026-10-03-commerce-admin-plan.md), [guest-publication](../plans/2026-10-03-guest-publication-plan.md).
 

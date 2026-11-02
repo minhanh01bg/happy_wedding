@@ -41,7 +41,7 @@ SePay tùy chọn:
 
 Bản này chạy Node với SQLite và ảnh local; cần máy chủ/container có volume bền vững. Không chạy nhiều instance cùng SQLite, không đưa DB lên disk tạm của serverless.
 
-Site thật chạy `next build` + `next start` từ checkout chính, dưới systemd user unit `happy-wedding.service`, chỉ nghe `127.0.0.1:3200`; nginx phục vụ HTTPS và chuyển vào. `scripts/deploy-prod.sh` build bundle mới bên cạnh server đang chạy rồi đổi sang nó với vài giây downtime. **Không chạy `pnpm build` trong checkout chính:** nó ghi đè `.next` của server đang chạy. `pnpm start` cũng chỉ nghe `127.0.0.1:3200` và chỉ dùng để thử tay; site thật chạy qua unit. Đừng cho `next start` nghe `0.0.0.0`: ai vào thẳng port 3200 sẽ bỏ qua nginx và tự đặt X-Real-IP.
+Site thật chạy `next build` + `next start` từ checkout chính, dưới systemd system unit `happy-wedding.service` (chạy với user `ccgram`, có bảo vệ OOM), chỉ nghe `127.0.0.1:3200`; nginx phục vụ HTTPS và chuyển vào. `scripts/deploy-prod.sh` build bundle mới bên cạnh server đang chạy rồi đổi sang nó với vài giây downtime. **Không chạy `pnpm build` trong checkout chính:** nó ghi đè `.next` của server đang chạy. `pnpm start` cũng chỉ nghe `127.0.0.1:3200` và chỉ dùng để thử tay; site thật chạy qua unit. Đừng cho `next start` nghe `0.0.0.0`: ai vào thẳng port 3200 sẽ bỏ qua nginx và tự đặt X-Real-IP.
 
 ### Cấu hình
 
@@ -55,69 +55,99 @@ NODE_ENV=production node --import tsx scripts/check-prod-env.ts
 
 Lệnh in `DATABASE_URL=file:...` khi hợp lệ, hoặc danh sách trường sai (chỉ tên trường, không in giá trị) và thoát mã 1. Server chạy cùng bộ kiểm tra (`src/config/env.ts`) lúc khởi động, nên trường **chặn khởi động** dưới đây làm `next start` dừng trước khi nhận request.
 
-| Biến                                                                                                                                       | Chặn khởi động                                                      | Giá trị production                                                                                                                   |
-| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `CANONICAL_ORIGIN`                                                                                                                         | Có, khi thiếu                                                       | `https://example.com`, không có `/` cuối. Kiểm tra Origin/CSRF.                                                                      |
-| `NEXT_PUBLIC_APP_URL`                                                                                                                      | Có, khi cả biến này lẫn `CANONICAL_ORIGIN` không phải URL công khai | `https://example.com`. Canonical, sitemap, OpenGraph, link chia sẻ. **Chốt lúc build.**                                              |
-| `STORE_PASSWORD_HASH`                                                                                                                      | Có                                                                  | `600000:<salt hex 32>:<hash hex 64>` (mục Admin).                                                                                    |
-| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`                                                                                       | Có                                                                  | Kho rate limit. Production không bỏ qua lỗi limiter.                                                                                 |
-| `RATE_LIMIT_KEY_SECRET`                                                                                                                    | Có                                                                  | Ngẫu nhiên, ≥ 32 ký tự.                                                                                                              |
-| `TRUSTED_PROXY_MODE`                                                                                                                       | Có, khi thiếu hoặc `none`                                           | `custom` (xem dưới).                                                                                                                 |
-| `TRUSTED_CLIENT_IP_HEADER`                                                                                                                 | Có, khi mode là `custom`                                            | `x-real-ip`.                                                                                                                         |
-| `SESSION_SECRET`                                                                                                                           | Chỉ khi đặt mà ngắn hơn 32 ký tự                                    | Có mặc định; mã hiện tại không dùng.                                                                                                 |
-| `NODE_ENV`                                                                                                                                 | Không                                                               | Unit đặt `production`. Không ghi vào tệp env.                                                                                        |
-| `DATABASE_URL`                                                                                                                             | Không                                                               | Mặc định `file:./dev.db`; đường dẫn tương đối tính từ `prisma/`.                                                                     |
-| `CSP_MODE`                                                                                                                                 | Không                                                               | `report-only` (mặc định, [ADR 0005](adr/0005-security-hardening-2026-10.md)); `enforce` khi báo cáo CSP đã sạch. **Chốt lúc build.** |
-| `SEPAY_WEBHOOK_API_KEY` (≥ 32), `SEPAY_ACCOUNT_NUMBER`                                                                                     | Không                                                               | Thiếu thì webhook SePay trả 503, không tự kích hoạt đơn (mục Thanh toán).                                                            |
-| `NEXT_PUBLIC_SENTRY_DSN`                                                                                                                   | Chỉ khi không phải URL                                              | Thêm vào `connect-src` của CSP. **Chốt lúc build.**                                                                                  |
-| `DATA_RETENTION_DAYS`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_STORE_NAME`, `STORE_NAME`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` | Chỉ khi sai định dạng                                               | Được kiểm nhưng mã hiện tại chưa dùng.                                                                                               |
-| `NEXT_DIST_DIR`, `ALLOWED_DEV_ORIGINS`                                                                                                     | —                                                                   | Không đặt trên production: biến đầu chỉ cho script deploy, biến sau chỉ cho `next dev`.                                              |
+| Biến                                                                                                                                       | Chặn khởi động                                                      | Giá trị production                                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CANONICAL_ORIGIN`                                                                                                                         | Có, khi thiếu                                                       | `https://example.com`, không có `/` cuối. Kiểm tra Origin/CSRF.                                                                                                                                                                      |
+| `NEXT_PUBLIC_APP_URL`                                                                                                                      | Có, khi cả biến này lẫn `CANONICAL_ORIGIN` không phải URL công khai | `https://example.com`. Canonical, sitemap, OpenGraph, link chia sẻ. **Chốt lúc build.**                                                                                                                                              |
+| `STORE_PASSWORD_HASH`                                                                                                                      | Có                                                                  | `600000:<salt hex 32>:<hash hex 64>` (mục Admin).                                                                                                                                                                                    |
+| `RATE_LIMIT_STORE`                                                                                                                         | Có, khi đặt giá trị khác `upstash`/`memory`                         | `memory` cho site này: bộ đếm nằm trong tiến trình server, có trần 50.000 khóa, chỉ đúng khi chạy **một** instance ([ADR 0012](adr/0012-single-instance-memory-rate-limit.md)). Không có mặc định; thiếu biến nghĩa là dùng Upstash. |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`                                                                                       | Có, trừ khi `RATE_LIMIT_STORE=memory`                               | Kho rate limit dùng chung khi chạy nhiều instance. Không đặt khi dùng `memory`. Production không bỏ qua lỗi limiter.                                                                                                                 |
+| `RATE_LIMIT_KEY_SECRET`                                                                                                                    | Có                                                                  | Ngẫu nhiên, ≥ 32 ký tự.                                                                                                                                                                                                              |
+| `TRUSTED_PROXY_MODE`                                                                                                                       | Có, khi thiếu hoặc `none`                                           | `custom` (xem dưới).                                                                                                                                                                                                                 |
+| `TRUSTED_CLIENT_IP_HEADER`                                                                                                                 | Có, khi mode là `custom`                                            | `x-real-ip`.                                                                                                                                                                                                                         |
+| `SESSION_SECRET`                                                                                                                           | Chỉ khi đặt mà ngắn hơn 32 ký tự                                    | Có mặc định; mã hiện tại không dùng.                                                                                                                                                                                                 |
+| `NODE_ENV`                                                                                                                                 | Không                                                               | Unit đặt `production`. Không ghi vào tệp env.                                                                                                                                                                                        |
+| `DATABASE_URL`                                                                                                                             | Không                                                               | Mặc định `file:./dev.db`; đường dẫn tương đối tính từ `prisma/`.                                                                                                                                                                     |
+| `CSP_MODE`                                                                                                                                 | Không                                                               | `report-only` (mặc định, [ADR 0005](adr/0005-security-hardening-2026-10.md)); `enforce` khi báo cáo CSP đã sạch. **Chốt lúc build.**                                                                                                 |
+| `SEPAY_WEBHOOK_API_KEY` (≥ 32), `SEPAY_ACCOUNT_NUMBER`                                                                                     | Không                                                               | Thiếu thì webhook SePay trả 503, không tự kích hoạt đơn (mục Thanh toán).                                                                                                                                                            |
+| `NEXT_PUBLIC_SENTRY_DSN`                                                                                                                   | Chỉ khi không phải URL                                              | Thêm vào `connect-src` của CSP. **Chốt lúc build.**                                                                                                                                                                                  |
+| `DATA_RETENTION_DAYS`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_STORE_NAME`, `STORE_NAME`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` | Chỉ khi sai định dạng                                               | Được kiểm nhưng mã hiện tại chưa dùng.                                                                                                                                                                                               |
+| `NEXT_DIST_DIR`, `ALLOWED_DEV_ORIGINS`                                                                                                     | —                                                                   | Không đặt trên production: biến đầu chỉ cho script deploy, biến sau chỉ cho `next dev`.                                                                                                                                              |
 
-Biến **chốt lúc build** được ghi vào bundle (`NEXT_PUBLIC_*` vào JavaScript gửi trình duyệt, CSP vào header lúc build). Đổi chúng thì chạy lại `scripts/deploy-prod.sh`; đổi biến khác chỉ cần `systemctl --user restart happy-wedding.service`. Không đưa dummy Redis/domain/hash từ build hay `.env.example` vào production: placeholder chỉ có hiệu lực trong lúc `next build`.
+Biến **chốt lúc build** được ghi vào bundle (`NEXT_PUBLIC_*` vào JavaScript gửi trình duyệt, CSP vào header lúc build). Đổi chúng thì chạy lại `scripts/deploy-prod.sh`; đổi biến khác chỉ cần `sudo -n systemctl restart happy-wedding.service`. Không đưa dummy Redis/domain/hash từ build hay `.env.example` vào production: placeholder chỉ có hiệu lực trong lúc `next build`.
 
 **IP khách:** `TRUSTED_PROXY_MODE=custom` với `TRUSTED_CLIENT_IP_HEADER=x-real-ip`. nginx ghi đè `X-Real-IP` bằng `$remote_addr` ở mọi request, nên khách không tự đặt được, và app chỉ nghe `127.0.0.1` nên không ai vào thẳng mà bỏ qua nginx. Không dùng `vercel` (đọc `x-vercel-forwarded-for` trước, nginx chuyển nguyên header khách gửi) hay `cloudflare` (`cf-connecting-ip` khách tự gửi được khi không có Cloudflare phía trước). Nếu sau này đặt Cloudflare trước nginx, giữ cấu hình app và cho nginx giải IP thật bằng `set_real_ip_from <dải IP Cloudflare>` cùng `real_ip_header CF-Connecting-IP`. Request gửi thẳng tới `127.0.0.1:3200` không có X-Real-IP nên các route có rate limit từ chối; thử qua domain.
 
-### systemd user unit
+### systemd system unit
 
-`~/.config/systemd/user/happy-wedding.service`:
+Site chạy dưới unit hệ thống [`ops/happy-wedding.service`](../ops/happy-wedding.service), cài vào `/etc/systemd/system/`, chạy với user `ccgram`. Không dùng user unit nữa vì máy chỉ có 5,9 GB RAM, swap gần đầy, và systemd-oomd theo dõi cây `user@1001.service` (áp lực bộ nhớ 50% trong 20 giây): server nằm trong cây đó có thể bị giết cùng phiên của user. Chỉ unit hệ thống mới:
 
-```ini
-[Unit]
-Description=Happy Wedding (next start)
-After=network.target
+- đặt được `OOMScoreAdjust=-900` (user manager không được đặt số âm): kernel OOM killer chọn gần như mọi tiến trình khác trước server. Không đặt -1000 để server rò bộ nhớ vẫn bị giết được.
+- nằm ngoài cây `user@1001.service`, nên oomd không giết server vì áp lực bộ nhớ của phiên user.
+- có `ManagedOOMPreference=avoid` có hiệu lực (oomd bỏ qua thiết lập này trên cgroup không thuộc root). Hiện oomd không theo dõi `system.slice`; dòng này phòng cho cấu hình sau này.
 
-[Service]
-Type=simple
-WorkingDirectory=%h/happy_wedding
-Environment=NODE_ENV=production
-ExecStart=%h/.nvm/versions/node/v22.23.3/bin/node %h/happy_wedding/node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3200
-Restart=on-failure
-RestartSec=5
-TimeoutStopSec=20
+Các thiết lập khác trong unit:
 
-[Install]
-WantedBy=default.target
+- `Restart=always`, `RestartSec=10`: chạy lại cả sau khi kernel OOM-kill server. `StartLimitIntervalSec=0`: không bao giờ bỏ cuộc (mặc định systemd ngừng chạy lại sau 5 lần khởi động trong 10 giây, để site sập tới khi có người start tay). Vì không còn giới hạn số lần, mỗi lần chạy lại cách nhau 10 giây: server chết ngay khi khởi động (`.env` sai, bundle hỏng) hoặc bị OOM-kill liên tục chỉ tốn một lần khởi động Node mỗi 10 giây, không thành vòng chạy lại dồn dập trên máy đang thiếu RAM. `TimeoutStopSec=20`.
+- `MemoryLow=256M`: kernel tránh thu hồi 256 MB bộ nhớ nền của server khi máy thiếu RAM. Mức này chỉ có hiệu lực khi `system.slice` cũng được bảo vệ, nên cài kèm [`ops/system.slice-memory-low.conf`](../ops/system.slice-memory-low.conf) (cũng 256M).
+- Không có `MemoryMax=`: đỉnh upload xấu nhất khoảng 1,6 GB cho 2 slot mã hóa cộng tối đa 400 MB body (mục Backup & ảnh), cộng mức nền của Node; giới hạn dưới khoảng 2,5G thì kernel giết server giữa lúc upload. Không thêm `--max-old-space-size`: bộ nhớ sharp/libvips nằm ngoài heap V8. Script deploy tự giới hạn heap của `next build` (1536 MB) và chỉ build khi `free -m` báo available ≥ 1800 MB.
+- Đường dẫn tuyệt đối: trong unit hệ thống `%h` là home của root. Không có secret trong unit: Next tự đọc `.env.production.local` và `.env` từ WorkingDirectory.
+- Log vào journal; journald tự xoay vòng, không cần logrotate. Server chạy với user `ccgram`, nên khi journal lưu trên đĩa (`/var/log/journal`, có trên máy này) và `SplitMode=uid` (mặc định), journald ghi output vào tệp journal riêng của ccgram, đọc không cần sudo bằng `journalctl -u happy-wedding.service -n 100` (không có `--user`). Điều này phụ thuộc cấu hình journald, nên kiểm lại ngay sau lần chuyển (lệnh `journalctl` trong mục "Kiểm tra" bên dưới). Dòng của chính systemd về unit (dừng, exit code, OOM kill) nằm trong journal hệ thống: `sudo journalctl -u happy-wedding.service`, hoặc không cần sudo `systemctl show -p Result,NRestarts,ExecMainStatus happy-wedding.service`. Lỗi trả cho khách chỉ có correlationId; chi tiết nằm trong log.
+- Unit hệ thống tự chạy khi máy khởi động (`WantedBy=multi-user.target`), không cần linger.
+
+**Cài một lần** (cần sudo; chạy từ checkout chính, sau `git pull` có thư mục `ops/`):
+
+```bash
+cd ~/happy_wedding
+systemd-analyze verify ops/happy-wedding.service   # không cần sudo; không in gì về happy-wedding.service là đạt
+sudo install -m 644 -o root -g root ops/happy-wedding.service /etc/systemd/system/happy-wedding.service
+sudo install -d -m 755 -o root -g root /etc/systemd/system/system.slice.d
+sudo install -m 644 -o root -g root ops/system.slice-memory-low.conf /etc/systemd/system/system.slice.d/50-happy-wedding-memory-low.conf
+sudo visudo -cf ops/sudoers-happy-wedding && sudo install -m 440 -o root -g root ops/sudoers-happy-wedding /etc/sudoers.d/happy-wedding
+sudo visudo -c
+sudo systemctl daemon-reload
+sudo -n -l systemctl start happy-wedding.service   # phải in /usr/bin/systemctl start happy-wedding.service, không hỏi mật khẩu
 ```
 
-- Không có secret trong unit: Next tự đọc `.env.production.local` và `.env` từ WorkingDirectory.
-- Đường dẫn node theo bản nvm đang dùng (`which node`); đổi phiên bản Node thì sửa ExecStart rồi `systemctl --user daemon-reload`.
-- Bộ nhớ: đỉnh upload xấu nhất khoảng 1,6 GB cho 2 slot mã hóa cộng tối đa 400 MB body (mục Backup & ảnh), cộng mức nền của Node. Nếu đặt `MemoryMax=`, đặt từ khoảng 2,5G trở lên; thấp hơn thì kernel giết server giữa lúc upload. Không thêm `--max-old-space-size` vào unit: bộ nhớ sharp/libvips nằm ngoài heap V8. Script deploy tự giới hạn heap của `next build` (1536 MB) và chỉ build khi `free -m` báo available ≥ 1800 MB.
-- Unit user chỉ tự chạy khi máy khởi động nếu tài khoản bật linger (`loginctl show-user "$USER" -p Linger` phải là `yes`).
-- Log: `journalctl --user -u happy-wedding.service -n 100`. Lỗi trả cho khách chỉ có correlationId; chi tiết nằm trong log.
+Chưa `enable` ở đây: chỉ enable **sau** lần chuyển đầu (bước 6 của mục "Lần chuyển đầu tiên"), khi user unit cũ đã bị disable.
+
+- `visudo -cf` kiểm cú pháp **trước** khi cài: một tệp lỗi trong `/etc/sudoers.d` làm sudo từ chối mọi lệnh. `visudo -c` kiểm lại toàn bộ cấu hình đã cài. Tên tệp trong `sudoers.d` không được có dấu chấm.
+- Tệp sudoers chỉ cho `ccgram` chạy đúng `systemctl start|stop|restart happy-wedding.service` không cần mật khẩu; mọi lệnh khác (kể cả `enable`/`disable`) vẫn hỏi mật khẩu.
+- Unit hệ thống và user unit cũ cùng nghe port 3200: không bao giờ để cả hai cùng chạy hay cùng enable. Vì vậy lệnh `enable` của unit hệ thống đứng sau lần chuyển đầu; giữa lần chuyển và lệnh đó không unit nào tự chạy khi máy khởi động, nên enable ngay. Script deploy nhắc lệnh này mỗi lần unit hệ thống chưa enable.
+- Đổi phiên bản Node (nvm): sửa đường dẫn node ở ExecStart và PATH trong `ops/happy-wedding.service`, cài lại bằng lệnh `install` đầu tiên, `sudo systemctl daemon-reload`, rồi `sudo -n systemctl restart happy-wedding.service`. Unit giả định checkout ở `/home/ccgram/happy_wedding` và user `ccgram`; máy khác thì sửa unit và sudoers trước khi cài.
+- Script deploy dùng unit hệ thống khi có `/etc/systemd/system/happy-wedding.service`; nếu không thì dùng user unit cùng tên (`~/.config/systemd/user/`, không có bảo vệ OOM, chỉ tự chạy khi máy khởi động nếu bật linger). `DEPLOY_UNIT_SCOPE=system` hoặc `user` ép một trong hai.
+
+**Kiểm tra** (sau lần deploy đầu với unit hệ thống, và khi nghi ngờ):
+
+```bash
+systemctl show -p User,ActiveState,OOMScoreAdjust,ManagedOOMPreference,MemoryLow happy-wedding.service
+cat /proc/$(systemctl show -p MainPID --value happy-wedding.service)/oom_score_adj   # -900
+cat /sys/fs/cgroup/system.slice/memory.low /sys/fs/cgroup/system.slice/happy-wedding.service/memory.low   # 268435456 cả hai
+systemctl is-enabled happy-wedding.service   # enabled
+systemctl --user is-enabled happy-wedding.service; systemctl --user is-active happy-wedding.service   # disabled, inactive
+journalctl -u happy-wedding.service -n 5   # không sudo; phải in log của server (lúc khởi động có "Ready in …")
+```
+
+Nếu lệnh `journalctl` cuối chỉ in `-- No entries --` trong khi `systemctl is-active happy-wedding.service` là `active`, thì journal trên máy không tách tệp theo user (ví dụ journal chỉ nằm trong RAM, hoặc `SplitMode=` khác `uid`), và output của server nằm trong journal hệ thống. Server vẫn chạy bình thường; chỉ cách đọc log khác. Chọn một trong hai:
+
+- Đọc bằng sudo mỗi lần: `sudo journalctl -u happy-wedding.service -n 100`.
+- Cho ccgram đọc journal không cần sudo: `sudo usermod -aG systemd-journal ccgram`. Nhóm mới chỉ có hiệu lực ở phiên đăng nhập và tiến trình khởi động sau đó, nên đăng nhập lại rồi chạy lại `journalctl -u happy-wedding.service -n 5`. Nhóm này cho đọc toàn bộ log của máy, không chỉ site.
 
 ### nginx
+
+nginx đang chạy (`/etc/nginx/sites-available/vutu-nguyenngoc`) đã chuyển vào `127.0.0.1:3200` và ghi đè `X-Real-IP` bằng `$remote_addr`, nên chuyển sang `next start` **không cần sửa nginx**. Ví dụ dưới đây là cấu hình đầy đủ, cho máy mới hoặc khi muốn thêm phần JS/CSS tĩnh; với site này, đổi nginx là tùy chọn (bước 8 của "Lần chuyển đầu tiên").
+
+**Không thêm `listen [::]:80` hay `listen [::]:443` (IPv6) khi còn `RATE_LIMIT_STORE=memory`.** Rate limit đếm theo từng địa chỉ IP, và một máy có dải IPv6 /64 dùng được vô số địa chỉ: một máy là đủ lấp trần 50.000 khóa, sau đó đăng nhập khách, đăng nhập admin, RSVP và upload trả 503 cho mọi khách mới tới khi khóa hết hạn (60 giây tới 1 giờ; [ADR 0012](adr/0012-single-instance-memory-rate-limit.md)). Cấu hình hiện tại chỉ nghe IPv4. Muốn bật IPv6 thì chuyển sang Upstash (không có trần khóa) trước.
 
 ```nginx
 server {
     listen 80;
-    listen [::]:80;
     server_name example.com;
     return 301 https://$host$request_uri;
 }
 
 server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
+    listen 443 ssl;                   # chỉ IPv4: xem cảnh báo IPv6 ở trên
     http2 on;                         # nginx < 1.25.1: "listen 443 ssl http2;"
     server_name example.com;
 
@@ -161,20 +191,22 @@ server {
 }
 ```
 
-So với cấu hình chạy `next dev`: bỏ hai header WebSocket, thêm `location /_next/static/`, đưa các `proxy_set_header` lên mức server; phần còn lại giữ nguyên. Giữ các dòng `listen`/`ssl_*` mà certbot đang quản lý thay vì chép ví dụ. Áp dụng: `sudo nginx -t && sudo systemctl reload nginx`.
+So với cấu hình đang chạy: thêm `location /_next/static/` (nginx buffer JS/CSS có hash của build), đưa các `proxy_set_header` lên mức server, bỏ hai header WebSocket (`next start` không có HMR; để lại cũng vô hại); phần còn lại giữ nguyên. Giữ các dòng `listen`/`ssl_*` mà certbot đang quản lý thay vì chép ví dụ, và không thêm dòng `listen [::]`. Áp dụng: `sudo nginx -t && sudo systemctl reload nginx`.
 
 ### Lần chuyển đầu tiên từ `next dev`
 
-1. Kiểm tra tài nguyên: `df -h .` (script cần ≥ 400 MB trống, upload cũng cần chỗ) và `free -m` (available ≥ 1800 MB trong lúc dev server vẫn chạy).
-2. Tạo `.env.production.local` (`chmod 600`) với các biến ở bảng trên, rồi chạy lệnh kiểm tra ở mục Cấu hình tới khi nó in `DATABASE_URL=...`.
-3. Chạy thử: `scripts/deploy-prod.sh --build-only`. Nó kiểm tra cấu hình, migration, Prisma client và dependency, build vào `.next-staging` rồi khởi động thử trên `127.0.0.1:3290`; server thật không bị đụng tới.
-4. Sao lưu unit hiện tại: `cp ~/.config/systemd/user/happy-wedding.service ~/happy_wedding-backups/happy-wedding.service.dev`.
-5. Thay nội dung unit bằng bản ở trên, rồi `systemctl --user daemon-reload`. Lệnh này không khởi động lại dev server đang chạy, nhưng nếu dev server tự dừng sau đó, systemd sẽ chạy `next start` trên `.next` của dev và lỗi. Vì vậy làm bước 6 ngay.
-6. `scripts/deploy-prod.sh`. Cache ảnh đã tối ưu được chuyển sang bundle mới.
-7. Kiểm tra qua domain: trang thiệp đã xuất bản, đăng nhập khách và admin, tải một ảnh rồi mở nó, `journalctl --user -u happy-wedding.service -n 50`.
-8. Đổi nginx theo mục trên, `sudo nginx -t && sudo systemctl reload nginx`. Có thể đóng port 3200 trên firewall: app không còn nghe ở địa chỉ public.
+Trước lần chuyển, site chạy `next dev` dưới user unit cùng tên. Lần chuyển đi thẳng sang unit hệ thống:
 
-**`.next-prev` sau lần đầu:** lần deploy đầu đổi tên `.next` của `next dev` (khoảng 1 GB, không phải bundle production) thành `.next-prev`. Nó chỉ dùng để quay về `next dev` (mục Rollback). Khi bản mới đã kiểm xong ở bước 7 và 8, xóa nó bằng `rm -rf .next-prev` để lấy lại chỗ trên đĩa; nếu không, lần deploy sau cũng xóa nó trước khi build.
+1. Kiểm tra tài nguyên: `df -h .` (script cần ≥ 400 MB trống, upload cũng cần chỗ) và `free -m` (available ≥ 1800 MB trong lúc dev server vẫn chạy).
+2. Tạo `.env.production.local` (`chmod 600`) với các biến ở bảng trên, gồm `RATE_LIMIT_STORE=memory` (site không dùng Redis), rồi chạy lệnh kiểm tra ở mục Cấu hình tới khi nó in `DATABASE_URL=...`.
+3. Chạy thử: `scripts/deploy-prod.sh --build-only`. Nó kiểm tra cấu hình, migration, Prisma client và dependency, build vào `.next-staging` rồi khởi động thử trên `127.0.0.1:3290`; server thật không bị đụng tới.
+4. Chạy các lệnh "Cài một lần" ở mục systemd system unit. Dev server vẫn chạy; unit hệ thống đã nạp nhưng chưa chạy, chưa enable.
+5. `scripts/deploy-prod.sh`. Script nhận ra unit hệ thống, kiểm tra `sudo -n` trước khi build, rồi trong lúc đổi: chép tệp user unit cũ vào `~/happy_wedding-backups/happy-wedding.service.user.<thời điểm>`, dừng và disable user unit (dev server), kiểm port 3200 đã trống, khởi động unit hệ thống. Tệp user unit vẫn ở chỗ cũ, ở trạng thái disabled. Cache ảnh đã tối ưu được chuyển sang bundle mới. Script in `OOM score adjustment of PID …: -900` và nhắc lệnh ở bước 6. Nếu có lỗi sau khi đã dừng dev server (backup, migration, port 3200 vẫn bận, đổi thư mục, unit hệ thống không khởi động hay không trả 200) hoặc bị ngắt (Ctrl-C, mất SSH), script tự đưa về như cũ: dừng unit hệ thống, trả `.next` của dev về chỗ cũ (bản mới về `.next-staging`), enable và chạy lại user unit như trước, rồi chờ port 3200 trả 200 và in `The previous server is back`. Khi không tự đưa về được, script in `The site is DOWN` kèm đúng các lệnh còn phải chạy (mục Rollback).
+6. Ngay sau đó, để site tự chạy khi máy khởi động: `sudo systemctl enable happy-wedding.service`.
+7. Chạy các lệnh "Kiểm tra" ở mục systemd system unit, gồm `journalctl -u happy-wedding.service -n 5` không sudo (không in log thì làm theo đoạn ngay sau khối lệnh đó), rồi kiểm tra qua domain: trang thiệp đã xuất bản, đăng nhập khách và admin, tải một ảnh rồi mở nó.
+8. Tùy chọn, không cần cho lần chuyển: đổi nginx theo mục nginx. Site đã chạy đúng mà không có bước này, vì nginx hiện tại đã chuyển vào `127.0.0.1:3200` và ghi đè `X-Real-IP`; bước này chỉ thêm phần JS/CSS tĩnh. Nếu làm: giữ các dòng `listen`/`ssl_*` của certbot, không thêm `listen [::]`, rồi `sudo nginx -t && sudo systemctl reload nginx`. Port 3200 có thể đóng trên firewall: app không còn nghe ở địa chỉ public.
+
+**`.next-prev` sau lần đầu:** lần deploy đầu đổi tên `.next` của `next dev` (khoảng 1 GB, không phải bundle production) thành `.next-prev`. Nó chỉ dùng để quay về `next dev` (mục Rollback). Khi bản mới đã kiểm xong ở bước 7, xóa nó bằng `rm -rf .next-prev` để lấy lại chỗ trên đĩa; nếu không, lần deploy sau cũng xóa nó trước khi build.
 
 ### Deploy thường lệ
 
@@ -187,12 +219,15 @@ scripts/deploy-prod.sh --build-only   # chỉ kiểm tra và build, không đổ
 
 Thứ tự trong script, dừng ngay ở bước đầu tiên lỗi:
 
-1. **Kiểm tra** (chưa đổi gì): công cụ cần thiết, khóa chống chạy hai deploy, không có `next build` nào khác, RAM, unit chạy `next start` với `NODE_ENV=production` từ đúng checkout, cấu hình production hợp lệ, `prisma migrate status`, Prisma client đã sinh khớp `prisma/schema.prisma`, `node_modules` khớp dependency trực tiếp trong `pnpm-lock.yaml`.
+1. **Kiểm tra** (chưa đổi gì): công cụ cần thiết, khóa chống chạy hai deploy, không có `next build` nào khác, RAM, unit chạy `<checkout>/node_modules/next/dist/bin/next start` với `NODE_ENV=production` và WorkingDirectory là checkout này; với unit hệ thống thêm: systemd đã nạp unit, unit chạy với user hiện tại, `sudo -n` được phép `systemctl stop`/`start` unit, và user unit cùng tên còn chạy hay còn enable thì được ghi nhận để dừng lúc đổi; với user unit: không có unit hệ thống cùng tên đang chạy hay enable; cấu hình production hợp lệ, `prisma migrate status`, Prisma client đã sinh khớp `prisma/schema.prisma`, `node_modules` khớp dependency trực tiếp trong `pnpm-lock.yaml`.
 2. **Build** vào `.next-staging` với `NEXT_DIST_DIR`, trong khi server vẫn phục vụ từ `.next` (khoảng 30 giây và 1,2 GB RAM trên máy hiện tại; bundle khoảng 30 MB). `tsconfig.json` và `next-env.d.ts` mà Next sửa lúc build được trả lại.
 3. **Khởi động thử** bundle mới trên `127.0.0.1:3290` (`DEPLOY_CHECK_PORT`), chờ `/robots.txt` trả 200. Server chỉ lên được khi cấu hình production hợp lệ.
-4. **Đổi** (bắt đầu downtime): dừng unit; nếu có migration thì sao lưu DB (`scripts/backup.py --db-only` vào `~/happy_wedding-backups`) rồi `pnpm db:migrate`, lỗi thì chạy lại bundle cũ; đổi tên `.next` → `.next-prev`, `.next-staging` → `.next`; giữ cache ảnh; khởi động unit và chờ 200. Script in số giây downtime và BUILD_ID.
+4. **Đổi** (bắt đầu downtime): dừng unit (unit hệ thống qua `sudo -n systemctl`); lần chuyển đầu thì chép tệp user unit cũ vào thư mục backup rồi dừng và disable nó; kiểm port 3200 đã trống; nếu có migration thì sao lưu DB (`scripts/backup.py --db-only` vào `~/happy_wedding-backups`) rồi `pnpm db:migrate`; đổi tên `.next` → `.next-prev`, `.next-staging` → `.next`; giữ cache ảnh; khởi động unit và chờ 200. Script in số giây downtime và BUILD_ID, và nhắc `sudo systemctl enable` khi unit hệ thống chưa enable.
+5. **Tự khôi phục:** từ lúc unit đã dừng, mọi lỗi ở bước 4 (backup, migration, port vẫn bận, đổi tên thư mục, `start` lỗi, server mới không trả 200 trong 90 giây) và mọi lần bị ngắt (Ctrl-C, SIGTERM, mất SSH) đều đưa server trước về: dừng bản mới nếu đã start, trả cache ảnh, `.next` → `.next-staging`, `.next-prev` → `.next` (thư mục như trước lúc đổi), rồi start lại server đã chạy trước đó. Lần chuyển đầu thì đó là user unit cũ, enable lại như trước, trừ khi unit hệ thống đã enable (không để cả hai cùng enable; script in lệnh để sửa). Chỉ chạy một lần, không bị Ctrl-C cắt ngang, và kết thúc bằng `The previous server is back` khi port trả 200. DB **không** được khôi phục: lỗi sau migration thì code cũ chạy trên DB đã migrate, script in đường dẫn backup. Nếu khôi phục cũng lỗi, script in `The site is DOWN` kèm đúng các lệnh còn lại; chạy chúng theo thứ tự.
 
-Script không chạy `pnpm install` hay `prisma generate`. Cài đặt khác qua environment: `DEPLOY_SERVICE`, `DEPLOY_PORT`, `DEPLOY_CHECK_PORT`, `DEPLOY_BACKUP_DIR`, `DEPLOY_MIN_MEMORY_MB`, `DEPLOY_MIN_DISK_MB` (mặc định ở đầu script). Request đang chạy lúc dừng (ví dụ upload đang mã hóa) bị cắt, nên deploy lúc ít khách.
+Script không chạy `pnpm install` hay `prisma generate`. Cài đặt khác qua environment: `DEPLOY_SERVICE`, `DEPLOY_UNIT_SCOPE` (`auto`, `system` hoặc `user`), `DEPLOY_PORT`, `DEPLOY_CHECK_PORT`, `DEPLOY_BACKUP_DIR`, `DEPLOY_MIN_MEMORY_MB`, `DEPLOY_MIN_DISK_MB` (mặc định ở đầu script). Request đang chạy lúc dừng (ví dụ upload đang mã hóa) bị cắt, nên deploy lúc ít khách.
+
+Sửa `scripts/deploy-prod.sh` thì chạy `scripts/deploy-prod-dry-run.sh` (`bash -n` và `shellcheck` nếu có, trước đó). Nó chạy một bản sao của script trong thư mục tạm với `systemctl`, `sudo`, `node`, `pnpm`, `curl`… giả đặt đầu PATH, qua các tình huống user unit, unit hệ thống, lần chuyển đầu, sudo bị từ chối, migration, và các lỗi sau khi đã dừng server (backup lỗi, port vẫn bận, `mv` lỗi, `start` lỗi, server mới không lên, migration lỗi, SIGTERM giữa lúc đổi thư mục, khôi phục cũng lỗi) cho cả lần chuyển đầu lẫn lần deploy sau, và báo `ok`/`FAIL` từng điểm. Nó không đụng unit thật, sudo, port hay checkout này, nên chạy được cả khi site đang chạy.
 
 ### Schema change
 
@@ -200,7 +235,7 @@ Khi `prisma/schema.prisma` đổi, hoặc dependency trực tiếp trong `pnpm-l
 
 ```bash
 cd ~/happy_wedding
-systemctl --user stop happy-wedding.service
+sudo -n systemctl stop happy-wedding.service
 python3 scripts/backup.py --db-only ~/happy_wedding-backups
 pnpm db:migrate
 pnpm install --frozen-lockfile    # chỉ khi pnpm-lock.yaml đổi
@@ -212,18 +247,31 @@ Không chạy `prisma generate` trước `pnpm db:migrate`: nếu server khởi 
 
 ### Rollback
 
+Lỗi xảy ra trong lúc script đổi bundle thì script tự khôi phục (mục Deploy thường lệ, bước 5); sau đó bản mới nằm trong `.next-staging`, không có `.next-prev`, nên không cần làm gì thêm. Nếu script in `The site is DOWN` kèm danh sách lệnh, chạy đúng các lệnh đó theo thứ tự. Các lệnh dưới đây dùng khi bản mới đã chạy (đã trả 200) nhưng có lỗi.
+
 Bundle trước nằm trong `.next-prev` cho tới lần deploy sau.
 
 ```bash
 cd ~/happy_wedding
-systemctl --user stop happy-wedding.service
+sudo -n systemctl stop happy-wedding.service
 mv .next .next-failed && mv .next-prev .next
-systemctl --user start happy-wedding.service
+sudo -n systemctl start happy-wedding.service
 ```
 
 - Nếu lần deploy đó đã migrate: trước khi start, chép bản backup mà script in ra đè lên tệp DB của DATABASE_URL (mặc định `prisma/dev.db`) và xóa `dev.db-wal`, `dev.db-shm` cạnh nó. Mọi ghi từ lúc deploy tới lúc rollback sẽ mất.
 - Nếu lỗi nằm ở `next.config.ts` (`next start` đọc lại tệp này), `git checkout` về commit trước rồi mới start.
-- Quay về `next dev` sau lần chuyển đầu: chép lại `happy-wedding.service.dev` vào `~/.config/systemd/user/happy-wedding.service`, `systemctl --user daemon-reload`, rồi làm các lệnh ở trên.
+- Quay về user unit (`next dev`) sau lần chuyển đầu, khi `.next-prev` vẫn là `.next` của dev:
+
+  ```bash
+  cd ~/happy_wedding
+  sudo -n systemctl stop happy-wedding.service
+  sudo systemctl disable happy-wedding.service   # nếu đã enable; hỏi mật khẩu: sudoers chỉ mở start/stop/restart
+  mv .next .next-failed && mv .next-prev .next
+  systemctl --user enable --now happy-wedding.service
+  ```
+
+  Tệp user unit vẫn ở `~/.config/systemd/user/`; nếu đã bị sửa, chép lại bản `happy-wedding.service.user.<thời điểm>` trong `~/happy_wedding-backups` rồi `systemctl --user daemon-reload` trước lệnh cuối. Khi `/etc/systemd/system/happy-wedding.service` còn đó, script deploy vẫn chọn unit hệ thống: ở lại user unit thì chạy deploy với `DEPLOY_UNIT_SCOPE=user`, hoặc gỡ hẳn unit hệ thống: `sudo rm /etc/systemd/system/happy-wedding.service /etc/systemd/system/system.slice.d/50-happy-wedding-memory-low.conf /etc/sudoers.d/happy-wedding && sudo systemctl daemon-reload`.
+
 - Xóa `.next-failed` khi đã xem xong.
 
 ### Khác biệt sau khi bỏ `next dev`

@@ -1,0 +1,14 @@
+# /etc/sudoers.d/happy-wedding, installed from ops/sudoers-happy-wedding as
+# root with mode 0440 after `visudo -cf` (docs/OPERATIONS.md, "systemd system
+# unit"). The file name in sudoers.d must not contain a dot.
+#
+# Lets ccgram (scripts/deploy-prod.sh) start, stop and restart the site's
+# system unit without a password, and nothing else: sudo matches the
+# arguments exactly, so other actions, other units and extra options still
+# need the password. sudo resolves `systemctl` through secure_path to
+# /usr/bin/systemctl.
+Cmnd_Alias HAPPY_WEDDING_SERVICE = /usr/bin/systemctl start happy-wedding.service, \
+                                   /usr/bin/systemctl stop happy-wedding.service, \
+                                   /usr/bin/systemctl restart happy-wedding.service
+
+ccgram ALL=(root) NOPASSWD: HAPPY_WEDDING_SERVICE

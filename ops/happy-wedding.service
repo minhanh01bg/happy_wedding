@@ -1,0 +1,68 @@
+# /etc/systemd/system/happy-wedding.service, installed from ops/ as root
+# (docs/OPERATIONS.md, "systemd system unit"). Runs `next start` as ccgram.
+#
+# A system unit rather than a user unit because only the system manager can
+# protect the server from being OOM-killed: a user manager cannot set a
+# negative OOMScoreAdjust=, systemd-oomd ignores ManagedOOMPreference= on
+# cgroups root does not own, and on this host systemd-oomd watches the
+# user@.service tree (memory pressure), not system.slice.
+#
+# Paths are absolute: in a system unit %h is root's home, not ccgram's.
+# scripts/deploy-prod.sh checks WorkingDirectory, ExecStart and NODE_ENV.
+
+[Unit]
+Description=Happy Wedding (next start)
+After=network.target
+# Restart=always never gives up: without this, five starts within 10 s (for
+# example right after repeated OOM kills) would leave the unit failed and the
+# site down until someone starts it by hand.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=ccgram
+Group=ccgram
+WorkingDirectory=/home/ccgram/happy_wedding
+# No secrets here: Next reads .env.production.local and .env from the
+# working directory.
+Environment=NODE_ENV=production
+Environment=PATH=/home/ccgram/.nvm/versions/node/v22.23.3/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/ccgram/.nvm/versions/node/v22.23.3/bin/node /home/ccgram/happy_wedding/node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3200
+
+# Also after a kernel OOM kill (OOMPolicy=stop ends the unit, then this
+# restarts it). `systemctl stop` does not trigger a restart.
+Restart=always
+# With StartLimitIntervalSec=0 nothing caps the restarts, so space them out:
+# a server that dies at once (bad .env, broken bundle) or keeps getting
+# OOM-killed then costs a Node start every 10 s, not every 2 s, on a host
+# that is already short of memory.
+RestartSec=10
+# Next finishes in-flight requests on SIGTERM; uploads that are still being
+# encoded get cut after this.
+TimeoutStopSec=20
+
+# Kernel OOM killer: score adjustment -900 of -1000, so it picks almost any
+# other process first. Not -1000: a runaway server must stay killable.
+OOMScoreAdjust=-900
+# systemd-oomd: never pick this cgroup while others qualify, if a future
+# configuration watches system.slice.
+ManagedOOMPreference=avoid
+# Reclaim protection for the server's resting working set. It takes effect
+# only while every parent slice has protection too:
+# ops/system.slice-memory-low.conf gives system.slice the same amount.
+MemoryLow=256M
+# No MemoryMax=: an upload peaks around 1.6 GB on top of Node's baseline
+# (docs/OPERATIONS.md), and a cap would get the server killed mid-upload.
+
+# Logs go to the journal; journald rotates and caps it, no logrotate needed.
+# Because the service runs as ccgram, a persistent journal with
+# SplitMode=uid (the default) stores its output in ccgram's journal file, so
+# `journalctl -u happy-wedding.service` works without sudo. Other journald
+# settings keep it in the system journal: docs/OPERATIONS.md ("Kiểm tra")
+# says how to check after the switch and what to do then.
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=happy-wedding
+
+[Install]
+WantedBy=multi-user.target

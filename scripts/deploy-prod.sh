@@ -19,7 +19,8 @@
 # with `sudo -n systemctl`, which ops/sudoers-happy-wedding allows without a
 # password. Both units listen on the same port, so while the system unit is
 # switched in, a user unit of the same name that still runs or starts at
-# boot is stopped and disabled, after a copy of its unit file is saved.
+# boot is stopped and disabled, after a copy of its unit file is saved. The
+# system unit is enabled by hand once it serves (the script reminds you).
 #
 # Settings (environment, all optional):
 #   DEPLOY_SERVICE        systemd unit to switch          happy-wedding.service
@@ -179,6 +180,18 @@ retire_user_unit() {
   if is_enabled "$USER_ENABLED"; then systemctl --user disable "$SERVICE"; fi
   echo "Old user unit: stopped and disabled"
 }
+# Puts the old user unit back as it was (no sudo needed); the system unit is
+# stopped at this point.
+restore_user_unit() {
+  if is_enabled "$USER_ENABLED"; then systemctl --user enable "$SERVICE"; fi
+  if is_running "$USER_ACTIVE"; then systemctl --user start "$SERVICE"; fi
+  USER_UNIT_RETIRED=false
+  echo "Old user unit: restored ($USER_ACTIVE, $USER_ENABLED)"
+}
+# The system unit is enabled only after the first switch (two enabled units
+# would both start at boot on the same port), with a password: the sudoers
+# file allows start, stop and restart only.
+system_unit_enabled() { is_enabled "$(unit_show UnitFileState 2>/dev/null || true)"; }
 
 # ---------------------------------------------------------------------------
 step "Checks (nothing changes yet)"
@@ -227,8 +240,8 @@ if [[ $BUILD_ONLY == false ]]; then
   # pipefail); never printed, as the unit could hold settings.
   unit_exec=$(unit_show ExecStart)
   unit_env=$(unit_show Environment)
-  grep -q 'bin/next start ' <<<"$unit_exec" ||
-    die "$SERVICE does not run 'next start'; install the unit from docs/OPERATIONS.md first"
+  grep -qF "$ROOT/$NEXT_BIN start " <<<"$unit_exec" ||
+    die "$SERVICE does not run '$ROOT/$NEXT_BIN start'; install the unit from docs/OPERATIONS.md first"
   grep -qw 'NODE_ENV=production' <<<"$unit_env" ||
     die "$SERVICE does not set NODE_ENV=production"
 
@@ -368,6 +381,13 @@ if [[ $MIGRATE == true ]]; then
   backup=${backup#Backup saved: }
   echo "Database backup: $backup"
   if ! pnpm db:migrate; then
+    if [[ $USER_UNIT_RETIRED == true ]]; then
+      # First switch: what ran before is the old user unit, not the system
+      # unit (LIVE is still its .next).
+      restore_user_unit
+      if is_running "$USER_ACTIVE"; then SITE_DOWN=false; fi
+      die "migration failed; the old user unit is back as it was. Backup: $backup"
+    fi
     if [[ -f $LIVE/BUILD_ID ]]; then
       "${UNIT_CONTROL[@]}" start "$SERVICE"
       SITE_DOWN=false
@@ -403,7 +423,9 @@ if ! wait_for_health "$PORT" 90 || ! "${UNIT_READ[@]}" is-active --quiet "$SERVI
     printf '  restore the database from %s (the old code expects the old schema)\n' "$backup" >&2
   fi
   if [[ $USER_UNIT_RETIRED == true ]]; then
-    printf '  sudo systemctl disable %s   # asks for the password\n' "$SERVICE" >&2
+    if system_unit_enabled; then
+      printf '  sudo systemctl disable %s   # asks for the password\n' "$SERVICE" >&2
+    fi
     printf '  systemctl --user enable --now %s   # the old user unit\n' "$SERVICE" >&2
   else
     printf '  %s start %s\n' "${UNIT_CONTROL[*]}" "$SERVICE" >&2
@@ -416,6 +438,10 @@ step "Live: $(cat "$LIVE/BUILD_ID") answered after $((SECONDS - stopped_at)) s"
 if [[ $SCOPE == system ]]; then
   main_pid=$(unit_show MainPID)
   echo "OOM score adjustment of PID $main_pid: $(cat "/proc/$main_pid/oom_score_adj" 2>/dev/null || echo unknown)"
+  if ! system_unit_enabled; then
+    printf '\nNOTE: %s is not enabled, so it will not start after a reboot. Run once:\n  sudo systemctl enable %s\n' \
+      "$SERVICE" "$SERVICE"
+  fi
 fi
 if [[ -d $PREVIOUS ]]; then
   echo "The previous bundle stays in $PREVIOUS ($(du -sh "$PREVIOUS" | cut -f1)) until the next deploy."

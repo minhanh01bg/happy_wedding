@@ -54,6 +54,24 @@ type RSVPInput = {
 
 Trả data `{id: responseId}`. Thiệp phải công khai hợp lệ. Personal client identity được thay bằng guest ID; submit lại cập nhật một record và đưa lời chúc về pending.
 
+GET/HEAD `/w/<slug>/og.jpg?v=<version>` (02/11/2026) là ảnh xem trước link (og:image) khi chia sẻ thiệp qua Messenger/Zalo/Facebook. Không cần phiên, không nhận và không đọc guest token; route ở `src/app/w/[slug]/og.jpg/route.ts`, logic ở `src/server/wedding/share-image.ts`.
+
+- **Quyền xem** như trang `/w/<slug>` (`publicInvitation`): đã publish, chủ thiệp không bị khóa, đã thanh toán và còn hạn. Bản nháp, thiệp tạm ẩn/hết hạn, chủ bị khóa, slug không tồn tại hoặc không có tệp ảnh nào trả 404 `text/plain`, `Cache-Control: no-store`, không decode ảnh.
+- **Chọn ảnh**: ảnh bìa mà hero đang hiện (`heroCover`: thiệp mẫu còn bìa mặc định dùng ảnh bìa của mẫu), nếu tệp không còn thì ảnh album đầu tiên. Chỉ nhận `/images/<tên>` hoặc `/uploads/weddings/<uuid>.webp` có tệp thật dưới `public/`.
+- **Ảnh trả về**: JPEG 1200×630, sRGB, quality 82 (mozjpeg), không EXIF/GPS/ICC; thường 30–120 KB (ảnh JPEG 45 MP, 19 MB khi thử: 70 KB). Ảnh rộng từ tỉ lệ 1,45 trở lên (3:2, toàn cảnh) được phóng phủ khung rồi cắt quanh điểm chú ý của Sharp, không cắt thấp hơn 25% phần dư theo chiều dọc (như `object-position: 50% 25%` của hero) để không mất đầu. Ảnh hẹp hơn (dọc, vuông, 4:3) giữ nguyên cả ảnh, đặt giữa trên nền chính ảnh đó phóng to, làm mờ và tối đi.
+- **Ảnh gốc không bị đụng tới**: chỉ đọc; thẻ dẫn xuất lưu ở `.cache/share-images/<version>.jpg` dưới thư mục chạy server (gitignored, ghi tạm rồi rename). Không tự dọn tệp cũ; xóa cả thư mục lúc nào cũng an toàn, lần gọi sau sẽ tạo lại.
+- **`version`**: 16 ký tự hex đầu của SHA-256 trên đường dẫn ảnh, kích thước và mtime tệp, cùng phiên bản cách dựng thẻ. Đổi ảnh bìa thì đổi `version`, URL og:image mới qua mặt cache của crawler. Sửa chữ trên thiệp không đổi ảnh nên không đổi URL.
+- **Cache**: `v` đúng phiên bản hiện tại trả `Cache-Control: public, max-age=86400`; thiếu hoặc sai `v` (link cũ trước khi đổi bìa) vẫn trả thẻ hiện tại nhưng `public, max-age=300`. Luôn có `Content-Length` và `X-Content-Type-Options: nosniff`. HEAD trả cùng status/header, không có body.
+- **Tải**: mỗi tiến trình dựng 1 thẻ một lúc (Sharp shrink-on-load, ~100 MB RSS với ảnh 45 MP, dưới 1,5 s); tối đa 10 request chờ, mỗi request chờ ≤30 s, nhiều crawler cùng hỏi một `version` dùng chung một lần dựng. Hàng đầy hoặc hết giờ trả 503 `Retry-After: 30` (log `share_image_busy`). Lỗi không mong đợi trả 500 `text/plain` kèm correlationId, log `share_image_error` (correlationId, errorClass, errorCode; không có slug, token hay đường dẫn tệp). Dựng xong log `share_image_rendered` (version, bytes, ms).
+
+`generateMetadata` của `/w/<slug>` (`src/app/w/[slug]/invitation-metadata.ts`) cho thiệp công khai:
+
+- Mọi URL tuyệt đối trên origin công khai (`publicSiteUrl` trong `src/server/http/site-url.ts`): `NEXT_PUBLIC_APP_URL` nếu là URL công khai, không thì `CANONICAL_ORIGIN`, rút về origin; không dùng Host của request nên không ra `localhost`, `127.0.0.1` hay `0.0.0.0` sau nginx. `metadataBase` cũng là origin này.
+- `title` `<chú rể> & <cô dâu> — Thiệp cưới` (layout thêm `| Hỷ Studio`), `description` là headline; `robots` giữ `noindex, nofollow`.
+- `og:type` `website`, `og:url` chuẩn `<origin>/w/<slug>` (không `?guest=`, kể cả khi khách mở link cá nhân), `og:site_name` `Hỷ Studio`, `og:locale` `vi_VN`, `og:title`, `og:description`; `og:image` là `<origin>/w/<slug>/og.jpg?v=<version>` kèm `og:image:width` 1200, `og:image:height` 630, `og:image:type` `image/jpeg`, `og:image:alt` `<chú rể> và <cô dâu> — ảnh thiệp cưới`.
+- `twitter:card` `summary_large_image` (Next điền `twitter:title/description/image` từ Open Graph). Không có tệp ảnh nào thì bỏ og:image và dùng `summary`.
+- Thiệp không công khai giữ metadata cũ: chỉ `title` “Lời mời chưa sẵn sàng” và `noindex`, không og:image.
+
 ## Admin
 
 Mọi operation dưới `admin/` cần phiên admin và role owner/manager. Riêng `admin/settings` chỉ dành cho owner; manager nhận 403. Bản ghi không tồn tại (Prisma P2025) trả 404 `Không tìm thấy dữ liệu`, không ghi audit.

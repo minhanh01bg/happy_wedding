@@ -55,6 +55,12 @@ async function main() {
         "TRUSTED_CLIENT_IP_HEADER=x-real-ip (docs/OPERATIONS.md).\n",
     );
 
+  if (process.env.RATE_LIMIT_STORE === "memory")
+    process.stderr.write(
+      "Note: RATE_LIMIT_STORE=memory keeps rate limits inside the server " +
+        "process; run exactly one instance (docs/adr/0012).\n",
+    );
+
   const databaseUrl = process.env.DATABASE_URL ?? "file:./dev.db";
   if (!databaseUrl.startsWith("file:"))
     fail("DATABASE_URL must be a SQLite file: URL.");

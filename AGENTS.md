@@ -22,7 +22,7 @@ This repository was cloned from `my_task`. The active product is a wedding invit
 - Personal guest tokens are opaque capabilities. Keep them out of logs and referrers. Never expose a complete guest list on public pages.
 - GuestResponse wishes default to pending and render publicly only after approval. RSVP replays update one response.
 - SQLite uses one pooled connection; use only `tx` within interactive transactions. Never call root Prisma from inside them.
-- Production fails closed for Redis, rate-limit HMAC, canonical origin, public URL and admin password hash. Build-only placeholders must never become runtime defaults.
+- Production fails closed for the rate-limit store, rate-limit HMAC, canonical origin, public URL and admin password hash. The store is Upstash Redis unless `RATE_LIMIT_STORE=memory` is set explicitly, which is valid for a single instance only (ADR 0012); never make memory a default. Build-only placeholders must never become runtime defaults.
 - Use logger, not direct console for application logging. Never commit `.env`, `.local-admin-password`, DB files or uploaded images.
 - Fresh migrations describe the new wedding domain; never apply them to the source my_task database.
 

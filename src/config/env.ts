@@ -10,6 +10,11 @@ z.config({ jitless: true });
  * if mandatory security configurations (Upstash Redis REST URL & token,
  * rate limit HMAC secret, trusted proxy configuration, canonical origin, or a
  * public site URL) are absent or malformed.
+ *
+ * The one exception is explicit: RATE_LIMIT_STORE=memory keeps rate-limit
+ * counters inside this process instead of Upstash, which is only valid for a
+ * single instance (docs/adr/0012-single-instance-memory-rate-limit.md). It is
+ * never a default, and the build-phase placeholders below never set it.
  */
 
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "0.0.0.0", "[::1]"]);
@@ -50,6 +55,12 @@ export const envSchema = z
     UPSTASH_REDIS_REST_URL: z.string().url().optional(),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1).optional(),
 
+    // Where production keeps rate-limit counters. Unset means Upstash.
+    // "memory" is an explicit opt-in for ONE instance: counters live in the
+    // process, so several instances would each allow the full limit.
+    // Development and tests always use the in-process store.
+    RATE_LIMIT_STORE: z.enum(["upstash", "memory"]).optional(),
+
     // Keyed HMAC secret for pseudonymizing client identifiers (IP, phone, session)
     RATE_LIMIT_KEY_SECRET: z.string().min(32).optional(),
 
@@ -73,21 +84,25 @@ export const envSchema = z
   .superRefine((data, ctx) => {
     // In production, security controls fail closed: required variables must be strictly enforced.
     if (data.NODE_ENV === "production") {
-      if (!data.UPSTASH_REDIS_REST_URL) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message:
-            "UPSTASH_REDIS_REST_URL is required in production for distributed rate limiting",
-          path: ["UPSTASH_REDIS_REST_URL"],
-        });
-      }
-      if (!data.UPSTASH_REDIS_REST_TOKEN) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message:
-            "UPSTASH_REDIS_REST_TOKEN is required in production for distributed rate limiting",
-          path: ["UPSTASH_REDIS_REST_TOKEN"],
-        });
+      // Upstash stays mandatory unless the single-instance memory store was
+      // chosen explicitly.
+      if (data.RATE_LIMIT_STORE !== "memory") {
+        if (!data.UPSTASH_REDIS_REST_URL) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message:
+              "UPSTASH_REDIS_REST_URL is required in production for distributed rate limiting (single instance: set RATE_LIMIT_STORE=memory)",
+            path: ["UPSTASH_REDIS_REST_URL"],
+          });
+        }
+        if (!data.UPSTASH_REDIS_REST_TOKEN) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message:
+              "UPSTASH_REDIS_REST_TOKEN is required in production for distributed rate limiting (single instance: set RATE_LIMIT_STORE=memory)",
+            path: ["UPSTASH_REDIS_REST_TOKEN"],
+          });
+        }
       }
       if (
         !data.RATE_LIMIT_KEY_SECRET ||
@@ -162,6 +177,10 @@ const isBuildPhase =
   process.env.NEXT_PHASE === "phase-production-build" ||
   process.env.npm_lifecycle_event === "build";
 
+// Placeholders for `next build` only, so a build does not need production
+// secrets. They exist only in this parse: `next start` evaluates this module
+// again with the real environment. Never add RATE_LIMIT_STORE here: the
+// in-process store must be chosen by the operator, not by a build default.
 const envToParse =
   isBuildPhase && !process.env.UPSTASH_REDIS_REST_URL
     ? {

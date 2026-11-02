@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Dry run of scripts/deploy-prod.sh. Runs a copy of it in a throwaway folder,
-# with stub systemctl, sudo, journalctl, node, pnpm, curl, python3, free, df,
-# pgrep and git first on PATH, through the scenarios below, and checks what it
+# with stub systemctl, sudo, journalctl, node, pnpm, curl, python3, mv, free,
+# df, pgrep and git first on PATH, through the scenarios below, and checks what it
 # did. Nothing real is touched: no unit, no sudo, no port, no build, and not
 # this checkout (the copy only sees the throwaway folder). The unit is called
 # dry-run-happy-wedding.service, which exists on no machine, and the stubs
@@ -33,8 +33,19 @@ trap cleanup EXIT
 
 # --- Stubs ------------------------------------------------------------------
 # State lives in $DRY_STATE: one file per unit property (system.ActiveState,
-# user.UnitFileState, ...), port.<n> while something answers on port n, and
-# calls.log. Anything the real deploy must never do lands in violations.
+# user.UnitFileState, ...), port.<n> holding who answers on port n (system,
+# user, check or stray), and calls.log. Anything the real deploy must never do
+# lands in violations. Failures to inject:
+#   <scope>.StartPlan  one line per start of that unit, used up in order:
+#                      "exit" (systemctl start fails, nothing starts) or
+#                      "failed" (answers once, then exits); none left = starts
+#   stray              something outside systemd takes the port as soon as a
+#                      stop frees it
+#   backup.fails       scripts/backup.py fails (disk full)
+#   mv.fails           mv of the folder named in it fails, once
+#   mv.signal          mv of the folder named in it moves it, then sends
+#                      SIGTERM to the deploy, once
+REAL_MV=$(command -v mv)
 mkdir -p "$BIN"
 
 cat >"$BIN/systemctl" <<'EOF'
@@ -104,16 +115,31 @@ case $cmd in
     case $cmd in
       stop | restart)
         put "$scope.ActiveState" inactive
-        if [[ $(get "port.$DRY_PORT") == "$scope" ]]; then rm -f -- "$S/port.$DRY_PORT"; fi
+        if [[ $(get "port.$DRY_PORT") == "$scope" ]]; then
+          rm -f -- "$S/port.$DRY_PORT"
+          if [[ -f $S/stray ]]; then put "port.$DRY_PORT" stray; fi
+        fi
         ;;
     esac
     case $cmd in
       start | restart)
-        if [[ -f $S/port.$DRY_PORT ]]; then
-          violation "$scope unit started while the $(get "port.$DRY_PORT") unit holds port $DRY_PORT"
+        plan=
+        if [[ -s $S/$scope.StartPlan ]]; then
+          plan=$(head -n 1 "$S/$scope.StartPlan")
+          sed -i 1d "$S/$scope.StartPlan"
         fi
-        put "$scope.ActiveState" "$(get "$scope.StartState" active)"
-        if [[ $(get "$scope.StartHealthy" yes) == yes ]]; then put "port.$DRY_PORT" "$scope"; fi
+        if [[ $plan == exit ]]; then
+          echo "Job for $unit failed because the control process exited with error code." >&2
+          exit 1
+        fi
+        holder=$(get "port.$DRY_PORT")
+        if [[ -n $holder && $holder != stray ]]; then
+          violation "$scope unit started while the $holder unit holds port $DRY_PORT"
+        fi
+        # "failed": it answered once, then exited (the deploy's is-active
+        # check sees it). A stray keeps the port: the unit runs but cannot bind.
+        if [[ $plan == failed ]]; then put "$scope.ActiveState" failed; else put "$scope.ActiveState" active; fi
+        if [[ -z $holder ]]; then put "port.$DRY_PORT" "$scope"; fi
         if [[ $(get system.ActiveState) == active && $(get user.ActiveState) == active ]]; then
           violation "both units run"
         fi
@@ -233,6 +259,10 @@ cat >"$BIN/python3" <<'EOF'
 #!/usr/bin/env bash
 printf 'python3 %s\n' "$*" >>"$DRY_STATE/calls.log"
 [[ ${1:-} == scripts/backup.py && ${2:-} == --db-only && -n ${3:-} ]] || exit 1
+if [[ -f $DRY_STATE/backup.fails ]]; then
+  echo "OSError: [Errno 28] No space left on device" >&2
+  exit 1
+fi
 mkdir -p -- "$3"
 : >"$3/dry-run-db.sqlite"
 echo "Backup saved: $3/dry-run-db.sqlite"
@@ -250,6 +280,28 @@ echo "Filesystem     1048576-blocks  Used Available Capacity Mounted on"
 echo "/dev/dry-run           100000 10000     90000      10% /"
 EOF
 
+# The real mv, unless the scenario makes the move of one folder fail or
+# interrupts the deploy right after it.
+printf '#!/usr/bin/env bash\nREAL_MV=%q\n' "$REAL_MV" >"$BIN/mv"
+cat >>"$BIN/mv" <<'EOF'
+S=$DRY_STATE
+printf 'mv %s\n' "$*" >>"$S/calls.log"
+paths=()
+for arg in "$@"; do [[ $arg == -* ]] || paths+=("$arg"); done
+if [[ -f $S/mv.fails && ${paths[0]:-} == "$(cat "$S/mv.fails")" ]]; then
+  rm -f -- "$S/mv.fails"
+  echo "mv: cannot move '${paths[0]}' to '${paths[1]:-}': Input/output error" >&2
+  exit 1
+fi
+if [[ -f $S/mv.signal && ${paths[0]:-} == "$(cat "$S/mv.signal")" ]]; then
+  rm -f -- "$S/mv.signal"
+  "$REAL_MV" "$@" || exit
+  kill -TERM "$PPID"
+  exit 0
+fi
+exec "$REAL_MV" "$@"
+EOF
+
 printf '#!/usr/bin/env bash\nexit 1\n' >"$BIN/pgrep"
 
 cat >"$BIN/git" <<'EOF'
@@ -259,7 +311,7 @@ EOF
 
 chmod +x "$BIN"/*
 
-for tool in systemctl sudo journalctl node pnpm curl; do
+for tool in systemctl sudo journalctl node pnpm curl python3 mv; do
   found=$(PATH="$BIN:/usr/bin:/bin" command -v "$tool")
   [[ $found == "$BIN/$tool" ]] || {
     echo "the $tool stub does not come first on PATH ($found)" >&2
@@ -381,6 +433,53 @@ asked_sudo_before_build() {
 build_files_restored() { [[ $(cat "$ROOT/tsconfig.json") == '{ "compilerOptions": {} }' ]]; }
 live_is_new_build() { [[ $(cat "$ROOT/.next/BUILD_ID" 2>/dev/null) == dry-run-build ]]; }
 
+# The two starting points of a switch: the first one from the next dev user
+# unit, and a later deploy to the system unit.
+first_switch() {
+  dev_bundle
+  unit system loaded inactive disabled
+  unit user loaded active enabled dev development
+}
+later_deploy() {
+  production_bundle
+  unit system loaded active enabled
+  unit user loaded inactive disabled dev development
+}
+# Folders as they were before the switch: the old .next is live with its
+# image cache, the new build waits in .next-staging, no .next-prev.
+staged_new_build() {
+  [[ $(cat "$ROOT/.next-staging/BUILD_ID" 2>/dev/null) == dry-run-build ]] && test ! -e "$ROOT/.next-prev"
+}
+dev_folders_restored() {
+  test -f "$ROOT/.next/dev/cache/images/a.webp" && test ! -e "$ROOT/.next/BUILD_ID" && staged_new_build
+}
+prod_folders_restored() {
+  [[ $(cat "$ROOT/.next/BUILD_ID" 2>/dev/null) == old-build ]] &&
+    test -f "$ROOT/.next/cache/images/a.webp" && staged_new_build
+}
+never_both_enabled() { ! { state_is system.UnitFileState enabled && state_is user.UnitFileState enabled; }; }
+restored_once() { [[ $(grep -c 'The previous server is back' "$OUT") == 1 ]]; }
+# expect_restored first|later [EXIT [PORT_HOLDER]]: a failure after the stop
+# put the previous server back by itself.
+expect_restored() {
+  local code=${2:-1} holder=${3:-}
+  check "exits $code" exit_is "$code"
+  if [[ $1 == first ]]; then
+    check "the old user unit runs and is enabled again, the system unit is stopped" \
+      eval 'state_is user.ActiveState active && state_is user.UnitFileState enabled && state_is system.ActiveState inactive'
+    check "port $PORT is answered by ${holder:-the old user unit}" state_is "port.$PORT" "${holder:-user}"
+    check "folders as before: dev .next live, new build in .next-staging, no .next-prev" dev_folders_restored
+  else
+    check "the system unit runs again, the user unit stays stopped" \
+      eval 'state_is system.ActiveState active && state_is user.ActiveState inactive'
+    check "port $PORT is answered by ${holder:-the system unit}" state_is "port.$PORT" "${holder:-system}"
+    check "folders as before: old bundle live, new build in .next-staging, no .next-prev" prod_folders_restored
+  fi
+  check "never leaves both units enabled" never_both_enabled
+  check "says the previous server is back, once" restored_once
+  check "does not report the site down" out_lacks "The site is DOWN"
+}
+
 # --- Scenarios --------------------------------------------------------------
 setup user-path "1. User unit path (auto: no /etc/systemd/system/$SERVICE), regular deploy"
 production_bundle
@@ -488,35 +587,25 @@ check "new bundle live" live_is_new_build
 finish
 
 setup system-new-server-fails "7. First switch, the new server fails after starting"
-dev_bundle
-unit system loaded inactive disabled
-unit user loaded active enabled dev development
-printf 'failed' >"$STATE/system.StartState"
+first_switch
+printf 'failed\n' >"$STATE/system.StartPlan"
 run_deploy DEPLOY_UNIT_SCOPE=system
-check "exits 1" exit_is 1
 check "shows the journal" called "^journalctl -u $SERVICE -n 40 --no-pager\$"
-check "prints the rollback to the user unit" out_has "systemctl --user enable --now $SERVICE"
-check "no sudo disable for a unit that is not enabled" out_lacks "sudo systemctl disable"
-check "reports the site down and the retired user unit" \
-  eval 'out_has "The site is DOWN" && out_has "old user unit was stopped and disabled"'
+check "stops the new server before the old user unit starts" \
+  controls_are "system (sudo): systemctl stop,user: systemctl stop,user: systemctl disable,system (sudo): systemctl start,system (sudo): systemctl stop,user: systemctl enable,user: systemctl start"
+expect_restored first
 finish
 
 setup system-migration-fails "8. First switch with a migration that fails"
-dev_bundle
-unit system loaded inactive disabled
-unit user loaded active enabled dev development
+first_switch
 : >"$STATE/migrate.pending"
 : >"$STATE/migrate.fails"
 run_deploy DEPLOY_UNIT_SCOPE=system
-check "exits 1" exit_is 1
 check "backs up the database first" called "^python3 scripts/backup.py --db-only "
 check "puts the user unit back" \
   controls_are "system (sudo): systemctl stop,user: systemctl stop,user: systemctl disable,user: systemctl enable,user: systemctl start"
-check "dev server runs and is enabled again" eval 'state_is user.ActiveState active && state_is user.UnitFileState enabled'
-check "system unit stays stopped" state_is system.ActiveState inactive
-check "says so, without reporting the site down" \
-  eval 'out_has "the old user unit is back as it was" && out_lacks "The site is DOWN"'
-check "live .next untouched" eval 'test -d "$ROOT/.next/dev" && test ! -e "$ROOT/.next-prev"'
+check "names the database backup" out_has "migration failed; database backup: $DIR/root-backups/dry-run-db.sqlite"
+expect_restored first
 finish
 
 setup user-path-system-enabled "9. User unit path while the system unit is enabled"
@@ -548,6 +637,159 @@ run_deploy DEPLOY_UNIT_SCOPE=system
 check "exits 1" exit_is 1
 check "asks for a login session" out_has "cannot reach your systemd user manager"
 check "touches no unit and builds nothing" eval 'controls_are "" && not_called "^pnpm build"'
+finish
+
+# --- Failures after the stop: the previous server comes back by itself -----
+setup first-backup-fails "12. First switch, the database backup fails (disk full)"
+first_switch
+: >"$STATE/migrate.pending"
+: >"$STATE/backup.fails"
+run_deploy DEPLOY_UNIT_SCOPE=system
+check "shows the backup error" out_has "No space left on device"
+check "does not migrate" not_called '^pnpm db:migrate'
+check "never starts the system unit" not_called "^system \(sudo\): systemctl start"
+expect_restored first
+finish
+
+setup first-port-busy "13. First switch, port $PORT still answers after the stop"
+first_switch
+: >"$STATE/stray"
+run_deploy DEPLOY_UNIT_SCOPE=system
+check "says the port still answers" out_has "port $PORT still answers"
+check "never starts the system unit" not_called "^system \(sudo\): systemctl start"
+expect_restored first 1 stray
+finish
+
+setup first-mv-fails "14. First switch, moving .next-staging to .next fails"
+first_switch
+printf '.next-staging' >"$STATE/mv.fails"
+run_deploy DEPLOY_UNIT_SCOPE=system
+check "moves .next-prev back to .next" called '^mv -T -- \.next-prev \.next$'
+check "never starts the system unit" not_called "^system \(sudo\): systemctl start"
+expect_restored first
+finish
+
+setup first-start-fails "15. First switch, sudo -n systemctl start fails"
+first_switch
+printf 'exit\n' >"$STATE/system.StartPlan"
+run_deploy DEPLOY_UNIT_SCOPE=system
+check "says the start failed" out_has "'sudo -n systemctl start $SERVICE' failed"
+check "stops the system unit before the old user unit starts" \
+  controls_are "system (sudo): systemctl stop,user: systemctl stop,user: systemctl disable,system (sudo): systemctl start,system (sudo): systemctl stop,user: systemctl enable,user: systemctl start"
+check "moves the image cache back to the dev .next" test ! -e "$ROOT/.next-staging/cache/images"
+expect_restored first
+finish
+
+setup first-enabled-backup-fails "16. First switch with the system unit already enabled, the backup fails"
+first_switch
+unit system loaded inactive enabled
+: >"$STATE/migrate.pending"
+: >"$STATE/backup.fails"
+run_deploy DEPLOY_UNIT_SCOPE=system
+check "exits 1" exit_is 1
+check "the old user unit runs again, the system unit is stopped" \
+  eval 'state_is user.ActiveState active && state_is system.ActiveState inactive && state_is port.$PORT user'
+check "leaves the user unit disabled next to the enabled system unit" \
+  eval 'state_is user.UnitFileState disabled && state_is system.UnitFileState enabled'
+check "says how to put the boot setup back" out_has "sudo systemctl disable $SERVICE"
+check "folders as before" dev_folders_restored
+check "says the previous server is back" restored_once
+finish
+
+setup later-backup-fails "17. Later deploy, the database backup fails (disk full)"
+later_deploy
+: >"$STATE/migrate.pending"
+: >"$STATE/backup.fails"
+run_deploy DEPLOY_UNIT_SCOPE=system
+check "does not migrate" not_called '^pnpm db:migrate'
+check "starts the previous bundle again" \
+  controls_are "system (sudo): systemctl stop,system (sudo): systemctl start"
+expect_restored later
+finish
+
+setup later-port-busy "18. Later deploy, port $PORT still answers after the stop"
+later_deploy
+: >"$STATE/stray"
+run_deploy DEPLOY_UNIT_SCOPE=system
+check "says the port still answers" out_has "port $PORT still answers"
+check "starts the previous bundle again, nothing else" \
+  controls_are "system (sudo): systemctl stop,system (sudo): systemctl start"
+check "warns that something else answers on the port" out_has "something else answered on port $PORT"
+expect_restored later 1 stray
+finish
+
+setup later-mv-fails "19. Later deploy, moving .next-staging to .next fails"
+later_deploy
+printf '.next-staging' >"$STATE/mv.fails"
+run_deploy DEPLOY_UNIT_SCOPE=system
+check "moves .next-prev back to .next" called '^mv -T -- \.next-prev \.next$'
+check "starts the previous bundle again" \
+  controls_are "system (sudo): systemctl stop,system (sudo): systemctl start"
+expect_restored later
+finish
+
+setup later-start-fails "20. Later deploy, sudo -n systemctl start fails once"
+later_deploy
+printf 'exit\n' >"$STATE/system.StartPlan"
+run_deploy DEPLOY_UNIT_SCOPE=system
+check "says the start failed" out_has "'sudo -n systemctl start $SERVICE' failed"
+check "stops, swaps back, starts the previous bundle" \
+  controls_are "system (sudo): systemctl stop,system (sudo): systemctl start,system (sudo): systemctl stop,system (sudo): systemctl start"
+check "moves the image cache back to the old bundle" test ! -e "$ROOT/.next-staging/cache/images"
+expect_restored later
+finish
+
+setup later-new-server-fails "21. Later deploy, the new server fails after starting"
+later_deploy
+printf 'failed\n' >"$STATE/system.StartPlan"
+run_deploy DEPLOY_UNIT_SCOPE=system
+check "shows the journal" called "^journalctl -u $SERVICE -n 40 --no-pager\$"
+expect_restored later
+finish
+
+setup later-migration-fails "22. Later deploy with a migration that fails"
+later_deploy
+: >"$STATE/migrate.pending"
+: >"$STATE/migrate.fails"
+run_deploy DEPLOY_UNIT_SCOPE=system
+check "starts the previous bundle again" \
+  controls_are "system (sudo): systemctl stop,system (sudo): systemctl start"
+expect_restored later
+finish
+
+setup later-signal "23. Later deploy, SIGTERM right after .next moved to .next-prev"
+later_deploy
+printf '.next' >"$STATE/mv.signal"
+run_deploy DEPLOY_UNIT_SCOPE=system
+check "moves .next-prev back to .next" called '^mv -T -- \.next-prev \.next$'
+expect_restored later 143
+finish
+
+setup later-restore-fails "24. Later deploy, sudo -n refuses the start, so the restore fails too"
+later_deploy
+printf 'stop\nrestart\n' >"$STATE/sudo.run"
+run_deploy DEPLOY_UNIT_SCOPE=system
+check "exits 1" exit_is 1
+check "tries the start once for the deploy and once for the restore" \
+  eval '[[ $(grep -c "^sudo -n systemctl start $SERVICE\$" "$STATE/calls.log") == 2 ]]'
+check "folders as before" prod_folders_restored
+check "reports the site down" out_has "The site is DOWN"
+check "prints the start command that is left" out_has "  sudo -n systemctl start $SERVICE"
+check "prints no move, the folders are already back" out_lacks "  mv -T"
+check "does not say the previous server is back" out_lacks "The previous server is back"
+finish
+
+setup first-restore-fails "25. First switch, the user manager refuses the start back, so the restore fails"
+first_switch
+printf 'exit\n' >"$STATE/system.StartPlan"
+printf 'exit\n' >"$STATE/user.StartPlan"
+run_deploy DEPLOY_UNIT_SCOPE=system
+check "exits 1" exit_is 1
+check "system unit stays stopped" state_is system.ActiveState inactive
+check "folders as before" dev_folders_restored
+check "reports the site down" out_has "The site is DOWN"
+check "prints the start of the old user unit" out_has "  systemctl --user start $SERVICE"
+check "does not say the previous server is back" out_lacks "The previous server is back"
 finish
 
 echo

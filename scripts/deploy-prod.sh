@@ -13,6 +13,13 @@
 # while the service is stopped, after a database backup. It never runs
 # `prisma generate` or `pnpm install`.
 #
+# Once the service is stopped, any failure or interruption (Ctrl-C, SIGTERM,
+# a lost SSH session) puts the previous server back by itself: the new
+# bundle is stopped and moved back to .next-staging, .next-prev back to
+# .next, and what ran before starts again (on the first switch, the old user
+# unit, enabled as it was). The database is not restored. When that restore
+# fails, the script prints the commands that are left to run.
+#
 # The service is a system unit (ops/happy-wedding.service, protected from the
 # OOM killer) when /etc/systemd/system/<DEPLOY_SERVICE> exists, else a user
 # unit. A system unit is read with plain `systemctl` and started and stopped
@@ -84,6 +91,19 @@ CHECK_PID=
 SITE_DOWN=false
 RETIRE_USER_UNIT=false
 USER_UNIT_RETIRED=false
+# What the switch did, for the restore. Each is set before its step runs,
+# and the restore checks the folders themselves, so a step interrupted half
+# way is undone too.
+RESTORE_TARGET=none   # what ran before the stop: unit (SERVICE), user (old user unit) or none
+RESTORE_RAN=false
+SERVICE_STARTED=false # the new bundle may run under SERVICE
+LIVE_MOVED=false      # .next -> .next-prev
+STAGED=false          # .next-staging -> .next
+CACHE_MOVED_FROM=     # image cache moved from here into the new .next
+PORT_BUSY=false
+MIGRATED=false
+USER_ENABLED_AGAIN=false
+backup=
 
 step() { printf '\n==> %s\n' "$*"; }
 die() {
@@ -102,24 +122,31 @@ restore_build_files() {
   done
 }
 
+# Runs once, on every exit. It must not stop half way: errexit and the ERR
+# trap are off (each step checks its own result), and signals are ignored
+# until it is done.
 on_exit() {
   local code=$?
+  trap - ERR
+  trap '' INT TERM HUP PIPE
+  set +e
   if [[ -n $CHECK_PID ]]; then
-    kill "$CHECK_PID" 2>/dev/null || true
-    wait "$CHECK_PID" 2>/dev/null || true
+    kill "$CHECK_PID" 2>/dev/null
+    wait "$CHECK_PID" 2>/dev/null
   fi
   restore_build_files
-  rm -rf -- "$WORK"
-  if [[ $code -ne 0 && $SITE_DOWN == true ]]; then
-    printf '\nThe site is DOWN: the %s unit %s is stopped. See "Rollback" in docs/OPERATIONS.md.\n' \
-      "$SCOPE" "$SERVICE" >&2
-    if [[ $USER_UNIT_RETIRED == true ]]; then
-      printf 'The old user unit was stopped and disabled by this run; "Rollback" says how to go back to it.\n' >&2
-    fi
+  if [[ $SITE_DOWN == true && $RESTORE_RAN == false ]]; then
+    ((code != 0)) || code=1
+    restore_previous_server
   fi
+  rm -rf -- "$WORK"
+  exit "$code"
 }
 trap on_exit EXIT
 trap 'die "command failed at line $LINENO"' ERR
+trap 'printf "\nInterrupted (SIGINT)\n" >&2; exit 130' INT
+trap 'printf "\nInterrupted (SIGTERM)\n" >&2; exit 143' TERM
+trap 'exit 129' HUP
 
 # wait_for_health PORT SECONDS [PID]: true once HEALTH_PATH answers 200.
 wait_for_health() {
@@ -175,23 +202,174 @@ backup_user_unit() {
   fi
 }
 retire_user_unit() {
-  if is_running "$USER_ACTIVE"; then systemctl --user stop "$SERVICE"; fi
   USER_UNIT_RETIRED=true
+  if is_running "$USER_ACTIVE"; then systemctl --user stop "$SERVICE"; fi
   if is_enabled "$USER_ENABLED"; then systemctl --user disable "$SERVICE"; fi
   echo "Old user unit: stopped and disabled"
-}
-# Puts the old user unit back as it was (no sudo needed); the system unit is
-# stopped at this point.
-restore_user_unit() {
-  if is_enabled "$USER_ENABLED"; then systemctl --user enable "$SERVICE"; fi
-  if is_running "$USER_ACTIVE"; then systemctl --user start "$SERVICE"; fi
-  USER_UNIT_RETIRED=false
-  echo "Old user unit: restored ($USER_ACTIVE, $USER_ENABLED)"
 }
 # The system unit is enabled only after the first switch (two enabled units
 # would both start at boot on the same port), with a password: the sudoers
 # file allows start, stop and restart only.
 system_unit_enabled() { is_enabled "$(unit_show UnitFileState 2>/dev/null || true)"; }
+system_unit_running() { is_running "$(unit_show ActiveState 2>/dev/null || echo unknown)"; }
+
+# --- Restore (from on_exit only) --------------------------------------------
+# Puts the old user unit back as it was before this run (no sudo needed),
+# and starts it when it was the server that ran. Never next to the system
+# unit: it starts only while the system unit is stopped, and is enabled
+# again only while the system unit is not enabled.
+restore_user_unit() {
+  if is_enabled "$USER_ENABLED" && [[ $USER_ENABLED_AGAIN == false ]]; then
+    if system_unit_enabled; then
+      echo "Old user unit: left disabled, because the system unit $SERVICE is enabled (both would start at boot on port $PORT)"
+      if [[ $RESTORE_TARGET == user ]]; then
+        printf 'To start the old user unit at boot instead, run:\n  sudo systemctl disable %s   # asks for the password\n  systemctl --user enable %s\n' \
+          "$SERVICE" "$SERVICE"
+      fi
+    else
+      systemctl --user enable "$SERVICE" || return 1
+      USER_ENABLED_AGAIN=true
+      echo "Old user unit: enabled again"
+    fi
+  fi
+  if [[ $RESTORE_TARGET == user ]]; then
+    if system_unit_running; then
+      echo "The system unit $SERVICE still runs (or its state cannot be read): the old user unit is not started next to it" >&2
+      return 1
+    fi
+    systemctl --user start "$SERVICE" || return 1
+    echo "Old user unit: started again"
+  fi
+  USER_UNIT_RETIRED=false
+}
+
+# Moves the folders back to where they were before the switch. Each move is
+# a rename, so it either happened or not: look at the folders.
+restore_folders() {
+  if [[ -n $CACHE_MOVED_FROM && -d $LIVE/cache/images && ! -e $CACHE_MOVED_FROM ]]; then
+    # Only a cache: losing it costs time, not data.
+    mkdir -p -- "$(dirname -- "$CACHE_MOVED_FROM")" &&
+      mv -T -- "$LIVE/cache/images" "$CACHE_MOVED_FROM" ||
+      echo "Warning: the image cache stays in $LIVE/cache/images of the new bundle" >&2
+  fi
+  CACHE_MOVED_FROM=
+  if [[ $STAGED == true ]]; then
+    if [[ -e $LIVE && ! -e $STAGING ]]; then
+      mv -T -- "$LIVE" "$STAGING" || return 1
+      echo "New bundle moved back to $STAGING"
+    fi
+    STAGED=false
+  fi
+  if [[ $LIVE_MOVED == true ]]; then
+    if [[ ! -e $LIVE && -e $PREVIOUS ]]; then
+      mv -T -- "$PREVIOUS" "$LIVE" || return 1
+      echo "Previous bundle moved back to $LIVE"
+    fi
+    LIVE_MOVED=false
+  fi
+}
+
+# The commands still needed to finish the restore by hand, worked out from
+# what the restore got done.
+print_manual_rollback() {
+  printf '\nRun these to bring the previous server back (docs/OPERATIONS.md, "Rollback"):\n' >&2
+  printf '  cd %s\n' "$ROOT" >&2
+  printf '  %s stop %s\n' "${UNIT_CONTROL[*]}" "$SERVICE" >&2
+  local unstage=false
+  if [[ $STAGED == true && -e $LIVE && ! -e $STAGING ]]; then
+    unstage=true
+    printf '  mv -T %s %s\n' "$LIVE" "$STAGING" >&2
+  fi
+  if [[ $LIVE_MOVED == true && -e $PREVIOUS ]] && [[ $unstage == true || ! -e $LIVE ]]; then
+    printf '  mv -T %s %s\n' "$PREVIOUS" "$LIVE" >&2
+  fi
+  case $RESTORE_TARGET in
+    user)
+      if system_unit_enabled; then
+        printf '  sudo systemctl disable %s   # asks for the password\n' "$SERVICE" >&2
+      fi
+      if is_enabled "$USER_ENABLED" && [[ $USER_ENABLED_AGAIN == false ]]; then
+        printf '  systemctl --user enable --now %s   # the old user unit\n' "$SERVICE" >&2
+      else
+        printf '  systemctl --user start %s   # the old user unit\n' "$SERVICE" >&2
+      fi
+      ;;
+    unit)
+      if [[ $USER_UNIT_RETIRED == true ]] && is_enabled "$USER_ENABLED" &&
+        [[ $USER_ENABLED_AGAIN == false ]] && ! system_unit_enabled; then
+        printf '  systemctl --user enable %s   # enabled before this run; it stays stopped\n' "$SERVICE" >&2
+      fi
+      printf '  %s start %s\n' "${UNIT_CONTROL[*]}" "$SERVICE" >&2
+      ;;
+  esac
+  if [[ $MIGRATED == true ]]; then
+    printf '  # The database was migrated. If the previous code fails on it, restore\n  # %s first (see "Rollback").\n' "$backup" >&2
+  fi
+}
+
+restore_failed() {
+  printf '\nThe site is DOWN: the previous server could not be put back (%s).\n' "$1" >&2
+  print_manual_rollback
+}
+
+# Brings back what ran before the stop. Called once, from on_exit.
+restore_previous_server() {
+  RESTORE_RAN=true
+  step "Restore: putting the previous server back (do not interrupt)"
+  if [[ $SERVICE_STARTED == true ]]; then
+    if ! "${UNIT_CONTROL[@]}" stop "$SERVICE"; then
+      restore_failed "'${UNIT_CONTROL[*]} stop $SERVICE' failed"
+      return
+    fi
+    SERVICE_STARTED=false
+  fi
+  if ! restore_folders; then
+    restore_failed "moving the bundles back failed"
+    return
+  fi
+  case $RESTORE_TARGET in
+    user)
+      if ! restore_user_unit; then
+        restore_failed "the old user unit did not start"
+        return
+      fi
+      ;;
+    unit)
+      if [[ $USER_UNIT_RETIRED == true ]] && ! restore_user_unit; then
+        restore_failed "the old user unit could not be enabled again"
+        return
+      fi
+      if ! "${UNIT_CONTROL[@]}" start "$SERVICE"; then
+        restore_failed "'${UNIT_CONTROL[*]} start $SERVICE' failed"
+        return
+      fi
+      ;;
+    none)
+      if [[ $USER_UNIT_RETIRED == true ]]; then restore_user_unit; fi
+      printf '\nThe site is DOWN, as it was before this run: no server ran when it started, so none was started again.\n' >&2
+      return
+      ;;
+  esac
+  if ! wait_for_health "$PORT" 90; then
+    restore_failed "it was started but does not answer $HEALTH_PATH on port $PORT; see its journal"
+    return
+  fi
+  SITE_DOWN=false
+  if [[ $RESTORE_TARGET == user ]]; then
+    printf '\nThe previous server is back: the old user unit %s runs again and port %s answers.\n' \
+      "$SERVICE" "$PORT" >&2
+  else
+    printf '\nThe previous server is back: %s runs the previous bundle and port %s answers.\n' \
+      "$SERVICE" "$PORT" >&2
+  fi
+  if [[ $PORT_BUSY == true ]]; then
+    printf 'But something else answered on port %s before the restore, so the answer may not come from it: check with ss -ltnp.\n' \
+      "$PORT" >&2
+  fi
+  if [[ $MIGRATED == true ]]; then
+    printf 'The database stays migrated; backup from before: %s\n' "$backup" >&2
+  fi
+}
 
 # ---------------------------------------------------------------------------
 step "Checks (nothing changes yet)"
@@ -362,73 +540,65 @@ fi
 # ---------------------------------------------------------------------------
 step "Switch: $SERVICE is down from here until it answers again"
 if [[ $RETIRE_USER_UNIT == true ]]; then backup_user_unit; fi
+# What a failure from here on starts again (restore_previous_server). Both
+# running is never put back: the system unit wins.
+service_active=$(unit_show ActiveState) || die "cannot read the state of $SERVICE"
+if is_running "$service_active"; then
+  RESTORE_TARGET=unit
+elif [[ $RETIRE_USER_UNIT == true ]] && is_running "$USER_ACTIVE"; then
+  RESTORE_TARGET=user
+fi
 stopped_at=$SECONDS
 # Fails before anything else changes when sudo refuses: the site stays up.
 "${UNIT_CONTROL[@]}" stop "$SERVICE" ||
   die "'${UNIT_CONTROL[*]} stop $SERVICE' failed; see '${UNIT_READ[*]} status $SERVICE'"
+# From here on, on_exit puts the previous server back unless the new one
+# answers.
 SITE_DOWN=true
 if [[ $RETIRE_USER_UNIT == true ]]; then retire_user_unit; fi
 # Whatever still answers here would keep the new server from binding the
 # port, and would pass the health check in its place.
 if port_in_use "$PORT"; then
+  PORT_BUSY=true
   die "port $PORT still answers with $SERVICE stopped; stop whatever listens there (ss -ltnp), then run again"
 fi
 
-backup=
 if [[ $MIGRATE == true ]]; then
   # After the stop, so the copy holds every write the old server made.
-  backup=$(python3 scripts/backup.py --db-only "$BACKUP_DIR")
+  backup=$(python3 scripts/backup.py --db-only "$BACKUP_DIR") ||
+    die "the database backup failed; nothing was migrated"
   backup=${backup#Backup saved: }
   echo "Database backup: $backup"
-  if ! pnpm db:migrate; then
-    if [[ $USER_UNIT_RETIRED == true ]]; then
-      # First switch: what ran before is the old user unit, not the system
-      # unit (LIVE is still its .next).
-      restore_user_unit
-      if is_running "$USER_ACTIVE"; then SITE_DOWN=false; fi
-      die "migration failed; the old user unit is back as it was. Backup: $backup"
-    fi
-    if [[ -f $LIVE/BUILD_ID ]]; then
-      "${UNIT_CONTROL[@]}" start "$SERVICE"
-      SITE_DOWN=false
-      die "migration failed; the previous bundle was started again. Backup: $backup"
-    fi
-    die "migration failed and $LIVE is not a production build. Backup: $backup"
-  fi
+  pnpm db:migrate || die "migration failed; database backup: $backup"
+  MIGRATED=true
 fi
 
-if [[ -e $LIVE ]]; then mv -- "$LIVE" "$PREVIOUS"; fi
-mv -- "$STAGING" "$LIVE"
+# -T: never move a folder into one that is already there.
+if [[ -e $LIVE ]]; then
+  LIVE_MOVED=true
+  mv -T -- "$LIVE" "$PREVIOUS"
+fi
+STAGED=true
+mv -T -- "$STAGING" "$LIVE"
 # Optimised images do not depend on the build: keep them (a 45 MP photo takes
 # seconds to resize). `next dev` kept its cache under .next/dev.
 for cache in "$PREVIOUS/cache/images" "$PREVIOUS/dev/cache/images"; do
   if [[ -d $cache && ! -e $LIVE/cache/images ]]; then
+    CACHE_MOVED_FROM=$cache
     mkdir -p "$LIVE/cache"
-    mv -- "$cache" "$LIVE/cache/images"
+    mv -T -- "$cache" "$LIVE/cache/images"
   fi
 done
 
-"${UNIT_CONTROL[@]}" start "$SERVICE"
+SERVICE_STARTED=true
+"${UNIT_CONTROL[@]}" start "$SERVICE" ||
+  die "'${UNIT_CONTROL[*]} start $SERVICE' failed"
 if ! wait_for_health "$PORT" 90 || ! "${UNIT_READ[@]}" is-active --quiet "$SERVICE"; then
   "${UNIT_JOURNAL[@]}" -u "$SERVICE" -n 40 --no-pager >&2 || true
   if [[ $SCOPE == system ]]; then
     # systemd's own lines about the unit (exit status, OOM kill) are in the
     # system journal, which needs sudo; these properties hold the same.
     systemctl show -p ActiveState -p Result -p ExecMainStatus -p NRestarts "$SERVICE" >&2 || true
-  fi
-  printf '\nRoll back (docs/OPERATIONS.md, "Rollback"):\n' >&2
-  printf '  %s stop %s\n' "${UNIT_CONTROL[*]}" "$SERVICE" >&2
-  printf '  cd %s && mv %s .next-failed && mv %s %s\n' "$ROOT" "$LIVE" "$PREVIOUS" "$LIVE" >&2
-  if [[ -n $backup ]]; then
-    printf '  restore the database from %s (the old code expects the old schema)\n' "$backup" >&2
-  fi
-  if [[ $USER_UNIT_RETIRED == true ]]; then
-    if system_unit_enabled; then
-      printf '  sudo systemctl disable %s   # asks for the password\n' "$SERVICE" >&2
-    fi
-    printf '  systemctl --user enable --now %s   # the old user unit\n' "$SERVICE" >&2
-  else
-    printf '  %s start %s\n' "${UNIT_CONTROL[*]}" "$SERVICE" >&2
   fi
   die "$SERVICE did not answer $HEALTH_PATH on port $PORT within 90 s"
 fi

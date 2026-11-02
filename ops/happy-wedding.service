@@ -13,6 +13,10 @@
 [Unit]
 Description=Happy Wedding (next start)
 After=network.target
+# Restart=always never gives up: without this, five starts within 10 s (for
+# example right after repeated OOM kills) would leave the unit failed and the
+# site down until someone starts it by hand.
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple

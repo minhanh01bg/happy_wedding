@@ -88,7 +88,7 @@ Site chạy dưới unit hệ thống [`ops/happy-wedding.service`](../ops/happy
 
 Các thiết lập khác trong unit:
 
-- `Restart=always`, `RestartSec=2`: chạy lại cả sau khi kernel OOM-kill server. `StartLimitIntervalSec=0`: không bao giờ bỏ cuộc (mặc định systemd ngừng chạy lại sau 5 lần khởi động trong 10 giây, để site sập tới khi có người start tay). `TimeoutStopSec=20`.
+- `Restart=always`, `RestartSec=10`: chạy lại cả sau khi kernel OOM-kill server. `StartLimitIntervalSec=0`: không bao giờ bỏ cuộc (mặc định systemd ngừng chạy lại sau 5 lần khởi động trong 10 giây, để site sập tới khi có người start tay). Vì không còn giới hạn số lần, mỗi lần chạy lại cách nhau 10 giây: server chết ngay khi khởi động (`.env` sai, bundle hỏng) hoặc bị OOM-kill liên tục chỉ tốn một lần khởi động Node mỗi 10 giây, không thành vòng chạy lại dồn dập trên máy đang thiếu RAM. `TimeoutStopSec=20`.
 - `MemoryLow=256M`: kernel tránh thu hồi 256 MB bộ nhớ nền của server khi máy thiếu RAM. Mức này chỉ có hiệu lực khi `system.slice` cũng được bảo vệ, nên cài kèm [`ops/system.slice-memory-low.conf`](../ops/system.slice-memory-low.conf) (cũng 256M).
 - Không có `MemoryMax=`: đỉnh upload xấu nhất khoảng 1,6 GB cho 2 slot mã hóa cộng tối đa 400 MB body (mục Backup & ảnh), cộng mức nền của Node; giới hạn dưới khoảng 2,5G thì kernel giết server giữa lúc upload. Không thêm `--max-old-space-size`: bộ nhớ sharp/libvips nằm ngoài heap V8. Script deploy tự giới hạn heap của `next build` (1536 MB) và chỉ build khi `free -m` báo available ≥ 1800 MB.
 - Đường dẫn tuyệt đối: trong unit hệ thống `%h` là home của root. Không có secret trong unit: Next tự đọc `.env.production.local` và `.env` từ WorkingDirectory.

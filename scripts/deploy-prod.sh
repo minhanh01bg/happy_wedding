@@ -259,10 +259,10 @@ DATABASE_URL=${db_line#DATABASE_URL=}
 export DATABASE_URL
 echo "Settings: valid for production"
 
-set +e
-migrate_status=$(pnpm exec prisma migrate status 2>&1)
-migrate_code=$?
-set -e
+# Exits 1 when migrations are pending. Caught with ||: `set +e` would not
+# stop the ERR trap, which fires on any failing command that is not tested.
+migrate_code=0
+migrate_status=$(pnpm exec prisma migrate status 2>&1) || migrate_code=$?
 if ((migrate_code == 0)); then
   MIGRATE=false
   echo "Database: up to date"

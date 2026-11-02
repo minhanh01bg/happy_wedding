@@ -219,6 +219,8 @@ Thứ tự trong script, dừng ngay ở bước đầu tiên lỗi:
 
 Script không chạy `pnpm install` hay `prisma generate`. Cài đặt khác qua environment: `DEPLOY_SERVICE`, `DEPLOY_UNIT_SCOPE` (`auto`, `system` hoặc `user`), `DEPLOY_PORT`, `DEPLOY_CHECK_PORT`, `DEPLOY_BACKUP_DIR`, `DEPLOY_MIN_MEMORY_MB`, `DEPLOY_MIN_DISK_MB` (mặc định ở đầu script). Request đang chạy lúc dừng (ví dụ upload đang mã hóa) bị cắt, nên deploy lúc ít khách.
 
+Sửa `scripts/deploy-prod.sh` thì chạy `scripts/deploy-prod-dry-run.sh` (`bash -n` và `shellcheck` nếu có, trước đó). Nó chạy một bản sao của script trong thư mục tạm với `systemctl`, `sudo`, `node`, `pnpm`, `curl`… giả đặt đầu PATH, qua các tình huống user unit, unit hệ thống, lần chuyển đầu, sudo bị từ chối, migration, server mới lỗi, và báo `ok`/`FAIL` từng điểm. Nó không đụng unit thật, sudo, port hay checkout này, nên chạy được cả khi site đang chạy.
+
 ### Schema change
 
 Khi `prisma/schema.prisma` đổi, hoặc dependency trực tiếp trong `pnpm-lock.yaml` đổi, script dừng ở bước kiểm tra. Prisma client và `node_modules` dùng chung với server đang chạy, nên chỉ được sinh lại khi server đã dừng và DB đã migrate. Script chỉ so dependency trực tiếp (mục `importers`); bản cập nhật chỉ đổi phụ thuộc gián tiếp thì tự làm theo mục này. Downtime bằng thời gian install/generate cộng build:

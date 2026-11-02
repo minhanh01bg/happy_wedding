@@ -54,9 +54,12 @@ MemoryLow=256M
 # No MemoryMax=: an upload peaks around 1.6 GB on top of Node's baseline
 # (docs/OPERATIONS.md), and a cap would get the server killed mid-upload.
 
-# Logs go to the journal. Because the service runs as ccgram, its output is
-# stored in ccgram's journal file, so `journalctl -u happy-wedding.service`
-# works without sudo; journald rotates and caps it, no logrotate needed.
+# Logs go to the journal; journald rotates and caps it, no logrotate needed.
+# Because the service runs as ccgram, a persistent journal with
+# SplitMode=uid (the default) stores its output in ccgram's journal file, so
+# `journalctl -u happy-wedding.service` works without sudo. Other journald
+# settings keep it in the system journal: docs/OPERATIONS.md ("Kiểm tra")
+# says how to check after the switch and what to do then.
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=happy-wedding

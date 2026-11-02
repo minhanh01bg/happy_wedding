@@ -92,7 +92,7 @@ Các thiết lập khác trong unit:
 - `MemoryLow=256M`: kernel tránh thu hồi 256 MB bộ nhớ nền của server khi máy thiếu RAM. Mức này chỉ có hiệu lực khi `system.slice` cũng được bảo vệ, nên cài kèm [`ops/system.slice-memory-low.conf`](../ops/system.slice-memory-low.conf) (cũng 256M).
 - Không có `MemoryMax=`: đỉnh upload xấu nhất khoảng 1,6 GB cho 2 slot mã hóa cộng tối đa 400 MB body (mục Backup & ảnh), cộng mức nền của Node; giới hạn dưới khoảng 2,5G thì kernel giết server giữa lúc upload. Không thêm `--max-old-space-size`: bộ nhớ sharp/libvips nằm ngoài heap V8. Script deploy tự giới hạn heap của `next build` (1536 MB) và chỉ build khi `free -m` báo available ≥ 1800 MB.
 - Đường dẫn tuyệt đối: trong unit hệ thống `%h` là home của root. Không có secret trong unit: Next tự đọc `.env.production.local` và `.env` từ WorkingDirectory.
-- Log vào journal. Server chạy với user `ccgram`, nên journald ghi output vào tệp journal của ccgram: đọc không cần sudo bằng `journalctl -u happy-wedding.service -n 100` (không có `--user`), và journald tự xoay vòng, không cần logrotate. Dòng của chính systemd về unit (dừng, exit code, OOM kill) nằm trong journal hệ thống: `sudo journalctl -u happy-wedding.service`, hoặc không cần sudo `systemctl show -p Result,NRestarts,ExecMainStatus happy-wedding.service`. Lỗi trả cho khách chỉ có correlationId; chi tiết nằm trong log.
+- Log vào journal; journald tự xoay vòng, không cần logrotate. Server chạy với user `ccgram`, nên khi journal lưu trên đĩa (`/var/log/journal`, có trên máy này) và `SplitMode=uid` (mặc định), journald ghi output vào tệp journal riêng của ccgram, đọc không cần sudo bằng `journalctl -u happy-wedding.service -n 100` (không có `--user`). Điều này phụ thuộc cấu hình journald, nên kiểm lại ngay sau lần chuyển (lệnh `journalctl` trong mục "Kiểm tra" bên dưới). Dòng của chính systemd về unit (dừng, exit code, OOM kill) nằm trong journal hệ thống: `sudo journalctl -u happy-wedding.service`, hoặc không cần sudo `systemctl show -p Result,NRestarts,ExecMainStatus happy-wedding.service`. Lỗi trả cho khách chỉ có correlationId; chi tiết nằm trong log.
 - Unit hệ thống tự chạy khi máy khởi động (`WantedBy=multi-user.target`), không cần linger.
 
 **Cài một lần** (cần sudo; chạy từ checkout chính, sau `git pull` có thư mục `ops/`):
@@ -125,8 +125,13 @@ cat /proc/$(systemctl show -p MainPID --value happy-wedding.service)/oom_score_a
 cat /sys/fs/cgroup/system.slice/memory.low /sys/fs/cgroup/system.slice/happy-wedding.service/memory.low   # 268435456 cả hai
 systemctl is-enabled happy-wedding.service   # enabled
 systemctl --user is-enabled happy-wedding.service; systemctl --user is-active happy-wedding.service   # disabled, inactive
-journalctl -u happy-wedding.service -n 50
+journalctl -u happy-wedding.service -n 5   # không sudo; phải in log của server (lúc khởi động có "Ready in …")
 ```
+
+Nếu lệnh `journalctl` cuối chỉ in `-- No entries --` trong khi `systemctl is-active happy-wedding.service` là `active`, thì journal trên máy không tách tệp theo user (ví dụ journal chỉ nằm trong RAM, hoặc `SplitMode=` khác `uid`), và output của server nằm trong journal hệ thống. Server vẫn chạy bình thường; chỉ cách đọc log khác. Chọn một trong hai:
+
+- Đọc bằng sudo mỗi lần: `sudo journalctl -u happy-wedding.service -n 100`.
+- Cho ccgram đọc journal không cần sudo: `sudo usermod -aG systemd-journal ccgram`. Nhóm mới chỉ có hiệu lực ở phiên đăng nhập và tiến trình khởi động sau đó, nên đăng nhập lại rồi chạy lại `journalctl -u happy-wedding.service -n 5`. Nhóm này cho đọc toàn bộ log của máy, không chỉ site.
 
 ### nginx
 
@@ -198,7 +203,7 @@ Trước lần chuyển, site chạy `next dev` dưới user unit cùng tên. L�
 4. Chạy các lệnh "Cài một lần" ở mục systemd system unit. Dev server vẫn chạy; unit hệ thống đã nạp nhưng chưa chạy, chưa enable.
 5. `scripts/deploy-prod.sh`. Script nhận ra unit hệ thống, kiểm tra `sudo -n` trước khi build, rồi trong lúc đổi: chép tệp user unit cũ vào `~/happy_wedding-backups/happy-wedding.service.user.<thời điểm>`, dừng và disable user unit (dev server), kiểm port 3200 đã trống, khởi động unit hệ thống. Tệp user unit vẫn ở chỗ cũ, ở trạng thái disabled. Cache ảnh đã tối ưu được chuyển sang bundle mới. Script in `OOM score adjustment of PID …: -900` và nhắc lệnh ở bước 6. Nếu có lỗi sau khi đã dừng dev server (backup, migration, port 3200 vẫn bận, đổi thư mục, unit hệ thống không khởi động hay không trả 200) hoặc bị ngắt (Ctrl-C, mất SSH), script tự đưa về như cũ: dừng unit hệ thống, trả `.next` của dev về chỗ cũ (bản mới về `.next-staging`), enable và chạy lại user unit như trước, rồi chờ port 3200 trả 200 và in `The previous server is back`. Khi không tự đưa về được, script in `The site is DOWN` kèm đúng các lệnh còn phải chạy (mục Rollback).
 6. Ngay sau đó, để site tự chạy khi máy khởi động: `sudo systemctl enable happy-wedding.service`.
-7. Chạy các lệnh "Kiểm tra" ở mục systemd system unit, rồi kiểm tra qua domain: trang thiệp đã xuất bản, đăng nhập khách và admin, tải một ảnh rồi mở nó.
+7. Chạy các lệnh "Kiểm tra" ở mục systemd system unit, gồm `journalctl -u happy-wedding.service -n 5` không sudo (không in log thì làm theo đoạn ngay sau khối lệnh đó), rồi kiểm tra qua domain: trang thiệp đã xuất bản, đăng nhập khách và admin, tải một ảnh rồi mở nó.
 8. Tùy chọn, không cần cho lần chuyển: đổi nginx theo mục nginx. Site đã chạy đúng mà không có bước này, vì nginx hiện tại đã chuyển vào `127.0.0.1:3200` và ghi đè `X-Real-IP`; bước này chỉ thêm phần JS/CSS tĩnh. Nếu làm: giữ các dòng `listen`/`ssl_*` của certbot, không thêm `listen [::]`, rồi `sudo nginx -t && sudo systemctl reload nginx`. Port 3200 có thể đóng trên firewall: app không còn nghe ở địa chỉ public.
 
 **`.next-prev` sau lần đầu:** lần deploy đầu đổi tên `.next` của `next dev` (khoảng 1 GB, không phải bundle production) thành `.next-prev`. Nó chỉ dùng để quay về `next dev` (mục Rollback). Khi bản mới đã kiểm xong ở bước 7, xóa nó bằng `rm -rf .next-prev` để lấy lại chỗ trên đĩa; nếu không, lần deploy sau cũng xóa nó trước khi build.

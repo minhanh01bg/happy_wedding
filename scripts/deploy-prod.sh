@@ -13,11 +13,20 @@
 # while the service is stopped, after a database backup. It never runs
 # `prisma generate` or `pnpm install`.
 #
+# The service is a system unit (ops/happy-wedding.service, protected from the
+# OOM killer) when /etc/systemd/system/<DEPLOY_SERVICE> exists, else a user
+# unit. A system unit is read with plain `systemctl` and started and stopped
+# with `sudo -n systemctl`, which ops/sudoers-happy-wedding allows without a
+# password. Both units listen on the same port, so while the system unit is
+# switched in, a user unit of the same name that still runs or starts at
+# boot is stopped and disabled, after a copy of its unit file is saved.
+#
 # Settings (environment, all optional):
-#   DEPLOY_SERVICE        systemd user unit to switch     happy-wedding.service
+#   DEPLOY_SERVICE        systemd unit to switch          happy-wedding.service
+#   DEPLOY_UNIT_SCOPE     auto, system or user            auto (see above)
 #   DEPLOY_PORT           port that unit listens on       3200
 #   DEPLOY_CHECK_PORT     spare port for the boot check   3290 (E2E uses 3201)
-#   DEPLOY_BACKUP_DIR     database backups                <checkout>-backups, beside the checkout
+#   DEPLOY_BACKUP_DIR     database and unit backups       <checkout>-backups, beside the checkout
 #   DEPLOY_MIN_MEMORY_MB  "available" memory to build     1800
 #   DEPLOY_MIN_DISK_MB    free disk to build              400
 set -Eeuo pipefail
@@ -26,6 +35,8 @@ ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)
 cd "$ROOT"
 
 SERVICE=${DEPLOY_SERVICE:-happy-wedding.service}
+SCOPE=${DEPLOY_UNIT_SCOPE:-auto}
+SYSTEM_UNIT_FILE=/etc/systemd/system/$SERVICE
 PORT=${DEPLOY_PORT:-3200}
 CHECK_PORT=${DEPLOY_CHECK_PORT:-3290}
 BACKUP_DIR=${DEPLOY_BACKUP_DIR:-$ROOT-backups}
@@ -49,9 +60,29 @@ case "${1:-}" in
     ;;
 esac
 
+case $SCOPE in
+  auto) if [[ -e $SYSTEM_UNIT_FILE ]]; then SCOPE=system; else SCOPE=user; fi ;;
+  system | user) ;;
+  *)
+    echo "DEPLOY_UNIT_SCOPE must be auto, system or user" >&2
+    exit 2
+    ;;
+esac
+if [[ $SCOPE == system ]]; then
+  UNIT_READ=(systemctl)
+  UNIT_CONTROL=(sudo -n systemctl)
+  UNIT_JOURNAL=(journalctl)
+else
+  UNIT_READ=(systemctl --user)
+  UNIT_CONTROL=(systemctl --user)
+  UNIT_JOURNAL=(journalctl --user)
+fi
+
 WORK=$(mktemp -d)
 CHECK_PID=
 SITE_DOWN=false
+RETIRE_USER_UNIT=false
+USER_UNIT_RETIRED=false
 
 step() { printf '\n==> %s\n' "$*"; }
 die() {
@@ -79,8 +110,11 @@ on_exit() {
   restore_build_files
   rm -rf -- "$WORK"
   if [[ $code -ne 0 && $SITE_DOWN == true ]]; then
-    printf '\nThe site is DOWN: %s is stopped. See "Rollback" in docs/OPERATIONS.md.\n' \
-      "$SERVICE" >&2
+    printf '\nThe site is DOWN: the %s unit %s is stopped. See "Rollback" in docs/OPERATIONS.md.\n' \
+      "$SCOPE" "$SERVICE" >&2
+    if [[ $USER_UNIT_RETIRED == true ]]; then
+      printf 'The old user unit was stopped and disabled by this run; "Rollback" says how to go back to it.\n' >&2
+    fi
   fi
 }
 trap on_exit EXIT
@@ -106,6 +140,46 @@ port_in_use() {
   [[ $code != 000 ]]
 }
 
+unit_show() { "${UNIT_READ[@]}" show -p "$1" --value "$SERVICE"; }
+
+# unit_state [--user]: "<ActiveState> <UnitFileState>" of SERVICE in the
+# system (or user) manager, which also answers for a unit it does not know
+# ("inactive none"). Fails when that manager cannot be reached.
+unit_state() {
+  local out key value active= file_state=
+  out=$(systemctl "$@" show -p ActiveState -p UnitFileState "$SERVICE" 2>/dev/null) ||
+    return 1
+  while IFS='=' read -r key value; do
+    case $key in
+      ActiveState) active=$value ;;
+      UnitFileState) file_state=$value ;;
+    esac
+  done <<<"$out"
+  printf '%s %s\n' "${active:-inactive}" "${file_state:-none}"
+}
+is_running() { [[ $1 != inactive && $1 != failed ]]; }
+is_enabled() { [[ $1 == enabled || $1 == enabled-runtime ]]; }
+
+# Switching to the system unit: the old user unit must neither run nor start
+# at boot again (same port). Its unit file stays in place, disabled, and a
+# copy goes to BACKUP_DIR for "Rollback" in docs/OPERATIONS.md.
+backup_user_unit() {
+  local file
+  file=$(systemctl --user show -p FragmentPath --value "$SERVICE")
+  if [[ -n $file && -f $file ]]; then
+    mkdir -p -- "$BACKUP_DIR"
+    USER_UNIT_BACKUP=$BACKUP_DIR/$SERVICE.user.$(date +%Y%m%d-%H%M%S)
+    cp -p -- "$file" "$USER_UNIT_BACKUP"
+    echo "Old user unit file saved: $USER_UNIT_BACKUP"
+  fi
+}
+retire_user_unit() {
+  if is_running "$USER_ACTIVE"; then systemctl --user stop "$SERVICE"; fi
+  USER_UNIT_RETIRED=true
+  if is_enabled "$USER_ENABLED"; then systemctl --user disable "$SERVICE"; fi
+  echo "Old user unit: stopped and disabled"
+}
+
 # ---------------------------------------------------------------------------
 step "Checks (nothing changes yet)"
 for tool in node pnpm python3 curl flock free df; do
@@ -129,18 +203,53 @@ fi
 
 if [[ $BUILD_ONLY == false ]]; then
   command -v systemctl >/dev/null || die "systemctl is not in PATH"
-  unit_dir=$(systemctl --user show -p WorkingDirectory --value "$SERVICE") ||
-    die "cannot read $SERVICE"
+  echo "Unit: $SERVICE ($SCOPE unit)"
+  if [[ $SCOPE == system ]]; then
+    command -v sudo >/dev/null || die "sudo is not in PATH"
+    load_state=$(unit_show LoadState) || load_state=unknown
+    [[ $load_state == loaded ]] ||
+      die "the system unit $SERVICE is $load_state, not loaded; install it and run 'sudo systemctl daemon-reload' (docs/OPERATIONS.md, \"systemd system unit\")"
+    # Asks sudo whether each command may run, without running it. sudo also
+    # says yes when any other NOPASSWD rule exists for this user; the stop
+    # below then fails before anything is switched, and the site stays up.
+    for action in stop start; do
+      sudo -n -l systemctl "$action" "$SERVICE" >/dev/null 2>&1 ||
+        die "sudo -n may not run 'systemctl $action $SERVICE' without a password; install ops/sudoers-happy-wedding (docs/OPERATIONS.md, \"systemd system unit\")"
+    done
+    unit_user=$(unit_show User)
+    [[ $unit_user == "$(id -un)" ]] ||
+      die "$SERVICE runs as '${unit_user:-root}', not $(id -un); install ops/happy-wedding.service"
+  fi
+  unit_dir=$(unit_show WorkingDirectory) || die "cannot read $SERVICE"
   [[ $unit_dir == "$ROOT" ]] ||
     die "$SERVICE runs from '$unit_dir', not $ROOT"
   # Read whole, then matched (grep -q would cut a pipe short under
   # pipefail); never printed, as the unit could hold settings.
-  unit_exec=$(systemctl --user show -p ExecStart --value "$SERVICE")
-  unit_env=$(systemctl --user show -p Environment --value "$SERVICE")
+  unit_exec=$(unit_show ExecStart)
+  unit_env=$(unit_show Environment)
   grep -q 'bin/next start ' <<<"$unit_exec" ||
     die "$SERVICE does not run 'next start'; install the unit from docs/OPERATIONS.md first"
   grep -qw 'NODE_ENV=production' <<<"$unit_env" ||
     die "$SERVICE does not set NODE_ENV=production"
+
+  # The system and user units of this name both listen on PORT: never let
+  # both run, or both start at boot.
+  if [[ $SCOPE == system ]]; then
+    if state=$(unit_state --user); then
+      read -r USER_ACTIVE USER_ENABLED <<<"$state"
+      if is_running "$USER_ACTIVE" || is_enabled "$USER_ENABLED"; then
+        RETIRE_USER_UNIT=true
+        echo "Old user unit: $USER_ACTIVE, $USER_ENABLED; the switch stops and disables it (unit file saved to $BACKUP_DIR)"
+      fi
+    elif [[ -e ${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/$SERVICE ]]; then
+      die "cannot reach your systemd user manager to check the old user unit $SERVICE; run from a login session of $(id -un)"
+    fi
+  elif state=$(unit_state); then
+    read -r system_active system_enabled <<<"$state"
+    if is_running "$system_active" || is_enabled "$system_enabled"; then
+      die "the system unit $SERVICE is $system_active and $system_enabled; deploy to it (DEPLOY_UNIT_SCOPE=system), or stop and disable it first"
+    fi
+  fi
 fi
 
 export NODE_ENV=production
@@ -239,9 +348,18 @@ fi
 
 # ---------------------------------------------------------------------------
 step "Switch: $SERVICE is down from here until it answers again"
+if [[ $RETIRE_USER_UNIT == true ]]; then backup_user_unit; fi
 stopped_at=$SECONDS
-systemctl --user stop "$SERVICE"
+# Fails before anything else changes when sudo refuses: the site stays up.
+"${UNIT_CONTROL[@]}" stop "$SERVICE" ||
+  die "'${UNIT_CONTROL[*]} stop $SERVICE' failed; see '${UNIT_READ[*]} status $SERVICE'"
 SITE_DOWN=true
+if [[ $RETIRE_USER_UNIT == true ]]; then retire_user_unit; fi
+# Whatever still answers here would keep the new server from binding the
+# port, and would pass the health check in its place.
+if port_in_use "$PORT"; then
+  die "port $PORT still answers with $SERVICE stopped; stop whatever listens there (ss -ltnp), then run again"
+fi
 
 backup=
 if [[ $MIGRATE == true ]]; then
@@ -251,7 +369,7 @@ if [[ $MIGRATE == true ]]; then
   echo "Database backup: $backup"
   if ! pnpm db:migrate; then
     if [[ -f $LIVE/BUILD_ID ]]; then
-      systemctl --user start "$SERVICE"
+      "${UNIT_CONTROL[@]}" start "$SERVICE"
       SITE_DOWN=false
       die "migration failed; the previous bundle was started again. Backup: $backup"
     fi
@@ -270,21 +388,35 @@ for cache in "$PREVIOUS/cache/images" "$PREVIOUS/dev/cache/images"; do
   fi
 done
 
-systemctl --user start "$SERVICE"
-if ! wait_for_health "$PORT" 90; then
-  journalctl --user -u "$SERVICE" -n 40 --no-pager >&2 || true
+"${UNIT_CONTROL[@]}" start "$SERVICE"
+if ! wait_for_health "$PORT" 90 || ! "${UNIT_READ[@]}" is-active --quiet "$SERVICE"; then
+  "${UNIT_JOURNAL[@]}" -u "$SERVICE" -n 40 --no-pager >&2 || true
+  if [[ $SCOPE == system ]]; then
+    # systemd's own lines about the unit (exit status, OOM kill) are in the
+    # system journal, which needs sudo; these properties hold the same.
+    systemctl show -p ActiveState -p Result -p ExecMainStatus -p NRestarts "$SERVICE" >&2 || true
+  fi
   printf '\nRoll back (docs/OPERATIONS.md, "Rollback"):\n' >&2
-  printf '  systemctl --user stop %s\n' "$SERVICE" >&2
+  printf '  %s stop %s\n' "${UNIT_CONTROL[*]}" "$SERVICE" >&2
   printf '  cd %s && mv %s .next-failed && mv %s %s\n' "$ROOT" "$LIVE" "$PREVIOUS" "$LIVE" >&2
   if [[ -n $backup ]]; then
     printf '  restore the database from %s (the old code expects the old schema)\n' "$backup" >&2
   fi
-  printf '  systemctl --user start %s\n' "$SERVICE" >&2
+  if [[ $USER_UNIT_RETIRED == true ]]; then
+    printf '  sudo systemctl disable %s   # asks for the password\n' "$SERVICE" >&2
+    printf '  systemctl --user enable --now %s   # the old user unit\n' "$SERVICE" >&2
+  else
+    printf '  %s start %s\n' "${UNIT_CONTROL[*]}" "$SERVICE" >&2
+  fi
   die "$SERVICE did not answer $HEALTH_PATH on port $PORT within 90 s"
 fi
 SITE_DOWN=false
 
 step "Live: $(cat "$LIVE/BUILD_ID") answered after $((SECONDS - stopped_at)) s"
+if [[ $SCOPE == system ]]; then
+  main_pid=$(unit_show MainPID)
+  echo "OOM score adjustment of PID $main_pid: $(cat "/proc/$main_pid/oom_score_adj" 2>/dev/null || echo unknown)"
+fi
 if [[ -d $PREVIOUS ]]; then
   echo "The previous bundle stays in $PREVIOUS ($(du -sh "$PREVIOUS" | cut -f1)) until the next deploy."
 fi

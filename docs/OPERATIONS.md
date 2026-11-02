@@ -130,17 +130,19 @@ journalctl -u happy-wedding.service -n 50
 
 ### nginx
 
+nginx đang chạy (`/etc/nginx/sites-available/vutu-nguyenngoc`) đã chuyển vào `127.0.0.1:3200` và ghi đè `X-Real-IP` bằng `$remote_addr`, nên chuyển sang `next start` **không cần sửa nginx**. Ví dụ dưới đây là cấu hình đầy đủ, cho máy mới hoặc khi muốn thêm phần JS/CSS tĩnh; với site này, đổi nginx là tùy chọn (bước 8 của "Lần chuyển đầu tiên").
+
+**Không thêm `listen [::]:80` hay `listen [::]:443` (IPv6) khi còn `RATE_LIMIT_STORE=memory`.** Rate limit đếm theo từng địa chỉ IP, và một máy có dải IPv6 /64 dùng được vô số địa chỉ: một máy là đủ lấp trần 50.000 khóa, sau đó đăng nhập khách, đăng nhập admin, RSVP và upload trả 503 cho mọi khách mới tới khi khóa hết hạn (60 giây tới 1 giờ; [ADR 0012](adr/0012-single-instance-memory-rate-limit.md)). Cấu hình hiện tại chỉ nghe IPv4. Muốn bật IPv6 thì chuyển sang Upstash (không có trần khóa) trước.
+
 ```nginx
 server {
     listen 80;
-    listen [::]:80;
     server_name example.com;
     return 301 https://$host$request_uri;
 }
 
 server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
+    listen 443 ssl;                   # chỉ IPv4: xem cảnh báo IPv6 ở trên
     http2 on;                         # nginx < 1.25.1: "listen 443 ssl http2;"
     server_name example.com;
 
@@ -184,7 +186,7 @@ server {
 }
 ```
 
-So với cấu hình chạy `next dev`: bỏ hai header WebSocket, thêm `location /_next/static/`, đưa các `proxy_set_header` lên mức server; phần còn lại giữ nguyên. Giữ các dòng `listen`/`ssl_*` mà certbot đang quản lý thay vì chép ví dụ. Áp dụng: `sudo nginx -t && sudo systemctl reload nginx`.
+So với cấu hình đang chạy: thêm `location /_next/static/` (nginx buffer JS/CSS có hash của build), đưa các `proxy_set_header` lên mức server, bỏ hai header WebSocket (`next start` không có HMR; để lại cũng vô hại); phần còn lại giữ nguyên. Giữ các dòng `listen`/`ssl_*` mà certbot đang quản lý thay vì chép ví dụ, và không thêm dòng `listen [::]`. Áp dụng: `sudo nginx -t && sudo systemctl reload nginx`.
 
 ### Lần chuyển đầu tiên từ `next dev`
 
@@ -197,9 +199,9 @@ Trước lần chuyển, site chạy `next dev` dưới user unit cùng tên. L�
 5. `scripts/deploy-prod.sh`. Script nhận ra unit hệ thống, kiểm tra `sudo -n` trước khi build, rồi trong lúc đổi: chép tệp user unit cũ vào `~/happy_wedding-backups/happy-wedding.service.user.<thời điểm>`, dừng và disable user unit (dev server), kiểm port 3200 đã trống, khởi động unit hệ thống. Tệp user unit vẫn ở chỗ cũ, ở trạng thái disabled. Cache ảnh đã tối ưu được chuyển sang bundle mới. Script in `OOM score adjustment of PID …: -900` và nhắc lệnh ở bước 6. Nếu có lỗi sau khi đã dừng dev server (backup, migration, port 3200 vẫn bận, đổi thư mục, unit hệ thống không khởi động hay không trả 200) hoặc bị ngắt (Ctrl-C, mất SSH), script tự đưa về như cũ: dừng unit hệ thống, trả `.next` của dev về chỗ cũ (bản mới về `.next-staging`), enable và chạy lại user unit như trước, rồi chờ port 3200 trả 200 và in `The previous server is back`. Khi không tự đưa về được, script in `The site is DOWN` kèm đúng các lệnh còn phải chạy (mục Rollback).
 6. Ngay sau đó, để site tự chạy khi máy khởi động: `sudo systemctl enable happy-wedding.service`.
 7. Chạy các lệnh "Kiểm tra" ở mục systemd system unit, rồi kiểm tra qua domain: trang thiệp đã xuất bản, đăng nhập khách và admin, tải một ảnh rồi mở nó.
-8. Đổi nginx theo mục trên, `sudo nginx -t && sudo systemctl reload nginx`. Có thể đóng port 3200 trên firewall: app không còn nghe ở địa chỉ public.
+8. Tùy chọn, không cần cho lần chuyển: đổi nginx theo mục nginx. Site đã chạy đúng mà không có bước này, vì nginx hiện tại đã chuyển vào `127.0.0.1:3200` và ghi đè `X-Real-IP`; bước này chỉ thêm phần JS/CSS tĩnh. Nếu làm: giữ các dòng `listen`/`ssl_*` của certbot, không thêm `listen [::]`, rồi `sudo nginx -t && sudo systemctl reload nginx`. Port 3200 có thể đóng trên firewall: app không còn nghe ở địa chỉ public.
 
-**`.next-prev` sau lần đầu:** lần deploy đầu đổi tên `.next` của `next dev` (khoảng 1 GB, không phải bundle production) thành `.next-prev`. Nó chỉ dùng để quay về `next dev` (mục Rollback). Khi bản mới đã kiểm xong ở bước 7 và 8, xóa nó bằng `rm -rf .next-prev` để lấy lại chỗ trên đĩa; nếu không, lần deploy sau cũng xóa nó trước khi build.
+**`.next-prev` sau lần đầu:** lần deploy đầu đổi tên `.next` của `next dev` (khoảng 1 GB, không phải bundle production) thành `.next-prev`. Nó chỉ dùng để quay về `next dev` (mục Rollback). Khi bản mới đã kiểm xong ở bước 7, xóa nó bằng `rm -rf .next-prev` để lấy lại chỗ trên đĩa; nếu không, lần deploy sau cũng xóa nó trước khi build.
 
 ### Deploy thường lệ
 
